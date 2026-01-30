@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String?  @map("password_hash")
+  role          UserRole @default(USER)
+  oauthProvider String?  @map("oauth_provider")
+  oauthId       String?  @map("oauth_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ownedPools    Pool[]           @relation("PoolOwner")
+  poolMemberships PoolMember[]
+  predictions  Prediction[]
+  enteredWinners ActualWinner[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  SUPERUSER
+}
+
+model Pool {
+  id            String   @id @default(uuid())
+  name          String
+  passwordHash  String?  @map("password_hash")
+  isPublic     Boolean  @default(false) @map("is_public")
+  isPaidPool   Boolean  @default(false) @map("is_paid_pool")
+  entryAmount   Float?   @map("entry_amount")
+  venmoAlias   String?  @map("venmo_alias")
+  ownerId      String   @map("owner_id")
+  year          String
+  ceremonyDate  DateTime @map("ceremony_date")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  owner         User            @relation("PoolOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members       PoolMember[]
+  predictions   Prediction[]
+  actualWinners ActualWinner[]
+  settings      PoolSettings?
+
+  @@map("pools")
+}
+
+model PoolMember {
+  id            String   @id @default(uuid())
+  poolId        String   @map("pool_id")
+  userId        String   @map("user_id")
+  submissionName String?  @map("submission_name")
+  hasPaid       Boolean  @default(false) @map("has_paid")
+  joinedAt      DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  pool      Pool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId])
+  @@map("pool_members")
+}
+
+model Prediction {
+  id            String   @id @default(uuid())
+  poolId        String   @map("pool_id")
+  userId        String   @map("user_id")
+  categoryId    String   @map("category_id")
+  nomineeId     String   @map("nominee_id")
+  oddsPercentage Float?   @map("odds_percentage") // Current odds used for scoring (may be upgraded)
+  originalOddsPercentage Float? @map("original_odds_percentage") // Original odds at selection time
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pool        Pool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId, categoryId])
+  @@map("predictions")
+}
+
+model OddsSnapshot {
+  id              String   @id @default(uuid())
+  categoryId      String   @map("category_id")
+  nomineeId       String   @map("nominee_id")
+  nomineeName     String   @map("nominee_name")
+  nomineeFilm     String?  @map("nominee_film")
+  oddsPercentage  Float    @map("odds_percentage")
+  snapshotTime     DateTime @default(now()) @map("snapshot_time")
+
+  @@index([categoryId, snapshotTime])
+  @@index([snapshotTime])
+  @@map("odds_snapshots")
+}
+
+model ActualWinner {
+  id          String   @id @default(uuid())
+  poolId      String   @map("pool_id")
+  categoryId  String   @map("category_id")
+  nomineeId   String   @map("nominee_id")
+  enteredBy   String?  @map("entered_by") // Optional for auto-detected winners
+  isAutoDetected Boolean @default(false) @map("is_auto_detected")
+  enteredAt   DateTime @default(now()) @map("entered_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pool        Pool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  enteredByUser User? @relation(fields: [enteredBy], references: [id])
+
+  @@unique([poolId, categoryId])
+  @@map("actual_winners")
+}
+
+model PoolSettings {
+  id                    String   @id @default(uuid())
+  poolId                String   @unique @map("pool_id")
+  categoryPoints        Json     @map("category_points") // { categoryId: points }
+  oddsMultiplierEnabled Boolean  @default(true) @map("odds_multiplier_enabled")
+  oddsMultiplierFormula String   @default("linear") @map("odds_multiplier_formula") // 'linear', 'inverse', 'sqrt', 'log'
+  payoutStructure       Json?    @map("payout_structure") // [{ position: 1, percentage: 60 }, { position: 2, percentage: 30 }, ...]
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pool                  Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@map("pool_settings")
+}
+
+model Category {
+  id            String   @id // Composite: categoryId-year, e.g., 'best-picture-2026'
+  name          String   // e.g., 'Best Picture', 'Directing'
+  year          String   // e.g., '2026'
+  defaultPoints Int      @default(10) @map("default_points")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  nominees      Nominee[]
+
+  @@index([year])
+  @@map("categories")
+}
+
+model Nominee {
+  id          String   // Part of composite primary key
+  categoryId  String   @map("category_id") // References Category.id (composite)
+  name        String
+  film        String?  // For movie categories, this is the film name. For person categories, this is their film.
+  song        String?  // For music-song category
+  producers   String?  // For best-picture category
+  blurb_sentence_1 String? @map("blurb_sentence_1")
+  blurb_sentence_2 String? @map("blurb_sentence_2")
+  imdb_url    String?  @map("imdb_url")
+  letterboxd_url String? @map("letterboxd_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, id])  // Composite primary key - allows same ID in different categories
+  @@index([categoryId])
+  @@map("nominees")
+}

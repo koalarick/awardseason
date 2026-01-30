@@ -1,0 +1,1307 @@
+{
+  "2026": [
+    {
+      "id": "best-picture",
+      "name": "Best Picture",
+      "defaultPoints": 10,
+      "nominees": [
+        {
+          "id": "bugonia",
+          "name": "Bugonia",
+          "film": "Bugonia",
+          "producers": "Ed Guiney & Andrew Lowe, Yorgos Lanthimos, Emma Stone and Lars Knudsen, Producers",
+          "blurb_sentence_1": "A surreal sci fi satire that leans into paranoia and dark humor",
+          "blurb_sentence_2": "A bold critics pick with volatile win odds",
+          "imdb_url": "https://www.imdb.com/title/tt12300742",
+          "letterboxd_url": "https://letterboxd.com/film/bugonia/"
+        },
+        {
+          "id": "f1",
+          "name": "F1",
+          "film": "F1",
+          "producers": "Chad Oman, Brad Pitt, Dede Gardner, Jeremy Kleiner, Joseph Kosinski and Jerry Bruckheimer, Producers",
+          "blurb_sentence_1": "A high speed drama set inside Formula One",
+          "blurb_sentence_2": "A technical crowd pleaser with strong craft momentum",
+          "imdb_url": "https://www.imdb.com/title/tt16311594",
+          "letterboxd_url": "https://letterboxd.com/film/f1/"
+        },
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "film": "Frankenstein",
+          "producers": "Guillermo del Toro, J. Miles Dale and Scott Stuber, Producers",
+          "blurb_sentence_1": "A prestige reimagining of a classic monster story",
+          "blurb_sentence_2": "A craft heavy contender with serious upside",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "hamnet",
+          "name": "Hamnet",
+          "film": "Hamnet",
+          "producers": "Liza Marshall, Pippa Harris, Nicolas Gonda, Steven Spielberg and Sam Mendes, Producers",
+          "blurb_sentence_1": "A tender period drama centered on love and grief",
+          "blurb_sentence_2": "A classic Academy friendly contender with strong odds",
+          "imdb_url": "https://www.imdb.com/title/tt14905854",
+          "letterboxd_url": "https://letterboxd.com/film/hamnet/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "film": "Marty Supreme",
+          "producers": "Eli Bush, Ronald Bronstein, Josh Safdie, Anthony Katagas and Timothée Chalamet, Producers",
+          "blurb_sentence_1": "A charismatic rise and fall character story",
+          "blurb_sentence_2": "A buzzy frontrunner driven by momentum",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "film": "One Battle after Another",
+          "producers": "Adam Somner, Sara Murphy and Paul Thomas Anderson, Producers",
+          "blurb_sentence_1": "A tense modern epic about loyalty and resistance",
+          "blurb_sentence_2": "A broad consensus contender with real win equity",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "the-secret-agent",
+          "name": "The Secret Agent",
+          "film": "The Secret Agent",
+          "producers": "Emilie Lesclaux, Producer",
+          "blurb_sentence_1": "A slow burn political thriller with paranoia",
+          "blurb_sentence_2": "A passion pick that plays like a dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt27847051",
+          "letterboxd_url": "https://letterboxd.com/film/the-secret-agent-2025/"
+        },
+        {
+          "id": "sentimental-value",
+          "name": "Sentimental Value",
+          "film": "Sentimental Value",
+          "producers": "Maria Ekerhovd and Andrea Berentsen Ottmar, Producers",
+          "blurb_sentence_1": "A grounded family drama about memory and regret",
+          "blurb_sentence_2": "A critics darling with quieter but real support",
+          "imdb_url": "https://www.imdb.com/title/tt27714581",
+          "letterboxd_url": "https://letterboxd.com/film/sentimental-value-2025/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "film": "Sinners",
+          "producers": "Zinzi Coogler, Sev Ohanian and Ryan Coogler, Producers",
+          "blurb_sentence_1": "A stylish crime story about guilt and redemption",
+          "blurb_sentence_2": "A strong genre contender with serious odds",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        },
+        {
+          "id": "train-dreams",
+          "name": "Train Dreams",
+          "film": "Train Dreams",
+          "producers": "Marissa McMahon, Teddy Schwarzman, Will Janowitz, Ashley Schlaifer and Michael Heimler, Producers",
+          "blurb_sentence_1": "A poetic portrait of a life shaped by change",
+          "blurb_sentence_2": "A beautiful long shot that voters may admire",
+          "imdb_url": "https://www.imdb.com/title/tt29768334",
+          "letterboxd_url": "https://letterboxd.com/film/train-dreams/"
+        }
+      ]
+    },
+    {
+      "id": "directing",
+      "name": "Directing",
+      "defaultPoints": 8,
+      "nominees": [
+        {
+          "id": "chloe-zhao",
+          "name": "Chloé Zhao",
+          "film": "Hamnet",
+          "blurb_sentence_1": "Directs with intimacy and emotional restraint",
+          "blurb_sentence_2": "A past winner with real leverage in voting",
+          "imdb_url": "https://www.imdb.com/name/nm2125482",
+          "letterboxd_url": "https://letterboxd.com/director/chloe-zhao/"
+        },
+        {
+          "id": "josh-safdie",
+          "name": "Josh Safdie",
+          "film": "Marty Supreme",
+          "blurb_sentence_1": "Brings kinetic tension and momentum",
+          "blurb_sentence_2": "A bold stylist with breakthrough potential",
+          "imdb_url": "https://www.imdb.com/name/nm1343394",
+          "letterboxd_url": "https://letterboxd.com/director/josh-safdie/"
+        },
+        {
+          "id": "paul-thomas-anderson",
+          "name": "Paul Thomas Anderson",
+          "film": "One Battle after Another",
+          "blurb_sentence_1": "Delivers a confident auteur epic",
+          "blurb_sentence_2": "A perennial favorite with overdue narrative",
+          "imdb_url": "https://www.imdb.com/name/nm0000759",
+          "letterboxd_url": "https://letterboxd.com/director/paul-thomas-anderson/"
+        },
+        {
+          "id": "joachim-trier",
+          "name": "Joachim Trier",
+          "film": "Sentimental Value",
+          "blurb_sentence_1": "Guides the film with subtle emotional precision",
+          "blurb_sentence_2": "A critics favorite with quieter odds",
+          "imdb_url": "https://www.imdb.com/name/nm1258686",
+          "letterboxd_url": "https://letterboxd.com/director/joachim-trier/"
+        },
+        {
+          "id": "ryan-coogler",
+          "name": "Ryan Coogler",
+          "film": "Sinners",
+          "blurb_sentence_1": "Combines scale emotion and impact",
+          "blurb_sentence_2": "A top tier contender with broad support",
+          "imdb_url": "https://www.imdb.com/name/nm3363032",
+          "letterboxd_url": "https://letterboxd.com/director/ryan-coogler/"
+        }
+      ]
+    },
+    {
+      "id": "actor-leading",
+      "name": "Actor in a Leading Role",
+      "defaultPoints": 5,
+      "nominees": [
+        {
+          "id": "timothee-chalamet",
+          "name": "Timothée Chalamet",
+          "film": "Marty Supreme",
+          "blurb_sentence_1": "Plays a magnetic prodigy who drives the story",
+          "blurb_sentence_2": "A young superstar who is often the frontrunner",
+          "imdb_url": "https://www.imdb.com/name/nm3154303",
+          "letterboxd_url": "https://letterboxd.com/actor/timothee-chalamet/"
+        },
+        {
+          "id": "leonardo-dicaprio",
+          "name": "Leonardo DiCaprio",
+          "film": "One Battle after Another",
+          "blurb_sentence_1": "Leads as a driven idealist pushed to extremes",
+          "blurb_sentence_2": "A past winner whose name keeps him in the mix",
+          "imdb_url": "https://www.imdb.com/name/nm0000138",
+          "letterboxd_url": "https://letterboxd.com/actor/leonardo-dicaprio/"
+        },
+        {
+          "id": "ethan-hawke",
+          "name": "Ethan Hawke",
+          "film": "Blue Moon",
+          "blurb_sentence_1": "Anchors the film with quiet emotional weight",
+          "blurb_sentence_2": "A respected veteran with sleeper momentum",
+          "imdb_url": "https://www.imdb.com/name/nm0000160",
+          "letterboxd_url": "https://letterboxd.com/actor/ethan-hawke/"
+        },
+        {
+          "id": "michael-b-jordan",
+          "name": "Michael B. Jordan",
+          "film": "Sinners",
+          "blurb_sentence_1": "Commands the screen with intensity and conflict",
+          "blurb_sentence_2": "A prestige leaning star and strong dark horse",
+          "imdb_url": "https://www.imdb.com/name/nm0430107",
+          "letterboxd_url": "https://letterboxd.com/actor/michael-b-jordan/"
+        },
+        {
+          "id": "wagner-moura",
+          "name": "Wagner Moura",
+          "film": "The Secret Agent",
+          "blurb_sentence_1": "Plays a restrained morally trapped lead",
+          "blurb_sentence_2": "An international favorite with outsider odds",
+          "imdb_url": "https://www.imdb.com/name/nm0609944",
+          "letterboxd_url": "https://letterboxd.com/actor/wagner-moura/"
+        }
+      ]
+    },
+    {
+      "id": "actress-leading",
+      "name": "Actress in a Leading Role",
+      "defaultPoints": 5,
+      "nominees": [
+        {
+          "id": "jessie-buckley",
+          "name": "Jessie Buckley",
+          "film": "Hamnet",
+          "blurb_sentence_1": "Carries the film with raw grief and restraint",
+          "blurb_sentence_2": "A repeat nominee who feels close to a win",
+          "imdb_url": "https://www.imdb.com/name/nm2976580",
+          "letterboxd_url": "https://letterboxd.com/actor/jessie-buckley/"
+        },
+        {
+          "id": "rose-byrne",
+          "name": "Rose Byrne",
+          "film": "If I Had Legs I'd Kick You",
+          "blurb_sentence_1": "Leads with vulnerability and dark humor",
+          "blurb_sentence_2": "A familiar face with a real breakthrough push",
+          "imdb_url": "https://www.imdb.com/name/nm0126284",
+          "letterboxd_url": "https://letterboxd.com/actor/rose-byrne/"
+        },
+        {
+          "id": "kate-hudson",
+          "name": "Kate Hudson",
+          "film": "Song Sung Blue",
+          "blurb_sentence_1": "Plays against type in a grounded dramatic role",
+          "blurb_sentence_2": "A nostalgia fueled long shot with comeback energy",
+          "imdb_url": "https://www.imdb.com/name/nm0005028",
+          "letterboxd_url": "https://letterboxd.com/actor/kate-hudson/"
+        },
+        {
+          "id": "renate-reinsve",
+          "name": "Renate Reinsve",
+          "film": "Sentimental Value",
+          "blurb_sentence_1": "Delivers a subtle interior performance",
+          "blurb_sentence_2": "A critics favorite with quieter mainstream odds",
+          "imdb_url": "https://www.imdb.com/name/nm4561559",
+          "letterboxd_url": "https://letterboxd.com/actor/renate-reinsve/"
+        },
+        {
+          "id": "emma-stone",
+          "name": "Emma Stone",
+          "film": "Bugonia",
+          "blurb_sentence_1": "Leans into bold off kilter energy",
+          "blurb_sentence_2": "A recent winner who stays dangerous in close races",
+          "imdb_url": "https://www.imdb.com/name/nm1297015",
+          "letterboxd_url": "https://letterboxd.com/actor/emma-stone/"
+        }
+      ]
+    },
+    {
+      "id": "actor-supporting",
+      "name": "Actor in a Supporting Role",
+      "defaultPoints": 5,
+      "nominees": [
+        {
+          "id": "benicio-del-toro",
+          "name": "Benicio Del Toro",
+          "film": "One Battle after Another",
+          "blurb_sentence_1": "Plays an unpredictable moral wildcard",
+          "blurb_sentence_2": "A past winner with late surge potential",
+          "imdb_url": "https://www.imdb.com/name/nm0001125",
+          "letterboxd_url": "https://letterboxd.com/actor/benicio-del-toro/"
+        },
+        {
+          "id": "jacob-elordi",
+          "name": "Jacob Elordi",
+          "film": "Frankenstein",
+          "blurb_sentence_1": "Transforms in a haunting supporting role",
+          "blurb_sentence_2": "A rising star making a prestige leap",
+          "imdb_url": "https://www.imdb.com/name/nm8624059",
+          "letterboxd_url": "https://letterboxd.com/actor/jacob-elordi/"
+        },
+        {
+          "id": "delroy-lindo",
+          "name": "Delroy Lindo",
+          "film": "Sinners",
+          "blurb_sentence_1": "Brings gravitas and lived in authority",
+          "blurb_sentence_2": "A veteran many see as overdue",
+          "imdb_url": "https://www.imdb.com/name/nm0005148",
+          "letterboxd_url": "https://letterboxd.com/actor/delroy-lindo/"
+        },
+        {
+          "id": "sean-penn",
+          "name": "Sean Penn",
+          "film": "One Battle after Another",
+          "blurb_sentence_1": "Plays a volatile force in the story",
+          "blurb_sentence_2": "A polarizing two time winner who can still win",
+          "imdb_url": "https://www.imdb.com/name/nm0000576",
+          "letterboxd_url": "https://letterboxd.com/actor/sean-penn/"
+        },
+        {
+          "id": "stellan-skarsgard",
+          "name": "Stellan Skarsgård",
+          "film": "Sentimental Value",
+          "blurb_sentence_1": "Delivers a restrained devastating turn",
+          "blurb_sentence_2": "A beloved character actor with deep support",
+          "imdb_url": "https://www.imdb.com/name/nm0001745",
+          "letterboxd_url": "https://letterboxd.com/actor/stellan-skarsgard/"
+        }
+      ]
+    },
+    {
+      "id": "actress-supporting",
+      "name": "Actress in a Supporting Role",
+      "defaultPoints": 5,
+      "nominees": [
+        {
+          "id": "elle-fanning",
+          "name": "Elle Fanning",
+          "film": "Sentimental Value",
+          "blurb_sentence_1": "Adds warmth and emotional clarity",
+          "blurb_sentence_2": "A prestige favorite with strong momentum",
+          "imdb_url": "https://www.imdb.com/name/nm1102577",
+          "letterboxd_url": "https://letterboxd.com/actor/elle-fanning/"
+        },
+        {
+          "id": "inga-ibsdotter-lilleaas",
+          "name": "Inga Ibsdotter Lilleaas",
+          "film": "Sentimental Value",
+          "blurb_sentence_1": "Plays a quietly pivotal role",
+          "blurb_sentence_2": "A breakout nominee with long shot odds",
+          "imdb_url": "https://www.imdb.com/title/tt27714581",
+          "letterboxd_url": "https://letterboxd.com/actor/inga-ibsdotter-lilleaas/"
+        },
+        {
+          "id": "amy-madigan",
+          "name": "Amy Madigan",
+          "film": "Weapons",
+          "blurb_sentence_1": "Leaves a big impression in limited time",
+          "blurb_sentence_2": "A veteran return that voters may reward",
+          "imdb_url": "https://www.imdb.com/name/nm0001496/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/actor/amy-madigan/"
+        },
+        {
+          "id": "wunmi-mosaku",
+          "name": "Wunmi Mosaku",
+          "film": "Sinners",
+          "blurb_sentence_1": "Grounds the story with empathy and resolve",
+          "blurb_sentence_2": "A steadily rising contender with traction",
+          "imdb_url": "https://www.imdb.com/name/nm2148911",
+          "letterboxd_url": "https://letterboxd.com/actor/wunmi-mosaku/"
+        },
+        {
+          "id": "teyana-taylor",
+          "name": "Teyana Taylor",
+          "film": "One Battle after Another",
+          "blurb_sentence_1": "Brings raw intensity to a breakout role",
+          "blurb_sentence_2": "A crossover star with dark horse buzz",
+          "imdb_url": "https://www.imdb.com/name/nm3692520/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/actor/teyana-taylor/"
+        }
+      ]
+    },
+    {
+      "id": "writing-original",
+      "name": "Writing (Original Screenplay)",
+      "defaultPoints": 5,
+      "nominees": [
+        {
+          "id": "blue-moon",
+          "name": "Blue Moon",
+          "writer": "Written by Robert Kaplow",
+          "blurb_sentence_1": "A character driven original story",
+          "blurb_sentence_2": "A respected long shot",
+          "imdb_url": "https://www.imdb.com/title/tt32536315/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/blue-moon-2025/"
+        },
+        {
+          "id": "it-was-just-an-accident",
+          "name": "It Was Just an Accident",
+          "writer": "Written by Jafar Panahi; Script collaborators - Nader Saïvar, Shadmehr Rastin, Mehdi Mahmoudian",
+          "blurb_sentence_1": "A subtle European original",
+          "blurb_sentence_2": "A niche contender",
+          "imdb_url": "https://www.imdb.com/title/tt36491653/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/it-was-just-an-accident/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "writer": "Written by Ronald Bronstein & Josh Safdie",
+          "blurb_sentence_1": "A sharp character focused script",
+          "blurb_sentence_2": "A frontrunner boosted by momentum",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "sentimental-value",
+          "name": "Sentimental Value",
+          "writer": "Written by Eskil Vogt, Joachim Trier",
+          "blurb_sentence_1": "A reflective and intimate screenplay",
+          "blurb_sentence_2": "A critics favorite with real upside",
+          "imdb_url": "https://www.imdb.com/title/tt27714581",
+          "letterboxd_url": "https://letterboxd.com/film/sentimental-value-2025/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "writer": "Written by Ryan Coogler",
+          "blurb_sentence_1": "An original crime story built on tension",
+          "blurb_sentence_2": "A top contender",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "writing-adapted",
+      "name": "Writing (Adapted Screenplay)",
+      "defaultPoints": 5,
+      "nominees": [
+        {
+          "id": "bugonia",
+          "name": "Bugonia",
+          "writer": "Screenplay by Will Tracy",
+          "blurb_sentence_1": "Adaptation that twists familiar genre ideas",
+          "blurb_sentence_2": "A riskier contender",
+          "imdb_url": "https://www.imdb.com/title/tt12300742",
+          "letterboxd_url": "https://letterboxd.com/film/bugonia/"
+        },
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "writer": "Written for the Screen by Guillermo del Toro",
+          "blurb_sentence_1": "Adaptation of classic material with bold choices",
+          "blurb_sentence_2": "A prestige contender",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "hamnet",
+          "name": "Hamnet",
+          "writer": "Screenplay by Chloé Zhao & Maggie O'Farrell",
+          "blurb_sentence_1": "Adaptation focused on intimacy and grief",
+          "blurb_sentence_2": "A strong traditional pick",
+          "imdb_url": "https://www.imdb.com/title/tt14905854",
+          "letterboxd_url": "https://letterboxd.com/film/hamnet/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "writer": "Written by Paul Thomas Anderson",
+          "blurb_sentence_1": "Adaptation built for tension and scale",
+          "blurb_sentence_2": "A high profile contender",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "train-dreams",
+          "name": "Train Dreams",
+          "writer": "Screenplay by Clint Bentley & Greg Kwedar",
+          "blurb_sentence_1": "Faithful literary adaptation with restraint",
+          "blurb_sentence_2": "A quiet long shot",
+          "imdb_url": "https://www.imdb.com/title/tt29768334",
+          "letterboxd_url": "https://letterboxd.com/film/train-dreams/"
+        }
+      ]
+    },
+    {
+      "id": "cinematography",
+      "name": "Cinematography",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "cinematographer": "Dan Laustsen",
+          "blurb_sentence_1": "Gothic imagery with striking compositions",
+          "blurb_sentence_2": "A craft category frontrunner",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "cinematographer": "Darius Khondji",
+          "blurb_sentence_1": "Dynamic camera work that matches the energy",
+          "blurb_sentence_2": "A top contender with momentum",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "cinematographer": "Michael Bauman",
+          "blurb_sentence_1": "Large scale visuals with intimate detail",
+          "blurb_sentence_2": "A prestige contender with strong odds",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "cinematographer": "Autumn Durald Arkapaw",
+          "blurb_sentence_1": "Stylized lighting and mood driven visuals",
+          "blurb_sentence_2": "A dark horse with serious craft support",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        },
+        {
+          "id": "train-dreams",
+          "name": "Train Dreams",
+          "cinematographer": "Adolpho Veloso",
+          "blurb_sentence_1": "Naturalistic imagery and restraint",
+          "blurb_sentence_2": "A quiet long shot",
+          "imdb_url": "https://www.imdb.com/title/tt29768334",
+          "letterboxd_url": "https://letterboxd.com/film/train-dreams/"
+        }
+      ]
+    },
+    {
+      "id": "film-editing",
+      "name": "Film Editing",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "f1",
+          "name": "F1",
+          "editor": "Stephen Mirrione",
+          "blurb_sentence_1": "Editing that matches racing speed and tension",
+          "blurb_sentence_2": "A technical favorite with strong odds",
+          "imdb_url": "https://www.imdb.com/title/tt16311594",
+          "letterboxd_url": "https://letterboxd.com/film/f1/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "editor": "Ronald Bronstein and Josh Safdie",
+          "blurb_sentence_1": "Rhythmic editing that supports performance",
+          "blurb_sentence_2": "A strong contender tied to momentum",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "editor": "Andy Jurgensen",
+          "blurb_sentence_1": "Complex narrative structure and pacing",
+          "blurb_sentence_2": "A prestige contender",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "sentimental-value",
+          "name": "Sentimental Value",
+          "editor": "Olivier Bugge Coutté",
+          "blurb_sentence_1": "Subtle pacing and emotional rhythm",
+          "blurb_sentence_2": "A quieter contender",
+          "imdb_url": "https://www.imdb.com/title/tt27714581",
+          "letterboxd_url": "https://letterboxd.com/film/sentimental-value-2025/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "editor": "Michael P. Shawver",
+          "blurb_sentence_1": "Stylized momentum that sustains tension",
+          "blurb_sentence_2": "A genre dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "production-design",
+      "name": "Production Design",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "design": "Production Design: Tamara Deverell; Set Decoration: Shane Vieau",
+          "blurb_sentence_1": "Immersive gothic environments",
+          "blurb_sentence_2": "A craft frontrunner",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "hamnet",
+          "name": "Hamnet",
+          "design": "Production Design: Fiona Crombie; Set Decoration: Alice Felton",
+          "blurb_sentence_1": "Richly detailed period settings",
+          "blurb_sentence_2": "A classic contender",
+          "imdb_url": "https://www.imdb.com/title/tt14905854",
+          "letterboxd_url": "https://letterboxd.com/film/hamnet/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "design": "Production Design: Jack Fisk; Set Decoration: Adam Willis",
+          "blurb_sentence_1": "Stylized spaces that reflect ambition",
+          "blurb_sentence_2": "A strong contender",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "design": "Production Design: Florencia Martin; Set Decoration: Anthony Carlino",
+          "blurb_sentence_1": "Large scale modern world building",
+          "blurb_sentence_2": "A prestige pick",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "design": "Production Design: Hannah Beachler; Set Decoration: Monique Champagne",
+          "blurb_sentence_1": "Stylish genre driven design",
+          "blurb_sentence_2": "A dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "costume-design",
+      "name": "Costume Design",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "avatar-fire-and-ash",
+          "name": "Avatar: Fire and Ash",
+          "designer": "Deborah L. Scott",
+          "blurb_sentence_1": "Big imaginative wardrobe design",
+          "blurb_sentence_2": "A high visibility contender in craft races",
+          "imdb_url": "https://www.imdb.com/title/tt1757678/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/avatar-fire-and-ash/"
+        },
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "designer": "Kate Hawley",
+          "blurb_sentence_1": "Gothic costume work with bold silhouettes",
+          "blurb_sentence_2": "A likely category favorite",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "hamnet",
+          "name": "Hamnet",
+          "designer": "Malgosia Turzanska",
+          "blurb_sentence_1": "Authentic restrained period dress",
+          "blurb_sentence_2": "A traditional contender with strong odds",
+          "imdb_url": "https://www.imdb.com/title/tt14905854",
+          "letterboxd_url": "https://letterboxd.com/film/hamnet/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "designer": "Miyako Bellizzi",
+          "blurb_sentence_1": "Costumes that define ambition and status",
+          "blurb_sentence_2": "A modern contender",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "designer": "Ruth E. Carter",
+          "blurb_sentence_1": "Stylish contemporary costuming",
+          "blurb_sentence_2": "A genre leaning dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "sound",
+      "name": "Sound",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "f1",
+          "name": "F1",
+          "soundTeam": "Gareth John, Al Nelson, Gwendolyn Yates Whittle, Gary A. Rizzo and Juan Peralta",
+          "blurb_sentence_1": "Immersive racing sound design",
+          "blurb_sentence_2": "A technical frontrunner",
+          "imdb_url": "https://www.imdb.com/title/tt16311594",
+          "letterboxd_url": "https://letterboxd.com/film/f1/"
+        },
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "soundTeam": "Greg Chapman, Nathan Robitaille, Nelson Ferreira, Christian Cooke and Brad Zoern",
+          "blurb_sentence_1": "Atmospheric soundscapes",
+          "blurb_sentence_2": "A prestige contender",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "soundTeam": "José Antonio García, Christopher Scarabosio and Tony Villaflor",
+          "blurb_sentence_1": "Layered and complex sound work",
+          "blurb_sentence_2": "A strong contender",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "soundTeam": "Chris Welcker, Benjamin A. Burtt, Felipe Pacheco, Brandon Proctor and Steve Boeddeker",
+          "blurb_sentence_1": "Stylized genre sound design",
+          "blurb_sentence_2": "A dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        },
+        {
+          "id": "sirat",
+          "name": "Sirāt",
+          "soundTeam": "Amanda Villavieja, Laia Casanovas and Yasmina Praderas",
+          "blurb_sentence_1": "Expansive historical sound work",
+          "blurb_sentence_2": "A long shot",
+          "imdb_url": "https://www.imdb.com/title/tt32298285/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/sirat-2025/"
+        }
+      ]
+    },
+    {
+      "id": "visual-effects",
+      "name": "Visual Effects",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "avatar-fire-and-ash",
+          "name": "Avatar: Fire and Ash",
+          "effectsTeam": "Joe Letteri, Richard Baneham, Eric Saindon and Daniel Barrett",
+          "blurb_sentence_1": "Large scale immersive effects",
+          "blurb_sentence_2": "A category favorite",
+          "imdb_url": "https://www.imdb.com/title/tt1757678/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/avatar-fire-and-ash/"
+        },
+        {
+          "id": "f1",
+          "name": "F1",
+          "effectsTeam": "Ryan Tudhope, Nicolas Chevallier, Robert Harrington and Keith Dawson",
+          "blurb_sentence_1": "Realistic racing integration",
+          "blurb_sentence_2": "A strong contender",
+          "imdb_url": "https://www.imdb.com/title/tt16311594",
+          "letterboxd_url": "https://letterboxd.com/film/f1/"
+        },
+        {
+          "id": "jurassic-world-rebirth",
+          "name": "Jurassic World Rebirth",
+          "effectsTeam": "David Vickery, Stephen Aplin, Charmaine Chan and Neil Corbould",
+          "blurb_sentence_1": "Creature driven spectacle",
+          "blurb_sentence_2": "A franchise contender",
+          "imdb_url": "https://www.imdb.com/title/tt31036941/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/jurassic-world-rebirth/"
+        },
+        {
+          "id": "the-lost-bus",
+          "name": "The Lost Bus",
+          "effectsTeam": "Charlie Noble, David Zaretti, Russell Bowen and Brandon K. McLaughlin",
+          "blurb_sentence_1": "Subtle realism driven effects",
+          "blurb_sentence_2": "A quieter long shot",
+          "imdb_url": "https://www.imdb.com/title/tt21103218/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/the-lost-bus/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "effectsTeam": "Michael Ralla, Espen Nordahl, Guido Wolter and Donnie Dean",
+          "blurb_sentence_1": "Stylized enhancement effects",
+          "blurb_sentence_2": "A genre outsider",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "makeup-hairstyling",
+      "name": "Makeup and Hairstyling",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "makeupTeam": "Mike Hill, Jordan Samuel and Cliona Furey",
+          "blurb_sentence_1": "Transformational creature and character work",
+          "blurb_sentence_2": "A category frontrunner",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "kokuho",
+          "name": "Kokuho",
+          "makeupTeam": "Kyoko Toyokawa, Naomi Hibino and Tadashi Nishimatsu",
+          "blurb_sentence_1": "Expressive character makeup and styling",
+          "blurb_sentence_2": "A niche contender",
+          "imdb_url": "https://www.imdb.com/title/tt35231039/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/kokuho/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "makeupTeam": "Ken Diaz, Mike Fontaine and Shunika Terry",
+          "blurb_sentence_1": "Stylized realism and grit",
+          "blurb_sentence_2": "A strong contender",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        },
+        {
+          "id": "the-smashing-machine",
+          "name": "The Smashing Machine",
+          "makeupTeam": "Kazu Hiro, Glen Griffin and Bjoern Rehbein",
+          "blurb_sentence_1": "Transformation driven makeup work",
+          "blurb_sentence_2": "A prestige favorite",
+          "imdb_url": "https://www.imdb.com/title/tt11214558/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/the-smashing-machine/"
+        },
+        {
+          "id": "the-ugly-stepsister",
+          "name": "The Ugly Stepsister",
+          "makeupTeam": "Thomas Foldberg and Anne Cathrine Sauerberg",
+          "blurb_sentence_1": "Fantasy driven makeup design",
+          "blurb_sentence_2": "A creative long shot",
+          "imdb_url": "https://www.imdb.com/title/tt29344903/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/the-ugly-stepsister/"
+        }
+      ]
+    },
+    {
+      "id": "music-score",
+      "name": "Music (Original Score)",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "bugonia",
+          "name": "Bugonia",
+          "composer": "Jerskin Fendrix",
+          "blurb_sentence_1": "Inventive genre bending score",
+          "blurb_sentence_2": "A bold contender",
+          "imdb_url": "https://www.imdb.com/title/tt12300742",
+          "letterboxd_url": "https://letterboxd.com/film/bugonia/"
+        },
+        {
+          "id": "frankenstein",
+          "name": "Frankenstein",
+          "composer": "Alexandre Desplat",
+          "blurb_sentence_1": "Atmospheric dramatic scoring",
+          "blurb_sentence_2": "A category favorite",
+          "imdb_url": "https://www.imdb.com/title/tt1312221",
+          "letterboxd_url": "https://letterboxd.com/film/frankenstein-2025/"
+        },
+        {
+          "id": "hamnet",
+          "name": "Hamnet",
+          "composer": "Max Richter",
+          "blurb_sentence_1": "Emotional restrained music",
+          "blurb_sentence_2": "A classic Academy pick",
+          "imdb_url": "https://www.imdb.com/title/tt14905854",
+          "letterboxd_url": "https://letterboxd.com/film/hamnet/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "composer": "Jonny Greenwood",
+          "blurb_sentence_1": "Large scale thematic score",
+          "blurb_sentence_2": "A strong contender",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "composer": "Ludwig Goransson",
+          "blurb_sentence_1": "Moody genre driven music",
+          "blurb_sentence_2": "A dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "music-song",
+      "name": "Music (Original Song)",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "dear-me",
+          "name": "Dear Me",
+          "song": "from Diane Warren: Relentless; Music and Lyric by Diane Warren",
+          "blurb_sentence_1": "A personal emotional song",
+          "blurb_sentence_2": "A lower visibility long shot",
+          "imdb_url": "https://www.imdb.com/title/tt14588692",
+          "letterboxd_url": "https://letterboxd.com/film/relentless-2024/"
+        },
+        {
+          "id": "golden",
+          "name": "Golden",
+          "song": "from KPop Demon Hunters; Music and Lyric by EJAE, Mark Sonnenblick, Joong Gyu Kwak, Yu Han Lee, Hee Dong Nam, Jeong Hoon Seo and Teddy Park",
+          "blurb_sentence_1": "A big animated musical moment",
+          "blurb_sentence_2": "A fan favorite contender",
+          "imdb_url": "https://www.imdb.com/find/?q=Golden%20KPop%20Demon%20Hunters&s=tt",
+          "letterboxd_url": "https://letterboxd.com/film/kpop-demon-hunters/"
+        },
+        {
+          "id": "i-lied-to-you",
+          "name": "I Lied To You",
+          "song": "from Sinners; Music and Lyric by Raphael Saadiq and Ludwig Goransson",
+          "blurb_sentence_1": "A soulful dramatic song",
+          "blurb_sentence_2": "A strong emotional pick",
+          "imdb_url": "https://www.imdb.com/title/tt14205554",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        },
+        {
+          "id": "sweet-dreams-of-joy",
+          "name": "Sweet Dreams Of Joy",
+          "song": "from Viva Verdi!; Music and Lyric by Nicholas Pike",
+          "blurb_sentence_1": "A classic theatrical style song",
+          "blurb_sentence_2": "A traditional long shot",
+          "imdb_url": "https://www.imdb.com/title/tt3595454",
+          "letterboxd_url": "https://letterboxd.com/film/viva-verdi/"
+        },
+        {
+          "id": "train-dreams-song",
+          "name": "Train Dreams",
+          "song": "from Train Dreams; Music by Nick Cave and Bryce Dessner; Lyric by Nick Cave",
+          "blurb_sentence_1": "A reflective thematic song",
+          "blurb_sentence_2": "A quieter contender",
+          "imdb_url": "https://www.imdb.com/title/tt29768334",
+          "letterboxd_url": "https://letterboxd.com/film/train-dreams/"
+        }
+      ]
+    },
+    {
+      "id": "casting",
+      "name": "Casting",
+      "defaultPoints": 3,
+      "nominees": [
+        {
+          "id": "hamnet",
+          "name": "Hamnet",
+          "castingDirector": "Nina Gold",
+          "blurb_sentence_1": "Casting that sells intimacy and grief",
+          "blurb_sentence_2": "A prestige leaning contender with strong odds",
+          "imdb_url": "https://www.imdb.com/title/tt14905854",
+          "letterboxd_url": "https://letterboxd.com/film/hamnet/"
+        },
+        {
+          "id": "marty-supreme",
+          "name": "Marty Supreme",
+          "castingDirector": "Jennifer Venditti",
+          "blurb_sentence_1": "A cast built around charisma and pressure",
+          "blurb_sentence_2": "A category favorite tied to overall momentum",
+          "imdb_url": "https://www.imdb.com/title/tt32916440",
+          "letterboxd_url": "https://letterboxd.com/film/marty-supreme/"
+        },
+        {
+          "id": "one-battle-after-another",
+          "name": "One Battle after Another",
+          "castingDirector": "Cassandra Kulukundis",
+          "blurb_sentence_1": "An ensemble that supports a big tense story",
+          "blurb_sentence_2": "A strong contender with broad appeal",
+          "imdb_url": "https://www.imdb.com/title/tt30144839",
+          "letterboxd_url": "https://letterboxd.com/film/one-battle-after-another/"
+        },
+        {
+          "id": "the-secret-agent",
+          "name": "The Secret Agent",
+          "castingDirector": "Gabriel Domingues",
+          "blurb_sentence_1": "A performance driven political ensemble",
+          "blurb_sentence_2": "A passion pick with dark horse energy",
+          "imdb_url": "https://www.imdb.com/title/tt27847051",
+          "letterboxd_url": "https://letterboxd.com/film/the-secret-agent-2025/"
+        },
+        {
+          "id": "sinners",
+          "name": "Sinners",
+          "castingDirector": "Francine Maisler",
+          "blurb_sentence_1": "Distinct character work across the cast",
+          "blurb_sentence_2": "A genre dark horse that voters may reward",
+          "imdb_url": "https://www.imdb.com/title/tt31193180",
+          "letterboxd_url": "https://letterboxd.com/film/sinners-2025/"
+        }
+      ]
+    },
+    {
+      "id": "animated-feature",
+      "name": "Animated Feature Film",
+      "defaultPoints": 2,
+      "nominees": [
+        {
+          "id": "arco",
+          "name": "Arco",
+          "producers": "Ugo Bienvenu, Félix de Givry, Sophie Mas and Natalie Portman",
+          "blurb_sentence_1": "A visually inventive animated feature",
+          "blurb_sentence_2": "A critics pick with niche odds",
+          "imdb_url": "https://www.imdb.com/title/tt14883538",
+          "letterboxd_url": "https://letterboxd.com/film/arco/"
+        },
+        {
+          "id": "elio",
+          "name": "Elio",
+          "producers": "Madeline Sharafian, Domee Shi, Adrian Molina and Mary Alice Drumm",
+          "blurb_sentence_1": "A colorful sci fi coming of age adventure",
+          "blurb_sentence_2": "A mainstream favorite with strong win odds",
+          "imdb_url": "https://www.imdb.com/title/tt4900148",
+          "letterboxd_url": "https://letterboxd.com/film/elio-2025/"
+        },
+        {
+          "id": "kpop-demon-hunters",
+          "name": "KPop Demon Hunters",
+          "producers": "Maggie Kang, Chris Appelhans and Michelle L.M. Wong",
+          "blurb_sentence_1": "A genre blending animated musical",
+          "blurb_sentence_2": "A fun dark horse with fan energy",
+          "imdb_url": "https://www.imdb.com/title/tt14205554",
+          "letterboxd_url": "https://letterboxd.com/film/kpop-demon-hunters/"
+        },
+        {
+          "id": "little-amelie",
+          "name": "Little Amélie or the Character of Rain",
+          "producers": "Maïlys Vallade, Liane-Cho Han, Nidia Santiago and Henri Magalon",
+          "blurb_sentence_1": "A gentle introspective animated story",
+          "blurb_sentence_2": "A long shot that could surprise on passion",
+          "imdb_url": "https://www.imdb.com/title/tt29313285",
+          "letterboxd_url": "https://letterboxd.com/film/little-amelie-or-the-character-of-rain/"
+        },
+        {
+          "id": "zootopia-2",
+          "name": "Zootopia 2",
+          "producers": "Jared Bush, Byron Howard and Yvett Merino",
+          "blurb_sentence_1": "A fast paced sequel with big laughs",
+          "blurb_sentence_2": "A popular contender with solid odds",
+          "imdb_url": "https://www.imdb.com/title/tt26443597",
+          "letterboxd_url": "https://letterboxd.com/film/zootopia-2/"
+        }
+      ]
+    },
+    {
+      "id": "international-feature",
+      "name": "International Feature Film",
+      "defaultPoints": 2,
+      "nominees": [
+        {
+          "id": "brazil-secret-agent",
+          "name": "Brazil - The Secret Agent",
+          "film": "The Secret Agent",
+          "blurb_sentence_1": "A Brazilian thriller built on paranoia",
+          "blurb_sentence_2": "A top tier contender",
+          "imdb_url": "https://www.imdb.com/title/tt27847051",
+          "letterboxd_url": "https://letterboxd.com/film/the-secret-agent-2025/"
+        },
+        {
+          "id": "france-accident",
+          "name": "France - It Was Just an Accident",
+          "film": "It Was Just an Accident",
+          "blurb_sentence_1": "A French drama with character focus",
+          "blurb_sentence_2": "A quieter contender needing passion votes",
+          "imdb_url": "https://www.imdb.com/title/tt36491653",
+          "letterboxd_url": "https://letterboxd.com/film/it-was-just-an-accident/"
+        },
+        {
+          "id": "norway-sentimental",
+          "name": "Norway - Sentimental Value",
+          "film": "Sentimental Value",
+          "blurb_sentence_1": "A Norwegian family drama with depth",
+          "blurb_sentence_2": "A critics favorite with real win potential",
+          "imdb_url": "https://www.imdb.com/title/tt27714581",
+          "letterboxd_url": "https://letterboxd.com/film/sentimental-value-2025/"
+        },
+        {
+          "id": "spain-sirat",
+          "name": "Spain - Sirāt",
+          "film": "Sirāt",
+          "blurb_sentence_1": "A Spanish epic with scale",
+          "blurb_sentence_2": "A visually ambitious long shot",
+          "imdb_url": "https://www.imdb.com/title/tt32298285",
+          "letterboxd_url": "https://letterboxd.com/film/sirat-2025/"
+        },
+        {
+          "id": "tunisia-voice",
+          "name": "Tunisia - The Voice of Hind Rajab",
+          "film": "The Voice of Hind Rajab",
+          "blurb_sentence_1": "A Tunisian human rights drama",
+          "blurb_sentence_2": "A powerful outsider pick",
+          "imdb_url": "https://www.imdb.com/title/tt36943034",
+          "letterboxd_url": "https://letterboxd.com/film/the-voice-of-hind-rajab/"
+        }
+      ]
+    },
+    {
+      "id": "documentary-feature",
+      "name": "Documentary Feature Film",
+      "defaultPoints": 2,
+      "nominees": [
+        {
+          "id": "alabama-solution",
+          "name": "The Alabama Solution",
+          "producers": "Andrew Jarecki and Charlotte Kaufman",
+          "blurb_sentence_1": "A social issue documentary with urgency",
+          "blurb_sentence_2": "A topical contender with real momentum",
+          "imdb_url": "https://www.imdb.com/title/tt35307139",
+          "letterboxd_url": "https://letterboxd.com/film/the-alabama-solution/"
+        },
+        {
+          "id": "come-see-me",
+          "name": "Come See Me in the Good Light",
+          "producers": "Ryan White, Jessica Hargrave, Tig Notaro and Stef Willen",
+          "blurb_sentence_1": "A personal documentary with emotional pull",
+          "blurb_sentence_2": "A critics favorite that can win on passion",
+          "imdb_url": "https://www.imdb.com/title/tt34966013",
+          "letterboxd_url": "https://letterboxd.com/film/come-see-me-in-the-good-light/"
+        },
+        {
+          "id": "cutting-through-rocks",
+          "name": "Cutting through Rocks",
+          "producers": "Sara Khaki and Mohammadreza Eyni",
+          "blurb_sentence_1": "A perseverance story told with restraint",
+          "blurb_sentence_2": "A quieter long shot",
+          "imdb_url": "https://www.imdb.com/title/tt10196414",
+          "letterboxd_url": "https://letterboxd.com/film/cutting-through-rocks/"
+        },
+        {
+          "id": "mr-nobody",
+          "name": "Mr. Nobody against Putin",
+          "producers": "Nominees to be determined",
+          "blurb_sentence_1": "A politically charged documentary",
+          "blurb_sentence_2": "A high impact contender with strong odds",
+          "imdb_url": "https://www.imdb.com/title/tt34965515",
+          "letterboxd_url": "https://letterboxd.com/film/mr-nobody-against-putin/"
+        },
+        {
+          "id": "perfect-neighbor",
+          "name": "The Perfect Neighbor",
+          "producers": "Geeta Gandbhir, Alisa Payne, Nikon Kwantu and Sam Bisbee",
+          "blurb_sentence_1": "A chilling investigative true story",
+          "blurb_sentence_2": "A late season surge contender",
+          "imdb_url": "https://www.imdb.com/title/tt34962891",
+          "letterboxd_url": "https://letterboxd.com/film/the-perfect-neighbor-2024/"
+        }
+      ]
+    },
+    {
+      "id": "animated-short",
+      "name": "Animated Short Film",
+      "defaultPoints": 2,
+      "nominees": [
+        {
+          "id": "butterfly",
+          "name": "Butterfly",
+          "producers": "Florence Miailhe and Ron Dyens",
+          "blurb_sentence_1": "A short animation built around visual storytelling",
+          "blurb_sentence_2": "A competitive field makes it a long shot",
+          "imdb_url": "https://www.imdb.com/title/tt30970587",
+          "letterboxd_url": "https://letterboxd.com/film/butterfly-2025/"
+        },
+        {
+          "id": "forevergreen",
+          "name": "Forevergreen",
+          "producers": "Nathan Engelhardt and Jeremy Spears",
+          "blurb_sentence_1": "A poetic animated short with a warm message",
+          "blurb_sentence_2": "A quieter contender needing passion votes",
+          "imdb_url": "https://www.imdb.com/title/tt36454323",
+          "letterboxd_url": "https://letterboxd.com/film/forevergreen/"
+        },
+        {
+          "id": "girl-who-cried-pearls",
+          "name": "The Girl Who Cried Pearls",
+          "producers": "Chris Lavis and Maciek Szczerbowski",
+          "blurb_sentence_1": "A folkloric emotional animated short",
+          "blurb_sentence_2": "A critics leaning pick with niche odds",
+          "imdb_url": "https://www.imdb.com/title/tt36956820",
+          "letterboxd_url": "https://letterboxd.com/film/the-girl-who-cried-pearls/"
+        },
+        {
+          "id": "retirement-plan",
+          "name": "Retirement Plan",
+          "producers": "John Kelly and Andrew Freedman",
+          "blurb_sentence_1": "A funny character driven animated short",
+          "blurb_sentence_2": "A lighter tone dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt33019507",
+          "letterboxd_url": "https://letterboxd.com/film/retirement-plan-2025/"
+        },
+        {
+          "id": "three-sisters",
+          "name": "The Three Sisters",
+          "producers": "Konstantin Bronzit",
+          "blurb_sentence_1": "A lyrical animated short about relationships",
+          "blurb_sentence_2": "A subtle contender with limited buzz",
+          "imdb_url": "https://www.imdb.com/title/tt35676079",
+          "letterboxd_url": "https://letterboxd.com/film/the-three-sisters-2025/"
+        }
+      ]
+    },
+    {
+      "id": "documentary-short",
+      "name": "Documentary Short Film",
+      "defaultPoints": 2,
+      "nominees": [
+        {
+          "id": "all-empty-rooms",
+          "name": "All the Empty Rooms",
+          "producers": "Joshua Seftel and Conall Jones",
+          "blurb_sentence_1": "A minimalist documentary short",
+          "blurb_sentence_2": "A subtle long shot in a stacked category",
+          "imdb_url": "https://www.imdb.com/title/tt37798645",
+          "letterboxd_url": "https://letterboxd.com/film/all-the-empty-rooms/"
+        },
+        {
+          "id": "armed-camera",
+          "name": "Armed Only with a Camera: The Life and Death of Brent Renaud",
+          "producers": "Craig Renaud and Juan Arredondo",
+          "blurb_sentence_1": "A journalist focused real world account",
+          "blurb_sentence_2": "A timely contender with relevance",
+          "imdb_url": "https://www.imdb.com/title/tt35515733",
+          "letterboxd_url": "https://letterboxd.com/film/armed-only-with-a-camera-the-life-and-death-of-brent-renaud/"
+        },
+        {
+          "id": "children-no-more",
+          "name": "Children No More: \"Were and Are Gone\"",
+          "producers": "Hilla Medalia and Sheila Nevins",
+          "blurb_sentence_1": "A human rights focused short",
+          "blurb_sentence_2": "A powerful story with niche odds",
+          "imdb_url": "https://www.imdb.com/title/tt38691874/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/children-no-more-were-and-are-gone/"
+        },
+        {
+          "id": "devil-is-busy",
+          "name": "The Devil Is Busy",
+          "producers": "Christalyn Hampton and Geeta Gandbhir",
+          "blurb_sentence_1": "A character driven social short",
+          "blurb_sentence_2": "A critics leaning contender",
+          "imdb_url": "https://www.imdb.com/title/tt34205548/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/the-devil-is-busy/"
+        },
+        {
+          "id": "perfectly-strangeness",
+          "name": "Perfectly a Strangeness",
+          "producers": "Alison McAlpine",
+          "blurb_sentence_1": "A poetic observational short",
+          "blurb_sentence_2": "A long shot needing passion votes",
+          "imdb_url": "https://www.imdb.com/title/tt32205767/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/perfectly-a-strangeness/"
+        }
+      ]
+    },
+    {
+      "id": "live-action-short",
+      "name": "Live Action Short Film",
+      "defaultPoints": 2,
+      "nominees": [
+        {
+          "id": "butchers-stain",
+          "name": "Butcher's Stain",
+          "producers": "Meyer Levinson-Blount and Oron Caspi",
+          "blurb_sentence_1": "A gritty character driven short",
+          "blurb_sentence_2": "A dark tone long shot",
+          "imdb_url": "https://www.imdb.com/title/tt39232815/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/butchers-stain/"
+        },
+        {
+          "id": "friend-of-dorothy",
+          "name": "A Friend of Dorothy",
+          "producers": "Lee Knight and James Dean",
+          "blurb_sentence_1": "A heartfelt identity focused short",
+          "blurb_sentence_2": "A strong emotional contender",
+          "imdb_url": "https://www.imdb.com/title/tt35489516/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/a-friend-of-dorothy/"
+        },
+        {
+          "id": "jane-austen-period",
+          "name": "Jane Austen's Period Drama",
+          "producers": "Julia Aks and Steve Pinder",
+          "blurb_sentence_1": "A playful meta period short",
+          "blurb_sentence_2": "A lighter tone dark horse",
+          "imdb_url": "https://www.imdb.com/title/tt31171760/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/jane-austens-period-drama/"
+        },
+        {
+          "id": "singers",
+          "name": "The Singers",
+          "producers": "Sam A. Davis and Jack Piatt",
+          "blurb_sentence_1": "A relationship focused dramatic short",
+          "blurb_sentence_2": "A quiet contender",
+          "imdb_url": "https://www.imdb.com/title/tt33508491",
+          "letterboxd_url": "https://letterboxd.com/film/the-singers-2025/"
+        },
+        {
+          "id": "two-people-saliva",
+          "name": "Two People Exchanging Saliva",
+          "producers": "Alexandre Singh and Natalie Musteata",
+          "blurb_sentence_1": "An offbeat intimate short",
+          "blurb_sentence_2": "A risky outsider pick",
+          "imdb_url": "https://www.imdb.com/title/tt33365259/?ref_=fn_t_1",
+          "letterboxd_url": "https://letterboxd.com/film/two-people-exchanging-saliva/"
+        }
+      ]
+    }
+  ]
+}

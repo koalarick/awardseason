@@ -1,0 +1,82 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Configuration files with secrets
+config.js
+backend/.env
+frontend/.env
+
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+.next/
+out/
+
+# Logs
+*.log
+.eslintcache
+.prettiercache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Docker
+docker-compose.override.yml
+*.pid
+*.seed
+*.pid.lock
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Prisma
+# Note: migrations should typically be committed, but uncomment if you want to ignore them
+# backend/prisma/migrations/
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Legacy client-side files (old vanilla JS version)
+# Uncomment if you want to keep these files out of git
+# app.js
+# index.html
+# data.js
