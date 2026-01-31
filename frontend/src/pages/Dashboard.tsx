@@ -47,7 +47,7 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
 
   if (isLocked) {
     return (
-      <div className="w-full bg-gradient-to-r from-red-50 to-red-100/50 border-b-2 border-red-600 py-2 px-4 sm:px-6">
+      <div className="w-full bg-gradient-to-r from-yellow-50 to-yellow-100/60 border-b-2 border-yellow-600 py-2 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <p className="text-xs sm:text-sm text-center oscars-red-text font-bold flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +66,7 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
   }
 
   return (
-    <div className="w-full bg-gradient-to-r from-red-50 to-red-100/50 border-b-2 border-red-600 py-2 px-4 sm:px-6">
+    <div className="w-full bg-gradient-to-r from-yellow-50 to-yellow-100/60 border-b-2 border-yellow-600 py-2 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
           <div className="flex items-center gap-1.5">
@@ -90,7 +90,7 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
           <div className="flex items-center gap-1.5 sm:gap-2">
             {timeLeft.days > 0 && (
               <>
-                <div className="bg-white/80 rounded px-2 py-1 border border-red-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
+                <div className="bg-white/80 rounded px-2 py-1 border border-yellow-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
                   <p className="text-[9px] sm:text-[10px] oscars-red-text/60 mb-0.5 uppercase tracking-wider font-semibold text-center">
                     Days
                   </p>
@@ -101,7 +101,7 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
                 <span className="oscars-red-text/40 text-lg sm:text-xl font-bold">:</span>
               </>
             )}
-            <div className="bg-white/80 rounded px-2 py-1 border border-red-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
+            <div className="bg-white/80 rounded px-2 py-1 border border-yellow-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
               <p className="text-[9px] sm:text-[10px] oscars-red-text/60 mb-0.5 uppercase tracking-wider font-semibold text-center">
                 Hours
               </p>
@@ -110,7 +110,7 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
               </p>
             </div>
             <span className="oscars-red-text/40 text-lg sm:text-xl font-bold">:</span>
-            <div className="bg-white/80 rounded px-2 py-1 border border-red-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
+            <div className="bg-white/80 rounded px-2 py-1 border border-yellow-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
               <p className="text-[9px] sm:text-[10px] oscars-red-text/60 mb-0.5 uppercase tracking-wider font-semibold text-center">
                 Minutes
               </p>
@@ -119,7 +119,7 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
               </p>
             </div>
             <span className="oscars-red-text/40 text-lg sm:text-xl font-bold">:</span>
-            <div className="bg-white/80 rounded px-2 py-1 border border-red-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
+            <div className="bg-white/80 rounded px-2 py-1 border border-yellow-200 shadow-sm min-w-[50px] sm:min-w-[60px]">
               <p className="text-[9px] sm:text-[10px] oscars-red-text/60 mb-0.5 uppercase tracking-wider font-semibold text-center">
                 Seconds
               </p>
@@ -558,10 +558,10 @@ export default function Dashboard() {
           {/* Logo - No back button on home page */}
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600 rounded"
+            className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
             aria-label="Go to home"
           >
-            <img src="/images/logo.png" alt="Award Season" className="h-16 w-auto" />
+            <img src="/images/awardseason_logo_assets/awardseason_topnav_256.png" alt="Award Season" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
             <span className="hidden sm:inline oscars-font text-lg sm:text-xl font-bold">
               AWARD SEASON
             </span>
@@ -577,7 +577,7 @@ export default function Dashboard() {
             </span>
             <button
               onClick={logout}
-              className="flex items-center justify-center px-4 py-2 min-h-[44px] text-white border-2 border-white/30 hover:border-white/50 hover:bg-white/10 active:bg-white/20 rounded-lg transition-all text-sm font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600"
+              className="flex items-center justify-center px-4 py-2 min-h-[44px] text-white border-2 border-white/30 hover:border-white/50 hover:bg-white/10 active:bg-white/20 rounded-lg transition-all text-sm font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900"
               aria-label="Logout"
             >
               Logout

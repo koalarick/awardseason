@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,89 +16,97 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
   * {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Source Sans 3', sans-serif;
   }
 
   h1,
   h2,
   h3,
   .oscars-font {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.07em;
   }
 }
 
 @layer utilities {
   .oscars-red {
-    background-color: #8b1538;
+    background-color: #0f1013;
+    background-image:
+      radial-gradient(circle at 35% -35%, rgba(200, 146, 47, 0.18), transparent 60%),
+      radial-gradient(circle at 70% -45%, rgba(255, 246, 220, 0.12), transparent 65%),
+      linear-gradient(180deg, #15171b 0%, #0f1013 60%, #0b0c0f 100%);
   }
 
   .oscars-gold {
-    color: #d4af37;
+    color: #c8922f;
   }
 
   .oscars-gold-bg {
-    background-color: #d4af37;
+    background-color: #a77622;
   }
 
   .oscars-dark {
-    color: #1a1a1a;
+    color: #1b1b1b;
   }
 
   .oscars-red-text {
-    color: #8b1538;
+    color: #9a6f32;
   }
 
   .cta-neutral {
-    background-color: #0f172a;
+    background-color: #14151a;
     color: #ffffff;
   }
 
   .cta-neutral:hover {
-    background-color: #111827;
+    background-color: #1b1c22;
   }
 
   .cta-neutral-soft {
-    background-color: #f8fafc;
-    color: #0f172a;
-    border: 1px solid rgba(15, 23, 42, 0.2);
+    background-color: #f7f3ec;
+    color: #1b1b1b;
+    border: 1px solid rgba(27, 27, 27, 0.2);
   }
 
   .cta-neutral-soft:hover {
-    background-color: #f1f5f9;
+    background-color: #f1ece2;
   }
 
   .cta-neutral-invert {
-    background-color: #334155;
+    background-color: #2a2c31;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .cta-neutral-invert:hover {
-    background-color: #3f4c62;
+    background-color: #34363c;
   }
 
   .cta-header-secondary {
-    background-color: #f2e8da;
-    color: #334155;
-    border: 1px solid rgba(51, 65, 85, 0.25);
+    background-color: #f4efe6;
+    color: #2a2b2f;
+    border: 1px solid rgba(42, 43, 47, 0.18);
   }
 
   .cta-header-secondary:hover {
-    background-color: #ecdfcf;
+    background-color: #ede5d8;
   }
 
   .cta-selected {
-    background-color: #4b6a58;
-    color: #eef7f1;
+    background-color: #2a2c31;
+    color: #f3efe7;
     opacity: 0.85;
     cursor: default;
   }
 
   .cta-selected:hover {
-    background-color: #4b6a58;
+    background-color: #2a2c31;
   }
 }
 
@@ -106,6 +114,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: #1b1b1b;
+  background-color: #f6f3ec;
+  background-image:
+    radial-gradient(circle at 18% 18%, rgba(200, 169, 106, 0.18), transparent 48%),
+    radial-gradient(circle at 85% 8%, rgba(15, 16, 19, 0.08), transparent 55%);
 }
 
 #root {
