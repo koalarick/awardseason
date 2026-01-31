@@ -44,9 +44,9 @@ export default function ResetPassword() {
       <header className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-start gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">
-            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
-              ACADEMY AWARDS POOL
+            <img src="/images/logo.png" alt="Award Season" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-lg sm:text-xl font-bold">
+              AWARD SEASON
             </span>
           </div>
         </div>

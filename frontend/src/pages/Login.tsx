@@ -27,9 +27,9 @@ export default function Login() {
         <div className="max-w-7xl mx-auto flex items-center justify-start gap-3">
           {/* Logo - Left aligned */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
-              ACADEMY AWARDS POOL
+            <img src="/images/logo.png" alt="Award Season" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-lg sm:text-xl font-bold">
+              AWARD SEASON
             </span>
           </div>
         </div>

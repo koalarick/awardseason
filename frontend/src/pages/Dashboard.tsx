@@ -561,9 +561,9 @@ export default function Dashboard() {
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600 rounded"
             aria-label="Go to home"
           >
-            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
-              ACADEMY AWARDS POOL
+            <img src="/images/logo.png" alt="Award Season" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-lg sm:text-xl font-bold">
+              AWARD SEASON
             </span>
           </button>
 

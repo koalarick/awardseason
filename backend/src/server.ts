@@ -18,14 +18,9 @@ const CORS_ORIGINS = CORS_ORIGIN.split(',').map((origin) => origin.trim()).filte
 app.use(
   cors({
     origin: (origin, callback) => {
-      // In production, reject requests without origin
       if (!origin) {
-        if (process.env.NODE_ENV === 'production') {
-          console.log('CORS: Rejecting request with no origin in production');
-          return callback(new Error('CORS: Origin header required'));
-        }
-        // Only allow in development for testing tools
-        console.log('CORS: Allowing request with no origin (development mode)');
+        // Allow non-browser or same-origin server requests (no Origin header)
+        console.log('CORS: Allowing request with no origin header');
         return callback(null, true);
       }
 
