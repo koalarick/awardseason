@@ -12,6 +12,7 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const CORS_ORIGINS = CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
 
 // Middleware
 app.use(
@@ -37,8 +38,8 @@ app.use(
         origin.startsWith('http://10.') ||
         /^http:\/\/172\.(1[6-9]|2[0-9]|3[01])\./.test(origin);
 
-      // Allow if it matches CORS_ORIGIN, localhost, or local network
-      if (origin === CORS_ORIGIN || isLocalhost || isLocalNetwork) {
+      // Allow if it matches configured origins, localhost, or local network
+      if (CORS_ORIGINS.includes(origin) || isLocalhost || isLocalNetwork) {
         console.log(`CORS: Allowing origin: ${origin}`);
         callback(null, true);
       } else {
