@@ -37,6 +37,18 @@ const CORS_PROXIES = [
   'https://thingproxy.freeboard.io/fetch/',
 ];
 
+const FETCH_TIMEOUT_MS = 10_000;
+
+async function fetchWithTimeout(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export class KalshiService {
   async fetchKalshiMarkets(eventTicker: string): Promise<any> {
     const seriesTicker = eventTicker.split('-')[0];
@@ -49,10 +61,47 @@ export class KalshiService {
 
     let lastError: any = null;
     for (const apiUrl of apiUrls) {
+      try {
+        const response = await fetchWithTimeout(apiUrl);
+
+        if (response.ok) {
+          const data = (await response.json()) as any;
+
+          if (data.error) {
+            if (data.error.code === 'not_found' || response.status === 404) {
+              console.log(`Kalshi API returned not_found for ${eventTicker} (URL: ${apiUrl})`);
+              return null;
+            }
+            console.log(`Kalshi API error for ${eventTicker}: ${JSON.stringify(data.error)}`);
+            lastError = data.error;
+          } else if (data.event && data.event.markets && data.event.markets.length > 0) {
+            console.log(
+              `Found ${data.event.markets.length} markets for ${eventTicker} via events endpoint`,
+            );
+            return { markets: data.event.markets };
+          } else if (data.markets && data.markets.length > 0) {
+            console.log(
+              `Found ${data.markets.length} markets for ${eventTicker} via markets endpoint`,
+            );
+            return data;
+          }
+        } else if (response.status === 404) {
+          console.log(`404 response for ${eventTicker} (URL: ${apiUrl})`);
+          break;
+        } else {
+          console.log(
+            `Non-200 response (${response.status}) for ${eventTicker} (URL: ${apiUrl})`,
+          );
+        }
+      } catch (error) {
+        console.log(`Error fetching ${eventTicker} from ${apiUrl}:`, error);
+        lastError = error;
+      }
+
       for (const proxyBase of CORS_PROXIES) {
         try {
           const proxyUrl = `${proxyBase}${encodeURIComponent(apiUrl)}`;
-          const response = await fetch(proxyUrl);
+          const response = await fetchWithTimeout(proxyUrl);
 
           if (response.ok) {
             const data = (await response.json()) as any;
