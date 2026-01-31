@@ -505,7 +505,9 @@ export default function Dashboard() {
               <div key={pool.id} className="border border-gray-200 rounded-lg p-3 bg-white">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm oscars-dark truncate">{pool.name}</p>
+                    <p className="font-semibold text-sm oscars-dark whitespace-normal break-words">
+                      {pool.name}
+                    </p>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">
                       <span>ID: {pool.id}</span>
                       <span>•</span>
@@ -616,8 +618,8 @@ export default function Dashboard() {
                           className="rounded-lg border-2 bg-white border-gray-200 hover:border-gray-300 cursor-pointer transition-colors overflow-hidden"
                         >
                           {/* Header Section */}
-                          <div className="px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b border-gray-200">
-                            <h3 className="oscars-font text-sm sm:text-base font-bold oscars-dark truncate flex-1">
+                          <div className="px-3 sm:px-4 py-2 flex items-start justify-between gap-2 border-b border-gray-200">
+                            <h3 className="oscars-font text-sm sm:text-base font-bold oscars-dark whitespace-normal break-words flex-1 min-w-0">
                               {pool.name}
                             </h3>
                             <div className="flex items-center gap-1.5 flex-shrink-0">

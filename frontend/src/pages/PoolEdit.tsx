@@ -925,7 +925,9 @@ export default function PoolEdit() {
           {/* Submission Name Header */}
           <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
             {isViewingOtherSubmission ? (
-              <h2 className="oscars-font text-base sm:text-lg font-bold">{submissionName}</h2>
+              <h2 className="oscars-font text-base sm:text-lg font-bold whitespace-normal break-words">
+                {submissionName}
+              </h2>
             ) : (
               <SubmissionNameEditor
                 poolId={poolId!}
@@ -1182,8 +1184,8 @@ export default function PoolEdit() {
             className="sticky bg-white border-b border-gray-200 z-30 py-3"
             style={{ top: `${headerHeight}px` }}
           >
-            <div className="flex items-center justify-between px-4 md:px-6 gap-3">
-              <span className="oscars-font font-bold oscars-dark text-sm md:text-base truncate flex-shrink min-w-0">
+            <div className="flex items-start justify-between px-4 md:px-6 gap-3">
+              <span className="oscars-font font-bold oscars-dark text-sm md:text-base whitespace-normal break-words flex-1 min-w-0">
                 {submissionName}
               </span>
               <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
@@ -3760,14 +3762,16 @@ function SubmissionNameEditor({
   }
 
   return (
-    <div className="flex items-center gap-3 w-full">
+    <div className="flex items-start gap-3 w-full">
       <button
         type="button"
         onClick={() => setIsEditing(true)}
         className="flex-1 text-left"
         aria-label="Edit ballot name"
       >
-        <h2 className="oscars-font text-lg sm:text-xl font-bold text-white">{displayName}</h2>
+        <h2 className="oscars-font text-lg sm:text-xl font-bold text-white whitespace-normal break-words">
+          {displayName}
+        </h2>
       </button>
       <button
         type="button"
