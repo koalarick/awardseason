@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { PrismaClient, User } from '@prisma/client';
 import { JwtPayload } from '../types';
@@ -12,6 +13,8 @@ if (!JWT_SECRET_ENV) {
 // TypeScript assertion: we've checked it's not undefined above
 const JWT_SECRET = JWT_SECRET_ENV as string;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 60);
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 export class AuthService {
   async hashPassword(password: string): Promise<string> {
@@ -224,5 +227,62 @@ export class AuthService {
 
     const token = this.generateToken(user);
     return { user, token };
+  }
+
+  private hashResetToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !user.passwordHash) {
+      return;
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000);
+
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    const resetUrl = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+    await emailService.sendPasswordResetEmail(user.email, resetUrl);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const tokenHash = this.hashResetToken(token);
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= new Date()) {
+      throw new Error('Invalid or expired reset token');
+    }
+
+    const passwordHash = await this.hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { passwordHash },
+    });
+
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: resetToken.userId, usedAt: null },
+      data: { usedAt: new Date() },
+    });
   }
 }

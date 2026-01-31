@@ -86,4 +86,49 @@ export class AuthController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email is required' });
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        res.status(400).json({ error: 'Invalid email format' });
+        return;
+      }
+
+      await authService.requestPasswordReset(email);
+
+      res.json({ message: 'If an account exists, a reset link has been sent.' });
+    } catch (error: any) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ error: 'Failed to send reset email' });
+    }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        res.status(400).json({ error: 'Token and password are required' });
+        return;
+      }
+
+      if (password.length < 6) {
+        res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        return;
+      }
+
+      await authService.resetPassword(token, password);
+      res.json({ message: 'Password updated successfully' });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || 'Password reset failed' });
+    }
+  }
 }

@@ -82,6 +82,18 @@ class EmailService {
 
     await this.sendEmail({ to, subject, text, html });
   }
+
+  async sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
+    const subject = 'Reset your Award Season Fun password';
+    const text = `We received a request to reset your password. Use this link to set a new one: ${resetUrl}\n\nIf you did not request a reset, you can ignore this email.`;
+    const html = `
+      <p>We received a request to reset your password.</p>
+      <p><a href="${resetUrl}">Click here to set a new password</a></p>
+      <p>If you did not request a reset, you can ignore this email.</p>
+    `;
+
+    await this.sendEmail({ to, subject, text, html });
+  }
 }
 
 export const emailService = new EmailService();
