@@ -1,67 +1,71 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '../context/AuthContext'
-import api from '../services/api'
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 type UserSummary = {
-  id: string
-  email: string
-  role: string
-  oauthProvider?: string | null
-  createdAt: string
-  updatedAt: string
+  id: string;
+  email: string;
+  role: string;
+  oauthProvider?: string | null;
+  createdAt: string;
+  updatedAt: string;
   _count: {
-    ownedPools: number
-    poolMemberships: number
-    predictions: number
-  }
-}
+    ownedPools: number;
+    poolMemberships: number;
+    predictions: number;
+  };
+};
 
 const formatDate = (value?: string) => {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  return date.toLocaleDateString()
-}
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString();
+};
 
 export default function Users() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const [search, setSearch] = useState('')
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (user && user.role !== 'SUPERUSER') {
-      navigate('/')
+      navigate('/');
     }
-  }, [user, navigate])
+  }, [user, navigate]);
 
-  const { data: users, isLoading, isError } = useQuery({
+  const {
+    data: users,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/users')
-      return response.data as UserSummary[]
+      const response = await api.get('/users');
+      return response.data as UserSummary[];
     },
     enabled: user?.role === 'SUPERUSER',
-  })
+  });
 
   const filteredUsers = useMemo(() => {
-    if (!users) return []
-    const term = search.trim().toLowerCase()
-    if (!term) return users
+    if (!users) return [];
+    const term = search.trim().toLowerCase();
+    if (!term) return users;
     return users.filter((entry) => {
-      const email = entry.email?.toLowerCase() || ''
-      const id = entry.id?.toLowerCase() || ''
-      return email.includes(term) || id.includes(term)
-    })
-  }, [users, search])
+      const email = entry.email?.toLowerCase() || '';
+      const id = entry.id?.toLowerCase() || '';
+      return email.includes(term) || id.includes(term);
+    });
+  }, [users, search]);
 
-  const totalUsers = users?.length || 0
-  const superuserCount = users?.filter((entry) => entry.role === 'SUPERUSER').length || 0
-  const oauthUsers = users?.filter((entry) => entry.oauthProvider).length || 0
+  const totalUsers = users?.length || 0;
+  const superuserCount = users?.filter((entry) => entry.role === 'SUPERUSER').length || 0;
+  const oauthUsers = users?.filter((entry) => entry.oauthProvider).length || 0;
 
   if (user?.role !== 'SUPERUSER') {
-    return null
+    return null;
   }
 
   return (
@@ -73,8 +77,19 @@ export default function Users() {
             className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600"
             aria-label="Go back"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
@@ -83,12 +98,10 @@ export default function Users() {
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600 rounded"
             aria-label="Go to home"
           >
-            <img
-              src="/images/logo.png"
-              alt="Academy Awards Pool"
-              className="h-16 w-auto"
-            />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">ACADEMY AWARDS POOL</span>
+            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
+              ACADEMY AWARDS POOL
+            </span>
           </button>
 
           <div className="flex-1" />
@@ -127,7 +140,10 @@ export default function Users() {
 
             <div className="flex flex-col sm:flex-row sm:items-end gap-3">
               <div className="flex-1">
-                <label htmlFor="user-search" className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                <label
+                  htmlFor="user-search"
+                  className="text-xs font-semibold oscars-dark uppercase tracking-wide"
+                >
                   Search by email or ID
                 </label>
                 <input
@@ -141,13 +157,9 @@ export default function Users() {
               </div>
             </div>
 
-            {isLoading && (
-              <p className="text-sm text-gray-600">Loading users...</p>
-            )}
+            {isLoading && <p className="text-sm text-gray-600">Loading users...</p>}
 
-            {isError && (
-              <p className="text-sm text-red-600">Failed to load users.</p>
-            )}
+            {isError && <p className="text-sm text-red-600">Failed to load users.</p>}
 
             {!isLoading && filteredUsers.length === 0 && (
               <p className="text-sm text-gray-600">No users match this search.</p>
@@ -215,5 +227,5 @@ export default function Users() {
         </div>
       </main>
     </div>
-  )
+  );
 }

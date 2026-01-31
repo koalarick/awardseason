@@ -1,126 +1,132 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '../context/AuthContext'
-import api from '../services/api'
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function PoolInvite() {
-  const { poolId } = useParams<{ poolId: string }>()
-  const navigate = useNavigate()
-  const { user, login, register } = useAuth()
-  const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [poolPassword, setPoolPassword] = useState('')
-  const [error, setError] = useState('')
-  const [isJoining, setIsJoining] = useState(false)
+  const { poolId } = useParams<{ poolId: string }>();
+  const navigate = useNavigate();
+  const { user, login, register } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [poolPassword, setPoolPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
 
   // Fetch pool info (public endpoint)
-  const { data: pool, isLoading: poolLoading, error: poolError } = useQuery({
+  const {
+    data: pool,
+    isLoading: poolLoading,
+    error: poolError,
+  } = useQuery({
     queryKey: ['pool-info', poolId],
     queryFn: async () => {
-      const response = await api.get(`/pools/${poolId}/info`)
-      return response.data
+      const response = await api.get(`/pools/${poolId}/info`);
+      return response.data;
     },
     enabled: !!poolId,
-  })
+  });
 
   // Check if user is already authenticated and join automatically
   // Only auto-join if user just logged in/registered (not if they were already logged in)
-  const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false)
-  
+  const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
+
   useEffect(() => {
     // If user is authenticated, pool is loaded, and we haven't attempted join yet
     if (user && pool && !isJoining && !hasAttemptedJoin && poolId) {
       // For private pools, wait for password to be entered
       if (!pool.isPublic && !poolPassword) {
-        return // Don't auto-join yet, wait for password
+        return; // Don't auto-join yet, wait for password
       }
-      handleAutoJoin()
+      handleAutoJoin();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, pool, poolId, poolPassword])
+  }, [user, pool, poolId, poolPassword]);
 
   const handleAutoJoin = async () => {
-    if (!poolId || !user || hasAttemptedJoin) return
-    
-    setHasAttemptedJoin(true)
-    setIsJoining(true)
+    if (!poolId || !user || hasAttemptedJoin) return;
+
+    setHasAttemptedJoin(true);
+    setIsJoining(true);
     try {
-      await api.post(`/pools/${poolId}/join`, { 
-        password: !pool?.isPublic ? poolPassword : undefined 
-      })
+      await api.post(`/pools/${poolId}/join`, {
+        password: !pool?.isPublic ? poolPassword : undefined,
+      });
       // Successfully joined, redirect to pool page
-      navigate(`/pool/${poolId}`)
+      navigate(`/pool/${poolId}`);
     } catch (err: any) {
       // If already a member, just redirect
       if (err.response?.data?.error?.includes('Already a member')) {
-        navigate(`/pool/${poolId}`)
-      } else if (err.response?.data?.error?.includes('Password required') || 
-                 err.response?.data?.error?.includes('Invalid password')) {
+        navigate(`/pool/${poolId}`);
+      } else if (
+        err.response?.data?.error?.includes('Password required') ||
+        err.response?.data?.error?.includes('Invalid password')
+      ) {
         // Password needed or wrong, stay on page
-        setError(err.response?.data?.error || 'Failed to join pool')
-        setIsJoining(false)
-        setHasAttemptedJoin(false) // Allow retry
+        setError(err.response?.data?.error || 'Failed to join pool');
+        setIsJoining(false);
+        setHasAttemptedJoin(false); // Allow retry
       } else {
-        setError(err.response?.data?.error || 'Failed to join pool')
-        setIsJoining(false)
-        setHasAttemptedJoin(false) // Allow retry
+        setError(err.response?.data?.error || 'Failed to join pool');
+        setIsJoining(false);
+        setHasAttemptedJoin(false); // Allow retry
       }
     }
-  }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
+    e.preventDefault();
+    setError('');
+
     if (!poolPassword && !pool?.isPublic) {
-      setError('Password is required for this pool')
-      return
+      setError('Password is required for this pool');
+      return;
     }
 
     try {
-      await login(email, password)
+      await login(email, password);
       // Auto-join will happen in useEffect after user state updates
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed')
+      setError(err.response?.data?.error || 'Login failed');
     }
-  }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
+      setError('Passwords do not match');
+      return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
-      return
+      setError('Password must be at least 6 characters long');
+      return;
     }
 
     if (!poolPassword && !pool?.isPublic) {
-      setError('Pool password is required')
-      return
+      setError('Pool password is required');
+      return;
     }
 
     try {
-      await register(email, password)
+      await register(email, password);
       // Auto-join will happen in useEffect after user state updates
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed')
+      setError(err.response?.data?.error || 'Registration failed');
     }
-  }
+  };
 
   if (poolLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div>Loading pool information...</div>
       </div>
-    )
+    );
   }
 
   if (poolError || !pool) {
@@ -133,7 +139,7 @@ export default function PoolInvite() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -146,23 +152,32 @@ export default function PoolInvite() {
             className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600"
             aria-label="Go back"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
           {/* Logo - Right of back button */}
-          <Link 
+          <Link
             to="/login"
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600 rounded"
             aria-label="Go to home"
           >
-            <img 
-              src="/images/logo.png" 
-              alt="Academy Awards Pool" 
-              className="h-16 w-auto"
-            />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">ACADEMY AWARDS POOL</span>
+            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
+              ACADEMY AWARDS POOL
+            </span>
           </Link>
 
           {/* Spacer */}
@@ -189,14 +204,17 @@ export default function PoolInvite() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Type</p>
-                  <p className="text-base font-semibold oscars-dark">{pool.isPublic ? 'Public' : 'Private'}</p>
+                  <p className="text-base font-semibold oscars-dark">
+                    {pool.isPublic ? 'Public' : 'Private'}
+                  </p>
                 </div>
               </div>
               {pool.isPaidPool && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="text-sm font-semibold text-yellow-900">💰 Paid Pool</p>
                   <p className="text-xs text-yellow-800 mt-1">
-                    Entry fee: ${pool.entryAmount?.toFixed(2)} • Payment handled outside this platform
+                    Entry fee: ${pool.entryAmount?.toFixed(2)} • Payment handled outside this
+                    platform
                   </p>
                 </div>
               )}
@@ -210,8 +228,8 @@ export default function PoolInvite() {
             <div className="flex gap-4">
               <button
                 onClick={() => {
-                  setIsLogin(true)
-                  setError('')
+                  setIsLogin(true);
+                  setError('');
                 }}
                 className={`px-4 py-2 rounded transition-colors ${
                   isLogin ? 'bg-yellow-600 text-white' : 'text-gray-300 hover:text-white'
@@ -221,8 +239,8 @@ export default function PoolInvite() {
               </button>
               <button
                 onClick={() => {
-                  setIsLogin(false)
-                  setError('')
+                  setIsLogin(false);
+                  setError('');
                 }}
                 className={`px-4 py-2 rounded transition-colors ${
                   !isLogin ? 'bg-yellow-600 text-white' : 'text-gray-300 hover:text-white'
@@ -248,7 +266,10 @@ export default function PoolInvite() {
             {/* Pool Password (if private) */}
             {!pool.isPublic && (
               <div className="mb-4">
-                <label htmlFor="poolPassword" className="block text-sm font-medium oscars-dark mb-2">
+                <label
+                  htmlFor="poolPassword"
+                  className="block text-sm font-medium oscars-dark mb-2"
+                >
                   Pool Password *
                 </label>
                 <input
@@ -321,7 +342,10 @@ export default function PoolInvite() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="reg-password" className="block text-sm font-medium oscars-dark mb-2">
+                  <label
+                    htmlFor="reg-password"
+                    className="block text-sm font-medium oscars-dark mb-2"
+                  >
                     Password
                   </label>
                   <input
@@ -336,7 +360,10 @@ export default function PoolInvite() {
                   <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
                 </div>
                 <div>
-                  <label htmlFor="confirm-password" className="block text-sm font-medium oscars-dark mb-2">
+                  <label
+                    htmlFor="confirm-password"
+                    className="block text-sm font-medium oscars-dark mb-2"
+                  >
                     Confirm Password
                   </label>
                   <input
@@ -362,5 +389,5 @@ export default function PoolInvite() {
         </div>
       </main>
     </div>
-  )
+  );
 }

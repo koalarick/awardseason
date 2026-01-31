@@ -1,101 +1,105 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '../context/AuthContext'
-import api from '../services/api'
-import type { Category, Nominee } from '../types/pool'
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import type { Category, Nominee } from '../types/pool';
 
 type MetadataFormState = {
-  blurb_sentence_1: string
-  blurb_sentence_2: string
-  imdb_url: string
-  letterboxd_url: string
-}
+  blurb_sentence_1: string;
+  blurb_sentence_2: string;
+  imdb_url: string;
+  letterboxd_url: string;
+};
 
 const emptyForm: MetadataFormState = {
   blurb_sentence_1: '',
   blurb_sentence_2: '',
   imdb_url: '',
   letterboxd_url: '',
-}
+};
 
-const normalizeValue = (value?: string | null) => (value ?? '').trim()
+const normalizeValue = (value?: string | null) => (value ?? '').trim();
 
 const isMetadataComplete = (nominee: Nominee) =>
-  Boolean(nominee.blurb_sentence_1 && nominee.blurb_sentence_2 && nominee.imdb_url)
+  Boolean(nominee.blurb_sentence_1 && nominee.blurb_sentence_2 && nominee.imdb_url);
 
 const formatNomineeLabel = (nominee: Nominee) => {
   if (nominee.film && nominee.film !== nominee.name) {
-    return `${nominee.name} - ${nominee.film}`
+    return `${nominee.name} - ${nominee.film}`;
   }
-  return nominee.name
-}
+  return nominee.name;
+};
 
 export default function NomineeMetadata() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [yearInput, setYearInput] = useState(new Date().getFullYear().toString())
-  const [year, setYear] = useState(new Date().getFullYear().toString())
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
-  const [selectedNomineeId, setSelectedNomineeId] = useState<string | null>(null)
-  const [formState, setFormState] = useState<MetadataFormState>(emptyForm)
-  const [formError, setFormError] = useState<string | null>(null)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [yearInput, setYearInput] = useState(new Date().getFullYear().toString());
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedNomineeId, setSelectedNomineeId] = useState<string | null>(null);
+  const [formState, setFormState] = useState<MetadataFormState>(emptyForm);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && user.role !== 'SUPERUSER') {
-      navigate('/')
+      navigate('/');
     }
-  }, [user, navigate])
+  }, [user, navigate]);
 
-  const { data: categories, isLoading, isError } = useQuery({
+  const {
+    data: categories,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['nominees', year],
     queryFn: async () => {
-      const response = await api.get(`/nominees/${year}`)
-      return response.data as Category[]
+      const response = await api.get(`/nominees/${year}`);
+      return response.data as Category[];
     },
     enabled: !!year,
-  })
+  });
 
   useEffect(() => {
     if (!categories || categories.length === 0) {
-      setSelectedCategoryId(null)
-      return
+      setSelectedCategoryId(null);
+      return;
     }
-    if (!selectedCategoryId || !categories.some(category => category.id === selectedCategoryId)) {
-      setSelectedCategoryId(categories[0].id)
+    if (!selectedCategoryId || !categories.some((category) => category.id === selectedCategoryId)) {
+      setSelectedCategoryId(categories[0].id);
     }
-  }, [categories, selectedCategoryId])
+  }, [categories, selectedCategoryId]);
 
   const selectedCategory = useMemo(() => {
-    if (!categories || !selectedCategoryId) return null
-    return categories.find(category => category.id === selectedCategoryId) || null
-  }, [categories, selectedCategoryId])
+    if (!categories || !selectedCategoryId) return null;
+    return categories.find((category) => category.id === selectedCategoryId) || null;
+  }, [categories, selectedCategoryId]);
 
-  const nominees = selectedCategory?.nominees ?? []
+  const nominees = selectedCategory?.nominees ?? [];
 
   useEffect(() => {
     if (!nominees.length) {
-      setSelectedNomineeId(null)
-      return
+      setSelectedNomineeId(null);
+      return;
     }
-    if (!selectedNomineeId || !nominees.some(nominee => nominee.id === selectedNomineeId)) {
-      setSelectedNomineeId(nominees[0].id)
+    if (!selectedNomineeId || !nominees.some((nominee) => nominee.id === selectedNomineeId)) {
+      setSelectedNomineeId(nominees[0].id);
     }
-  }, [nominees, selectedNomineeId])
+  }, [nominees, selectedNomineeId]);
 
   const selectedNominee = useMemo(() => {
-    if (!selectedNomineeId) return null
-    return nominees.find(nominee => nominee.id === selectedNomineeId) || null
-  }, [nominees, selectedNomineeId])
+    if (!selectedNomineeId) return null;
+    return nominees.find((nominee) => nominee.id === selectedNomineeId) || null;
+  }, [nominees, selectedNomineeId]);
 
   useEffect(() => {
     if (!selectedNominee) {
-      setFormState(emptyForm)
-      setFormError(null)
-      setSaveMessage(null)
-      return
+      setFormState(emptyForm);
+      setFormError(null);
+      setSaveMessage(null);
+      return;
     }
 
     setFormState({
@@ -103,77 +107,82 @@ export default function NomineeMetadata() {
       blurb_sentence_2: normalizeValue(selectedNominee.blurb_sentence_2),
       imdb_url: normalizeValue(selectedNominee.imdb_url),
       letterboxd_url: normalizeValue(selectedNominee.letterboxd_url),
-    })
-    setFormError(null)
-    setSaveMessage(null)
-  }, [selectedNominee])
+    });
+    setFormError(null);
+    setSaveMessage(null);
+  }, [selectedNominee]);
 
   const isDirty = useMemo(() => {
-    if (!selectedNominee) return false
+    if (!selectedNominee) return false;
     return (
-      normalizeValue(formState.blurb_sentence_1) !== normalizeValue(selectedNominee.blurb_sentence_1) ||
-      normalizeValue(formState.blurb_sentence_2) !== normalizeValue(selectedNominee.blurb_sentence_2) ||
+      normalizeValue(formState.blurb_sentence_1) !==
+        normalizeValue(selectedNominee.blurb_sentence_1) ||
+      normalizeValue(formState.blurb_sentence_2) !==
+        normalizeValue(selectedNominee.blurb_sentence_2) ||
       normalizeValue(formState.imdb_url) !== normalizeValue(selectedNominee.imdb_url) ||
       normalizeValue(formState.letterboxd_url) !== normalizeValue(selectedNominee.letterboxd_url)
-    )
-  }, [formState, selectedNominee])
+    );
+  }, [formState, selectedNominee]);
 
   const updateNominee = useMutation({
     mutationFn: async (payload: MetadataFormState & { nomineeId: string; categoryId: string }) => {
-      const response = await api.patch(`/nominees/${year}/${payload.categoryId}/${payload.nomineeId}`, {
-        blurb_sentence_1: payload.blurb_sentence_1,
-        blurb_sentence_2: payload.blurb_sentence_2,
-        imdb_url: payload.imdb_url,
-        letterboxd_url: payload.letterboxd_url,
-      })
-      return response.data
+      const response = await api.patch(
+        `/nominees/${year}/${payload.categoryId}/${payload.nomineeId}`,
+        {
+          blurb_sentence_1: payload.blurb_sentence_1,
+          blurb_sentence_2: payload.blurb_sentence_2,
+          imdb_url: payload.imdb_url,
+          letterboxd_url: payload.letterboxd_url,
+        },
+      );
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nominees', year] })
-      setSaveMessage('Saved nominee metadata.')
-      setFormError(null)
+      queryClient.invalidateQueries({ queryKey: ['nominees', year] });
+      setSaveMessage('Saved nominee metadata.');
+      setFormError(null);
     },
     onError: (error: any) => {
-      setFormError(error.response?.data?.error || 'Failed to save nominee metadata.')
+      setFormError(error.response?.data?.error || 'Failed to save nominee metadata.');
     },
-  })
+  });
 
   const handleSave = () => {
-    if (!selectedNominee || !selectedCategoryId) return
-    setFormError(null)
-    setSaveMessage(null)
+    if (!selectedNominee || !selectedCategoryId) return;
+    setFormError(null);
+    setSaveMessage(null);
 
-    const missingFields = []
-    if (!formState.blurb_sentence_1.trim()) missingFields.push('Blurb sentence 1')
-    if (!formState.blurb_sentence_2.trim()) missingFields.push('Blurb sentence 2')
-    if (!formState.imdb_url.trim()) missingFields.push('IMDb URL')
+    const missingFields = [];
+    if (!formState.blurb_sentence_1.trim()) missingFields.push('Blurb sentence 1');
+    if (!formState.blurb_sentence_2.trim()) missingFields.push('Blurb sentence 2');
+    if (!formState.imdb_url.trim()) missingFields.push('IMDb URL');
 
     if (missingFields.length > 0) {
-      setFormError(`Missing required fields: ${missingFields.join(', ')}`)
-      return
+      setFormError(`Missing required fields: ${missingFields.join(', ')}`);
+      return;
     }
 
     updateNominee.mutate({
       ...formState,
       nomineeId: selectedNominee.id,
       categoryId: selectedCategoryId,
-    })
-  }
+    });
+  };
 
   const handleReset = () => {
-    if (!selectedNominee) return
+    if (!selectedNominee) return;
     setFormState({
       blurb_sentence_1: normalizeValue(selectedNominee.blurb_sentence_1),
       blurb_sentence_2: normalizeValue(selectedNominee.blurb_sentence_2),
       imdb_url: normalizeValue(selectedNominee.imdb_url),
       letterboxd_url: normalizeValue(selectedNominee.letterboxd_url),
-    })
-    setFormError(null)
-    setSaveMessage(null)
-  }
+    });
+    setFormError(null);
+    setSaveMessage(null);
+  };
 
   if (user?.role !== 'SUPERUSER') {
-    return null
+    return null;
   }
 
   return (
@@ -185,8 +194,19 @@ export default function NomineeMetadata() {
             className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600"
             aria-label="Go back"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
@@ -195,12 +215,10 @@ export default function NomineeMetadata() {
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600 rounded"
             aria-label="Go to home"
           >
-            <img
-              src="/images/logo.png"
-              alt="Academy Awards Pool"
-              className="h-16 w-auto"
-            />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">ACADEMY AWARDS POOL</span>
+            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
+              ACADEMY AWARDS POOL
+            </span>
           </button>
 
           <div className="flex-1" />
@@ -224,7 +242,10 @@ export default function NomineeMetadata() {
           <div className="p-4 sm:p-6 space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-col gap-2">
-                <label htmlFor="year-input" className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                <label
+                  htmlFor="year-input"
+                  className="text-xs font-semibold oscars-dark uppercase tracking-wide"
+                >
                   Year
                 </label>
                 <div className="flex items-center gap-2">
@@ -239,11 +260,11 @@ export default function NomineeMetadata() {
                   />
                   <button
                     onClick={() => {
-                      const nextYear = yearInput.trim()
+                      const nextYear = yearInput.trim();
                       if (nextYear) {
-                        setYear(nextYear)
-                        setSelectedCategoryId(null)
-                        setSelectedNomineeId(null)
+                        setYear(nextYear);
+                        setSelectedCategoryId(null);
+                        setSelectedNomineeId(null);
                       }
                     }}
                     className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium"
@@ -254,7 +275,10 @@ export default function NomineeMetadata() {
               </div>
 
               <div className="flex-1">
-                <label htmlFor="category-select" className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                <label
+                  htmlFor="category-select"
+                  className="text-xs font-semibold oscars-dark uppercase tracking-wide"
+                >
                   Category
                 </label>
                 <select
@@ -273,13 +297,9 @@ export default function NomineeMetadata() {
               </div>
             </div>
 
-            {isLoading && (
-              <p className="text-sm text-gray-600">Loading nominees...</p>
-            )}
+            {isLoading && <p className="text-sm text-gray-600">Loading nominees...</p>}
 
-            {isError && (
-              <p className="text-sm text-red-600">Failed to load nominees for {year}.</p>
-            )}
+            {isError && <p className="text-sm text-red-600">Failed to load nominees for {year}.</p>}
 
             {!isLoading && categories && categories.length === 0 && (
               <p className="text-sm text-gray-600">No nominees found for {year}.</p>
@@ -295,8 +315,8 @@ export default function NomineeMetadata() {
                   </div>
                   <div className="max-h-[520px] overflow-y-auto">
                     {nominees.map((nominee) => {
-                      const isSelected = nominee.id === selectedNomineeId
-                      const isComplete = isMetadataComplete(nominee)
+                      const isSelected = nominee.id === selectedNomineeId;
+                      const isComplete = isMetadataComplete(nominee);
                       return (
                         <button
                           key={nominee.id}
@@ -307,7 +327,9 @@ export default function NomineeMetadata() {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="font-semibold text-sm oscars-dark">{formatNomineeLabel(nominee)}</p>
+                              <p className="font-semibold text-sm oscars-dark">
+                                {formatNomineeLabel(nominee)}
+                              </p>
                               <p className="text-xs text-gray-500">ID: {nominee.id}</p>
                             </div>
                             <span
@@ -321,7 +343,7 @@ export default function NomineeMetadata() {
                             </span>
                           </div>
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -345,7 +367,9 @@ export default function NomineeMetadata() {
                           </label>
                           <textarea
                             value={formState.blurb_sentence_1}
-                            onChange={(e) => setFormState({ ...formState, blurb_sentence_1: e.target.value })}
+                            onChange={(e) =>
+                              setFormState({ ...formState, blurb_sentence_1: e.target.value })
+                            }
                             rows={3}
                             className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                           />
@@ -357,7 +381,9 @@ export default function NomineeMetadata() {
                           </label>
                           <textarea
                             value={formState.blurb_sentence_2}
-                            onChange={(e) => setFormState({ ...formState, blurb_sentence_2: e.target.value })}
+                            onChange={(e) =>
+                              setFormState({ ...formState, blurb_sentence_2: e.target.value })
+                            }
                             rows={3}
                             className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                           />
@@ -370,7 +396,9 @@ export default function NomineeMetadata() {
                           <input
                             type="url"
                             value={formState.imdb_url}
-                            onChange={(e) => setFormState({ ...formState, imdb_url: e.target.value })}
+                            onChange={(e) =>
+                              setFormState({ ...formState, imdb_url: e.target.value })
+                            }
                             className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                           />
                           {formState.imdb_url && (
@@ -392,7 +420,9 @@ export default function NomineeMetadata() {
                           <input
                             type="url"
                             value={formState.letterboxd_url}
-                            onChange={(e) => setFormState({ ...formState, letterboxd_url: e.target.value })}
+                            onChange={(e) =>
+                              setFormState({ ...formState, letterboxd_url: e.target.value })
+                            }
                             className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                           />
                           {formState.letterboxd_url && (
@@ -407,13 +437,9 @@ export default function NomineeMetadata() {
                           )}
                         </div>
 
-                        {formError && (
-                          <p className="text-sm text-red-600">{formError}</p>
-                        )}
+                        {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-                        {saveMessage && (
-                          <p className="text-sm text-green-700">{saveMessage}</p>
-                        )}
+                        {saveMessage && <p className="text-sm text-green-700">{saveMessage}</p>}
 
                         <div className="flex flex-wrap gap-3">
                           <button
@@ -443,5 +469,5 @@ export default function NomineeMetadata() {
         </div>
       </main>
     </div>
-  )
+  );
 }

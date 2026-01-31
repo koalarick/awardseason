@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import api from '../services/api'
-import type { Category } from '../types/pool'
-import { getNomineeImage } from '../utils/nomineeImages'
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import type { Category } from '../types/pool';
+import { getNomineeImage } from '../utils/nomineeImages';
 
 // Category grouping configuration (same as PoolEdit)
 const categoryGroups = [
@@ -47,118 +47,120 @@ const categoryGroups = [
       'casting',
     ],
   },
-]
+];
 
 export default function GlobalWinners() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [year, setYear] = useState(new Date().getFullYear().toString())
-  const [selectedCategoryType, setSelectedCategoryType] = useState<string | null>(categoryGroups[0]?.name || null)
-  const [showStickySummary, setShowStickySummary] = useState(false)
-  
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [selectedCategoryType, setSelectedCategoryType] = useState<string | null>(
+    categoryGroups[0]?.name || null,
+  );
+  const [showStickySummary, setShowStickySummary] = useState(false);
+
   // Refs for scrolling
-  const submissionHeaderRef = useRef<HTMLDivElement | null>(null)
-  const stickySummaryRef = useRef<HTMLDivElement | null>(null)
-  const headerRef = useRef<HTMLDivElement | null>(null)
-  const [stickySummaryHeight, setStickySummaryHeight] = useState(52)
-  const [headerHeight, setHeaderHeight] = useState(44)
+  const submissionHeaderRef = useRef<HTMLDivElement | null>(null);
+  const stickySummaryRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [stickySummaryHeight, setStickySummaryHeight] = useState(52);
+  const [headerHeight, setHeaderHeight] = useState(44);
 
   // Redirect if not superuser
   useEffect(() => {
     if (user && user.role !== 'SUPERUSER') {
-      navigate('/')
+      navigate('/');
     }
-  }, [user, navigate])
+  }, [user, navigate]);
 
   // Measure header height
   useEffect(() => {
     const measureHeader = () => {
       if (headerRef.current) {
-        const height = headerRef.current.offsetHeight
-        setHeaderHeight(height)
+        const height = headerRef.current.offsetHeight;
+        setHeaderHeight(height);
       }
-    }
+    };
 
-    measureHeader()
-    window.addEventListener('resize', measureHeader)
-    
-    let resizeObserver: ResizeObserver | null = null
+    measureHeader();
+    window.addEventListener('resize', measureHeader);
+
+    let resizeObserver: ResizeObserver | null = null;
     if (headerRef.current) {
       resizeObserver = new ResizeObserver(() => {
-        measureHeader()
-      })
-      resizeObserver.observe(headerRef.current)
+        measureHeader();
+      });
+      resizeObserver.observe(headerRef.current);
     }
 
     return () => {
-      window.removeEventListener('resize', measureHeader)
+      window.removeEventListener('resize', measureHeader);
       if (resizeObserver && headerRef.current) {
-        resizeObserver.unobserve(headerRef.current)
+        resizeObserver.unobserve(headerRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   // Detect when to show sticky summary
   useEffect(() => {
     const handleScroll = () => {
       if (submissionHeaderRef.current) {
-        const rect = submissionHeaderRef.current.getBoundingClientRect()
-        setShowStickySummary(rect.bottom < headerHeight)
+        const rect = submissionHeaderRef.current.getBoundingClientRect();
+        setShowStickySummary(rect.bottom < headerHeight);
       }
-    }
+    };
 
-    window.addEventListener('scroll', handleScroll)
-    handleScroll() // Check initial state
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial state
 
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [headerHeight])
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [headerHeight]);
 
   // Measure sticky summary height
   useEffect(() => {
     const measureStickySummary = () => {
       if (stickySummaryRef.current) {
-        const height = stickySummaryRef.current.offsetHeight
-        setStickySummaryHeight(height)
+        const height = stickySummaryRef.current.offsetHeight;
+        setStickySummaryHeight(height);
       }
-    }
+    };
 
-    measureStickySummary()
-    window.addEventListener('resize', measureStickySummary)
-    
-    let resizeObserver: ResizeObserver | null = null
+    measureStickySummary();
+    window.addEventListener('resize', measureStickySummary);
+
+    let resizeObserver: ResizeObserver | null = null;
     if (stickySummaryRef.current) {
       resizeObserver = new ResizeObserver(() => {
-        measureStickySummary()
-      })
-      resizeObserver.observe(stickySummaryRef.current)
+        measureStickySummary();
+      });
+      resizeObserver.observe(stickySummaryRef.current);
     }
 
     return () => {
-      window.removeEventListener('resize', measureStickySummary)
+      window.removeEventListener('resize', measureStickySummary);
       if (resizeObserver && stickySummaryRef.current) {
-        resizeObserver.unobserve(stickySummaryRef.current)
+        resizeObserver.unobserve(stickySummaryRef.current);
       }
-    }
-  }, [showStickySummary])
+    };
+  }, [showStickySummary]);
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['nominees', year],
     queryFn: async () => {
-      const response = await api.get(`/nominees/${year}`)
-      return response.data as Category[]
+      const response = await api.get(`/nominees/${year}`);
+      return response.data as Category[];
     },
     enabled: !!year,
-  })
+  });
 
   const { data: actualWinners } = useQuery({
     queryKey: ['globalWinners', year],
     queryFn: async () => {
-      const response = await api.get(`/winners/global/${year}`)
-      return response.data
+      const response = await api.get(`/winners/global/${year}`);
+      return response.data;
     },
     enabled: !!year,
-  })
+  });
 
   const markWinner = useMutation({
     mutationFn: async ({ categoryId, nomineeId }: { categoryId: string; nomineeId: string }) => {
@@ -166,56 +168,56 @@ export default function GlobalWinners() {
         year,
         categoryId,
         nomineeId,
-      })
-      return response.data
+      });
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['globalWinners', year] })
-      queryClient.invalidateQueries({ queryKey: ['submissions'] })
+      queryClient.invalidateQueries({ queryKey: ['globalWinners', year] });
+      queryClient.invalidateQueries({ queryKey: ['submissions'] });
     },
     onError: (error: any) => {
-      console.error('Failed to mark winner:', error)
+      console.error('Failed to mark winner:', error);
     },
-  })
+  });
 
   const unmarkWinner = useMutation({
     mutationFn: async ({ categoryId }: { categoryId: string }) => {
-      const response = await api.delete(`/winners/global/${year}/${categoryId}`)
-      return response.data
+      const response = await api.delete(`/winners/global/${year}/${categoryId}`);
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['globalWinners', year] })
-      queryClient.invalidateQueries({ queryKey: ['submissions'] })
+      queryClient.invalidateQueries({ queryKey: ['globalWinners', year] });
+      queryClient.invalidateQueries({ queryKey: ['submissions'] });
     },
     onError: (error: any) => {
-      console.error('Failed to unmark winner:', error)
+      console.error('Failed to unmark winner:', error);
     },
-  })
+  });
 
   const handleNomineeSelect = (categoryId: string, nomineeId: string) => {
-    const currentWinner = actualWinners?.find((w: any) => w.categoryId === categoryId)
-    
+    const currentWinner = actualWinners?.find((w: any) => w.categoryId === categoryId);
+
     // If clicking the same nominee, deselect it (remove winner)
     if (currentWinner && currentWinner.nomineeId === nomineeId) {
-      unmarkWinner.mutate({ categoryId })
-      return
+      unmarkWinner.mutate({ categoryId });
+      return;
     }
-    
+
     // Mark the winner
-    markWinner.mutate({ categoryId, nomineeId })
-  }
+    markWinner.mutate({ categoryId, nomineeId });
+  };
 
   const getWinnerForCategory = (categoryId: string) => {
-    return actualWinners?.find((w: any) => w.categoryId === categoryId)
-  }
+    return actualWinners?.find((w: any) => w.categoryId === categoryId);
+  };
 
   if (user?.role !== 'SUPERUSER') {
-    return null
+    return null;
   }
 
-  const markedCount = actualWinners?.length || 0
-  const totalCategories = categories?.length || 0
-  const isComplete = markedCount === totalCategories && totalCategories > 0
+  const markedCount = actualWinners?.length || 0;
+  const totalCategories = categories?.length || 0;
+  const isComplete = markedCount === totalCategories && totalCategories > 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -227,8 +229,19 @@ export default function GlobalWinners() {
             className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600"
             aria-label="Go back"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
@@ -238,12 +251,10 @@ export default function GlobalWinners() {
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-red-600 rounded"
             aria-label="Go to home"
           >
-            <img 
-              src="/images/logo.png" 
-              alt="Academy Awards Pool" 
-              className="h-16 w-auto"
-            />
-            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">ACADEMY AWARDS POOL</span>
+            <img src="/images/logo.png" alt="Academy Awards Pool" className="h-16 w-auto" />
+            <span className="hidden sm:inline oscars-font text-base sm:text-lg font-bold">
+              ACADEMY AWARDS POOL
+            </span>
           </button>
 
           {/* Spacer */}
@@ -262,11 +273,17 @@ export default function GlobalWinners() {
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Submission Header with Summary */}
-        <div ref={submissionHeaderRef} className="bg-white rounded-lg shadow mb-6 overflow-hidden" id="submission-header">
+        <div
+          ref={submissionHeaderRef}
+          className="bg-white rounded-lg shadow mb-6 overflow-hidden"
+          id="submission-header"
+        >
           {/* Submission Name Header */}
           <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
             <div className="flex items-center justify-between">
-              <h2 className="oscars-font text-base sm:text-lg font-bold">🏆 Global Winners ({year})</h2>
+              <h2 className="oscars-font text-base sm:text-lg font-bold">
+                🏆 Global Winners ({year})
+              </h2>
               <div className="flex items-center gap-2">
                 <label htmlFor="year-select" className="text-xs text-gray-300">
                   Year:
@@ -275,18 +292,18 @@ export default function GlobalWinners() {
                   id="year-select"
                   value={year}
                   onChange={(e) => {
-                    setYear(e.target.value)
-                    setSelectedCategoryType(categoryGroups[0]?.name || null)
+                    setYear(e.target.value);
+                    setSelectedCategoryType(categoryGroups[0]?.name || null);
                   }}
                   className="px-3 py-1.5 text-sm rounded border border-gray-400 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-300"
                 >
                   {Array.from({ length: 5 }, (_, i) => {
-                    const y = new Date().getFullYear() - 2 + i
+                    const y = new Date().getFullYear() - 2 + i;
                     return (
                       <option key={y} value={y.toString()}>
                         {y}
                       </option>
-                    )
+                    );
                   })}
                 </select>
               </div>
@@ -302,18 +319,22 @@ export default function GlobalWinners() {
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="bg-gray-50 rounded p-2 sm:p-3 border border-gray-100">
                   <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Categories</p>
-                  <p className={`font-bold text-sm sm:text-base ${
-                    isComplete ? 'text-green-600' : 'text-yellow-600'
-                  }`}>
+                  <p
+                    className={`font-bold text-sm sm:text-base ${
+                      isComplete ? 'text-green-600' : 'text-yellow-600'
+                    }`}
+                  >
                     {markedCount} / {totalCategories}
                     {isComplete && <span className="ml-1">✓</span>}
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded p-2 sm:p-3 border border-gray-100">
                   <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Status</p>
-                  <p className={`font-bold text-sm sm:text-base ${
-                    isComplete ? 'text-green-600' : 'text-yellow-600'
-                  }`}>
+                  <p
+                    className={`font-bold text-sm sm:text-base ${
+                      isComplete ? 'text-green-600' : 'text-yellow-600'
+                    }`}
+                  >
                     {isComplete ? 'Complete' : 'In Progress'}
                   </p>
                 </div>
@@ -338,7 +359,11 @@ export default function GlobalWinners() {
 
         {/* Collapsed Sticky Submission Summary */}
         {categories && showStickySummary && (
-          <div ref={stickySummaryRef} className="sticky bg-white border-b border-gray-200 z-30 py-3" style={{ top: `${headerHeight}px` }}>
+          <div
+            ref={stickySummaryRef}
+            className="sticky bg-white border-b border-gray-200 z-30 py-3"
+            style={{ top: `${headerHeight}px` }}
+          >
             <div className="flex items-center justify-between px-4 md:px-6 gap-3">
               <span className="oscars-font font-bold oscars-dark text-sm md:text-base truncate flex-shrink min-w-0">
                 Global Winners ({year})
@@ -348,9 +373,11 @@ export default function GlobalWinners() {
                 <div className="hidden md:flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">Categories:</span>
-                    <span className={`font-semibold ${
-                      isComplete ? 'text-green-600' : 'text-yellow-600'
-                    }`}>
+                    <span
+                      className={`font-semibold ${
+                        isComplete ? 'text-green-600' : 'text-yellow-600'
+                      }`}
+                    >
                       {markedCount}/{totalCategories}
                     </span>
                   </div>
@@ -375,35 +402,35 @@ export default function GlobalWinners() {
         {categories && categories.length > 0 && (
           <div>
             {/* Tab Navigation - Sticky */}
-            <div 
-              className="sticky bg-white z-20" 
-              style={{ 
-                top: showStickySummary 
-                  ? `${headerHeight + stickySummaryHeight}px` 
-                  : `${headerHeight}px`
+            <div
+              className="sticky bg-white z-20"
+              style={{
+                top: showStickySummary
+                  ? `${headerHeight + stickySummaryHeight}px`
+                  : `${headerHeight}px`,
               }}
             >
               <div className="bg-white rounded-t-lg border-b border-gray-200">
                 <div className="flex -mb-px">
                   {categoryGroups.map((group) => {
                     const groupCategories = categories.filter((cat) =>
-                      group.categoryIds.includes(cat.id)
-                    )
-                    if (groupCategories.length === 0) return null
+                      group.categoryIds.includes(cat.id),
+                    );
+                    if (groupCategories.length === 0) return null;
 
                     const markedCount = groupCategories.filter((cat) =>
-                      getWinnerForCategory(cat.id)
-                    ).length
-                    const totalCount = groupCategories.length
-                    const isComplete = markedCount === totalCount && totalCount > 0
-                    const isActive = selectedCategoryType === group.name
+                      getWinnerForCategory(cat.id),
+                    ).length;
+                    const totalCount = groupCategories.length;
+                    const isComplete = markedCount === totalCount && totalCount > 0;
+                    const isActive = selectedCategoryType === group.name;
 
                     return (
                       <button
                         key={group.name}
                         onClick={() => {
-                          setSelectedCategoryType(group.name)
-                          window.scrollTo({ top: 0, behavior: 'auto' })
+                          setSelectedCategoryType(group.name);
+                          window.scrollTo({ top: 0, behavior: 'auto' });
                         }}
                         className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                           isActive
@@ -412,13 +439,15 @@ export default function GlobalWinners() {
                         }`}
                       >
                         {group.name}
-                        <span className={`ml-2 text-xs ${
-                          isComplete ? 'text-green-600' : 'text-gray-400'
-                        }`}>
+                        <span
+                          className={`ml-2 text-xs ${
+                            isComplete ? 'text-green-600' : 'text-gray-400'
+                          }`}
+                        >
                           ({markedCount}/{totalCount})
                         </span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -431,23 +460,21 @@ export default function GlobalWinners() {
                   {categoryGroups
                     .find((group) => group.name === selectedCategoryType)
                     ?.categoryIds.map((categoryId) => {
-                      const category = categories.find((cat) => cat.id === categoryId)
-                      if (!category) return null
-                      const winner = getWinnerForCategory(category.id)
+                      const category = categories.find((cat) => cat.id === categoryId);
+                      if (!category) return null;
+                      const winner = getWinnerForCategory(category.id);
 
                       return (
                         <div key={category.id} className="bg-gray-50 p-2 md:p-4 rounded-lg">
                           <div className="flex items-center justify-between mb-3">
                             <h4 className="oscars-font text-base font-bold oscars-dark">
                               {category.name}
-                              {winner && (
-                                <span className="ml-2 text-green-600">✓</span>
-                              )}
+                              {winner && <span className="ml-2 text-green-600">✓</span>}
                             </h4>
                           </div>
                           <div className="space-y-2">
                             {category.nominees.map((nominee) => {
-                              const isSelected = winner?.nomineeId === nominee.id
+                              const isSelected = winner?.nomineeId === nominee.id;
 
                               return (
                                 <div
@@ -465,8 +492,10 @@ export default function GlobalWinners() {
                                       alt={nominee.name}
                                       className="w-full h-full object-contain"
                                       onError={(e) => {
-                                        console.error(`Failed to load image: ${getNomineeImage(nominee, category.id, year)}`)
-                                        e.currentTarget.style.display = 'none'
+                                        console.error(
+                                          `Failed to load image: ${getNomineeImage(nominee, category.id, year)}`,
+                                        );
+                                        e.currentTarget.style.display = 'none';
                                       }}
                                     />
                                   </div>
@@ -495,50 +524,62 @@ export default function GlobalWinners() {
                                         )}
                                       </div>
                                       {isSelected && (
-                                        <span className="text-yellow-600 font-bold text-lg flex-shrink-0">✓</span>
+                                        <span className="text-yellow-600 font-bold text-lg flex-shrink-0">
+                                          ✓
+                                        </span>
                                       )}
                                     </div>
                                   </div>
                                 </div>
-                              )
+                              );
                             })}
                           </div>
                         </div>
-                      )
+                      );
                     })}
                 </div>
-                
+
                 {/* Next Tab Button */}
                 {(() => {
                   const currentTabIndex = categoryGroups.findIndex(
-                    (group) => group.name === selectedCategoryType
-                  )
-                  const nextTab = categoryGroups[currentTabIndex + 1]
-                  
+                    (group) => group.name === selectedCategoryType,
+                  );
+                  const nextTab = categoryGroups[currentTabIndex + 1];
+
                   if (nextTab && categories) {
                     const nextTabCategories = categories.filter((cat) =>
-                      nextTab.categoryIds.includes(cat.id)
-                    )
+                      nextTab.categoryIds.includes(cat.id),
+                    );
                     if (nextTabCategories.length > 0) {
                       return (
                         <div className="mt-6 pt-6 border-t border-gray-200 flex justify-center">
                           <button
                             onClick={() => {
-                              setSelectedCategoryType(nextTab.name)
-                              window.scrollTo({ top: 0, behavior: 'auto' })
+                              setSelectedCategoryType(nextTab.name);
+                              window.scrollTo({ top: 0, behavior: 'auto' });
                             }}
                             className="px-6 py-3 oscars-gold-bg text-white rounded-lg hover:opacity-90 active:opacity-80 transition-opacity text-sm font-semibold min-h-[44px] flex items-center gap-2 touch-manipulation"
                           >
                             Next: {nextTab.name}
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
                             </svg>
                           </button>
                         </div>
-                      )
+                      );
                     }
                   }
-                  return null
+                  return null;
                 })()}
               </div>
             )}
@@ -546,5 +587,5 @@ export default function GlobalWinners() {
         )}
       </main>
     </div>
-  )
+  );
 }

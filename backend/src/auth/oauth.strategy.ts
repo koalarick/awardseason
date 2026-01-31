@@ -25,7 +25,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           const { user, token } = await authService.findOrCreateOAuthUser(
             email,
             'google',
-            profile.id
+            profile.id,
           );
 
           // Passport expects User, but we need to store token too
@@ -34,8 +34,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         } catch (error) {
           return done(error, undefined);
         }
-      }
-    )
+      },
+    ),
   );
 }
 

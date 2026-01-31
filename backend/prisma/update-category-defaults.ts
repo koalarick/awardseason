@@ -39,7 +39,7 @@ const categoryGroups = {
 function getDefaultPointsForCategory(categoryId: string): number {
   // Remove year suffix if present (e.g., "best-picture-2026" -> "best-picture")
   const baseCategoryId = categoryId.replace(/-\d{4}$/, '');
-  
+
   if (categoryGroups.major.includes(baseCategoryId)) {
     return 10;
   } else if (categoryGroups.technical.includes(baseCategoryId)) {
@@ -62,13 +62,15 @@ async function main() {
   let updatedCount = 0;
   for (const category of categories) {
     const newDefaultPoints = getDefaultPointsForCategory(category.id);
-    
+
     if (category.defaultPoints !== newDefaultPoints) {
       await prisma.category.update({
         where: { id: category.id },
         data: { defaultPoints: newDefaultPoints },
       });
-      console.log(`Updated ${category.name} (${category.id}): ${category.defaultPoints} -> ${newDefaultPoints}`);
+      console.log(
+        `Updated ${category.name} (${category.id}): ${category.defaultPoints} -> ${newDefaultPoints}`,
+      );
       updatedCount++;
     }
   }

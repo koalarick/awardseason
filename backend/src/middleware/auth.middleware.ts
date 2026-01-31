@@ -13,7 +13,7 @@ const authService = new AuthService();
 export const authenticate = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
@@ -52,11 +52,7 @@ export const authenticate = async (
   }
 };
 
-export const requireSuperuser = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): void => {
+export const requireSuperuser = (req: AuthRequest, res: Response, next: NextFunction): void => {
   if (!req.user || req.user.role !== 'SUPERUSER') {
     res.status(403).json({ error: 'Superuser access required' });
     return;

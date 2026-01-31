@@ -1,16 +1,16 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import OAuthCallback from './pages/OAuthCallback'
-import Dashboard from './pages/Dashboard'
-import PoolDetail from './pages/PoolDetail'
-import PoolEdit from './pages/PoolEdit'
-import PoolInvite from './pages/PoolInvite'
-import GlobalWinners from './pages/GlobalWinners'
-import NomineeMetadata from './pages/NomineeMetadata'
-import Users from './pages/Users'
-import ProtectedRoute from './components/ProtectedRoute'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import OAuthCallback from './pages/OAuthCallback';
+import Dashboard from './pages/Dashboard';
+import PoolDetail from './pages/PoolDetail';
+import PoolEdit from './pages/PoolEdit';
+import PoolInvite from './pages/PoolInvite';
+import GlobalWinners from './pages/GlobalWinners';
+import NomineeMetadata from './pages/NomineeMetadata';
+import Users from './pages/Users';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -73,7 +73,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

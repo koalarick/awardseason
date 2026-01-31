@@ -11,8 +11,8 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 @layer base {
@@ -20,7 +20,10 @@
     font-family: 'Roboto', sans-serif;
   }
 
-  h1, h2, h3, .oscars-font {
+  h1,
+  h2,
+  h3,
+  .oscars-font {
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -29,15 +32,15 @@
 
 @layer utilities {
   .oscars-red {
-    background-color: #8B1538;
+    background-color: #8b1538;
   }
 
   .oscars-gold {
-    color: #D4AF37;
+    color: #d4af37;
   }
 
   .oscars-gold-bg {
-    background-color: #D4AF37;
+    background-color: #d4af37;
   }
 
   .oscars-dark {
@@ -45,7 +48,7 @@
   }
 
   .oscars-red-text {
-    color: #8B1538;
+    color: #8b1538;
   }
 
   .cta-neutral {

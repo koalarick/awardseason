@@ -11,7 +11,20 @@ const poolService = new PoolService();
 // Create pool
 router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, year, ceremonyDate, password, isPublic, isPaidPool, entryAmount, venmoAlias, payoutStructure, oddsMultiplierEnabled, oddsMultiplierFormula, categoryPoints } = req.body;
+    const {
+      name,
+      year,
+      ceremonyDate,
+      password,
+      isPublic,
+      isPaidPool,
+      entryAmount,
+      venmoAlias,
+      payoutStructure,
+      oddsMultiplierEnabled,
+      oddsMultiplierFormula,
+      categoryPoints,
+    } = req.body;
     const userId = req.user!.id;
 
     if (!name) {
@@ -22,7 +35,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     // Default to current year's Oscars if not provided
     const currentYear = new Date().getFullYear().toString();
     const poolYear = year || currentYear;
-    
+
     // Default ceremony date to March 10th of the current year at 8pm ET (typical Oscars time)
     // If year is provided, use that year; otherwise use current year
     let defaultCeremonyDate: Date;
@@ -38,7 +51,9 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     // Validate paid pool fields
     if (isPaidPool) {
       if (!entryAmount || entryAmount <= 0) {
-        res.status(400).json({ error: 'Entry amount is required and must be greater than 0 for paid pools' });
+        res
+          .status(400)
+          .json({ error: 'Entry amount is required and must be greater than 0 for paid pools' });
         return;
       }
       if (!venmoAlias || venmoAlias.trim() === '') {
@@ -60,7 +75,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       payoutStructure,
       oddsMultiplierEnabled,
       oddsMultiplierFormula,
-      categoryPoints
+      categoryPoints,
     );
 
     res.status(201).json(pool);
@@ -83,10 +98,7 @@ router.get('/my-pools', authenticate, async (req: AuthRequest, res: Response) =>
 // Get global stats (superuser only)
 router.get('/stats', authenticate, requireSuperuser, async (_req: AuthRequest, res: Response) => {
   try {
-    const [totalUsers, totalPools] = await Promise.all([
-      prisma.user.count(),
-      prisma.pool.count(),
-    ]);
+    const [totalUsers, totalPools] = await Promise.all([prisma.user.count(), prisma.pool.count()]);
 
     res.json({ totalUsers, totalPools });
   } catch (error: any) {
@@ -272,7 +284,7 @@ router.get('/:poolId/submissions', authenticate, async (req: AuthRequest, res: R
     }
 
     const submissions = await poolService.getPoolSubmissions(poolId);
-    
+
     // Return empty array if no submissions, not an error
     res.json(submissions || []);
   } catch (error: any) {
@@ -334,7 +346,9 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     }
 
     if (hasWinners) {
-      res.status(403).json({ error: 'Cannot update pool settings after winners have been announced' });
+      res
+        .status(403)
+        .json({ error: 'Cannot update pool settings after winners have been announced' });
       return;
     }
 
@@ -364,38 +378,37 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
 });
 
 // Mark member as paid/unpaid (owner only)
-router.patch('/:poolId/members/:userId/payment', authenticate, async (req: AuthRequest, res: Response) => {
-  try {
-    const { poolId, userId: memberUserId } = req.params;
-    const ownerUserId = req.user!.id;
-    const userRole = req.user!.role;
-    const { hasPaid } = req.body;
+router.patch(
+  '/:poolId/members/:userId/payment',
+  authenticate,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { poolId, userId: memberUserId } = req.params;
+      const ownerUserId = req.user!.id;
+      const userRole = req.user!.role;
+      const { hasPaid } = req.body;
 
-    // Verify requester is pool owner or superuser
-    const isOwner = await poolService.isPoolOwner(poolId, ownerUserId);
-    const isSuperuser = userRole === 'SUPERUSER';
-    if (!isOwner && !isSuperuser) {
-      res.status(403).json({ error: 'Only pool owner or superuser can mark payment status' });
-      return;
+      // Verify requester is pool owner or superuser
+      const isOwner = await poolService.isPoolOwner(poolId, ownerUserId);
+      const isSuperuser = userRole === 'SUPERUSER';
+      if (!isOwner && !isSuperuser) {
+        res.status(403).json({ error: 'Only pool owner or superuser can mark payment status' });
+        return;
+      }
+
+      if (typeof hasPaid !== 'boolean') {
+        res.status(400).json({ error: 'hasPaid must be a boolean' });
+        return;
+      }
+
+      const member = await poolService.markMemberAsPaid(poolId, memberUserId, ownerUserId, hasPaid);
+
+      res.json(member);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
-
-    if (typeof hasPaid !== 'boolean') {
-      res.status(400).json({ error: 'hasPaid must be a boolean' });
-      return;
-    }
-
-    const member = await poolService.markMemberAsPaid(
-      poolId,
-      memberUserId,
-      ownerUserId,
-      hasPaid
-    );
-
-    res.json(member);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // Delete pool (owner only)
 router.delete('/:poolId', authenticate, async (req: AuthRequest, res: Response) => {
@@ -420,17 +433,21 @@ router.delete('/:poolId', authenticate, async (req: AuthRequest, res: Response) 
 });
 
 // Remove submission from pool (owner or superuser only)
-router.delete('/:poolId/submissions/:userId', authenticate, async (req: AuthRequest, res: Response) => {
-  try {
-    const { poolId, userId: targetUserId } = req.params;
-    const requesterUserId = req.user!.id;
-    const requesterRole = req.user!.role;
+router.delete(
+  '/:poolId/submissions/:userId',
+  authenticate,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { poolId, userId: targetUserId } = req.params;
+      const requesterUserId = req.user!.id;
+      const requesterRole = req.user!.role;
 
-    await poolService.removeSubmission(poolId, targetUserId, requesterUserId, requesterRole);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
+      await poolService.removeSubmission(poolId, targetUserId, requesterUserId, requesterRole);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+);
 
 export default router;

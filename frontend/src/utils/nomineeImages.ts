@@ -1,4 +1,4 @@
-import type { Nominee } from '../types/pool'
+import type { Nominee } from '../types/pool';
 
 export function filmNameToSlug(filmName: string): string {
   return filmName
@@ -11,7 +11,7 @@ export function filmNameToSlug(filmName: string): string {
     .replace(/[ç]/g, 'c')
     .replace(/[ñ]/g, 'n')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/^-+|-+$/g, '');
 }
 
 export function getNomineeImage(
@@ -22,25 +22,25 @@ export function getNomineeImage(
   const isPersonCategory =
     categoryId.includes('actor') ||
     categoryId.includes('actress') ||
-    categoryId.includes('directing')
+    categoryId.includes('directing');
 
   if (isPersonCategory) {
-    return `/images/${year}_${categoryId}_${nominee.id}.jpg`
+    return `/images/${year}_${categoryId}_${nominee.id}.jpg`;
   }
 
-  let movieId = nominee.id
+  let movieId = nominee.id;
   if (nominee.film && categoryId === 'international-feature') {
-    movieId = filmNameToSlug(nominee.film)
+    movieId = filmNameToSlug(nominee.film);
   } else if (nominee.song && categoryId === 'music-song') {
-    const match = nominee.song.match(/from\s+([^;]+)/i)
+    const match = nominee.song.match(/from\s+([^;]+)/i);
     if (match && match[1]) {
-      movieId = filmNameToSlug(match[1].trim())
+      movieId = filmNameToSlug(match[1].trim());
     }
   } else if (nominee.film) {
-    movieId = filmNameToSlug(nominee.film)
+    movieId = filmNameToSlug(nominee.film);
   } else {
-    movieId = nominee.id
+    movieId = nominee.id;
   }
 
-  return `/images/${year}_movie_${movieId}.jpg`
+  return `/images/${year}_movie_${movieId}.jpg`;
 }

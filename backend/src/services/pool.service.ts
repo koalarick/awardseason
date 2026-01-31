@@ -64,7 +64,7 @@ export class PoolService {
     payoutStructure?: Array<{ position: number; percentage: number }>,
     oddsMultiplierEnabled?: boolean,
     oddsMultiplierFormula?: string,
-    categoryPoints?: Record<string, number>
+    categoryPoints?: Record<string, number>,
   ) {
     let passwordHash: string | null = null;
     if (password && !isPublic) {
@@ -244,7 +244,7 @@ export class PoolService {
           where: { year },
         });
         return [year, categories] as const;
-      })
+      }),
     );
     categoriesByYearEntries.forEach(([year, categories]) => {
       categoriesByYear.set(year, categories);
@@ -256,7 +256,7 @@ export class PoolService {
       const userPredictions = predictionsByPool.get(pool.id) || [];
       const poolWinners = winnersByPool.get(pool.id) || [];
       const categories = categoriesByYear.get(pool.year) || [];
-      
+
       // Determine submission status
       const predictionCount = userPredictions.length;
       const totalCategories = categories.length;
@@ -268,7 +268,7 @@ export class PoolService {
       } else {
         submissionStatus = 'In Progress';
       }
-      
+
       // Calculate correct count
       let correctCount = 0;
       if (poolWinners.length > 0 && userPredictions.length > 0) {
@@ -290,7 +290,7 @@ export class PoolService {
       }
 
       // Use a neutral fallback so email prefixes aren't exposed
-      const submissionName = resolveSubmissionName(m.submissionName, 'My Ballot')
+      const submissionName = resolveSubmissionName(m.submissionName, 'My Ballot');
 
       return {
         ...pool,
@@ -351,7 +351,7 @@ export class PoolService {
 
     const totalCategories = categories.length;
     const categoriesById = new Map(categories.map((category) => [category.id, category]));
-    const categoryPoints = pool.settings.categoryPoints as Record<string, number> || {};
+    const categoryPoints = (pool.settings.categoryPoints as Record<string, number>) || {};
 
     // Get all predictions grouped by user (odds are stored in prediction)
     const predictions = await prisma.prediction.findMany({
@@ -370,10 +370,10 @@ export class PoolService {
     // Pre-fetch current odds for predictions that don't have stored odds
     // This avoids doing async lookups inside the loop
     const predictionsNeedingOdds = predictions.filter(
-      (prediction) => prediction.oddsPercentage === null || prediction.oddsPercentage === undefined
+      (prediction) => prediction.oddsPercentage === null || prediction.oddsPercentage === undefined,
     );
     const currentOddsMap: Record<string, number | null> = {};
-    
+
     if (predictionsNeedingOdds.length > 0) {
       const uniqueOddsLookups = new Map<string, { categoryId: string; nomineeId: string }>();
       predictionsNeedingOdds.forEach((prediction) => {
@@ -402,9 +402,9 @@ export class PoolService {
             key: `${prediction.categoryId}-${prediction.nomineeId}`,
             odds: snapshot?.oddsPercentage || null,
           };
-        })
+        }),
       );
-      
+
       oddsLookups.forEach(({ key, odds }) => {
         currentOddsMap[key] = odds;
       });
@@ -453,7 +453,7 @@ export class PoolService {
 
         // Create a map of categoryId -> winner nomineeId for quick lookup
         const winnerMap = new Map<string, string>();
-        winnersToUse.forEach(winner => {
+        winnersToUse.forEach((winner) => {
           const baseCategoryId = normalizeCategoryId(winner.categoryId);
           winnerMap.set(baseCategoryId, winner.nomineeId);
         });
@@ -476,11 +476,14 @@ export class PoolService {
 
           let multiplier = 1.0;
           if (pool.settings && pool.settings.oddsMultiplierEnabled && odds !== null && odds > 0) {
-            multiplier = calculateOddsMultiplier(odds, pool.settings.oddsMultiplierFormula || 'linear');
+            multiplier = calculateOddsMultiplier(
+              odds,
+              pool.settings.oddsMultiplierFormula || 'linear',
+            );
           }
 
           const winnerNomineeId = winnerMap.get(prediction.categoryId);
-          
+
           if (winnerNomineeId) {
             // Winner has been announced for this category
             if (prediction.nomineeId === winnerNomineeId) {
@@ -512,7 +515,7 @@ export class PoolService {
           totalEarnedPoints: parseFloat(totalEarnedPoints.toFixed(1)),
           hasPaid: member.hasPaid,
         };
-      })
+      }),
     );
 
     // Sort by total earned points (descending), then by total possible points (descending)
@@ -555,7 +558,7 @@ export class PoolService {
       isPaidPool?: boolean;
       entryAmount?: number | null;
       venmoAlias?: string | null;
-    }
+    },
   ) {
     // Verify user is pool owner
     const isOwner = await this.isPoolOwner(poolId, userId);
@@ -602,7 +605,7 @@ export class PoolService {
     poolId: string,
     memberUserId: string,
     ownerUserId: string,
-    hasPaid: boolean
+    hasPaid: boolean,
   ) {
     // Verify requester is pool owner
     const isOwner = await this.isPoolOwner(poolId, ownerUserId);
@@ -742,7 +745,7 @@ export class PoolService {
     poolId: string,
     targetUserId: string,
     requesterUserId: string,
-    requesterRole?: string
+    requesterRole?: string,
   ): Promise<void> {
     // Verify requester is pool owner or superuser
     const isOwner = await this.isPoolOwner(poolId, requesterUserId);
@@ -756,7 +759,7 @@ export class PoolService {
 
     // Prevent removing the pool owner's submission
     if (targetUserId === ownerId) {
-      throw new Error('Cannot remove pool owner\'s submission');
+      throw new Error("Cannot remove pool owner's submission");
     }
 
     // Check if target user is a member

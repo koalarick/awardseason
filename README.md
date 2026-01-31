@@ -102,7 +102,7 @@ cd academyawardspool
 
 ### 2. Environment Variables
 
-Create `.env` files in `backend/` and `frontend/` directories:
+Use `.env.example` as a template for your root `.env`, and create `.env` files in `backend/` and `frontend/` directories:
 
 **backend/.env:**
 ```env
@@ -123,6 +123,12 @@ APPLE_PRIVATE_KEY="your-apple-private-key"
 # Superuser (optional - for admin access)
 SUPERUSER_EMAIL="admin@example.com"
 SUPERUSER_PASSWORD="admin123"
+
+# SendGrid (optional - for transactional email)
+SENDGRID_API_KEY="your-sendgrid-api-key"
+SENDGRID_FROM_EMAIL="verified-sender@yourdomain.com"
+SENDGRID_FROM_NAME="Academy Awards Pool"
+INBOUND_EMAIL="alerts@yourdomain.com"
 ```
 
 **frontend/.env:**
@@ -138,6 +144,10 @@ POSTGRES_DB=academyawardspool
 JWT_SECRET=your-secret-key-here
 CORS_ORIGIN=http://localhost:5173
 LOCAL_IP=http://localhost:3001
+SENDGRID_API_KEY=your-sendgrid-api-key
+SENDGRID_FROM_EMAIL=verified-sender@yourdomain.com
+SENDGRID_FROM_NAME=Academy Awards Pool
+INBOUND_EMAIL=alerts@yourdomain.com
 ```
 
 ### 3. Database Setup
@@ -276,6 +286,9 @@ npm run prisma:update-nominee-info -- --year 2026
 
 ### Users
 - `GET /api/users` - Get all users (superuser only)
+
+### Email
+- `POST /api/email/test` - Send a test email (superuser only)
 
 ## Scoring System
 

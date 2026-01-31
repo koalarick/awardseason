@@ -106,7 +106,7 @@ export class ScoringService {
     for (const member of pool.members) {
       const fallbackName = fallbackNameMap.get(member.userId) || 'Ballot';
       const submissionName = resolveSubmissionName(member.submissionName, fallbackName);
-      
+
       userScores[member.userId] = {
         userId: member.userId,
         submissionName,
@@ -122,12 +122,10 @@ export class ScoringService {
       // winner.categoryId might be base ID (e.g., "best-picture") or full ID (e.g., "best-picture-2026")
       // Always normalize to ensure consistent comparison
       const winnerCategoryId = winner.categoryId.replace(/-\d{4}$/, '');
-      
+
       const basePoints = categoryPoints[winnerCategoryId] || 0;
       // Filter predictions that match the normalized category ID
-      const categoryPredictions = predictions.filter(
-        (p) => p.categoryId === winnerCategoryId
-      );
+      const categoryPredictions = predictions.filter((p) => p.categoryId === winnerCategoryId);
 
       for (const prediction of categoryPredictions) {
         const isCorrect = prediction.nomineeId === winner.nomineeId;

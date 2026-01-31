@@ -75,7 +75,7 @@ router.get('/global/standings', async (req: AuthRequest, res: Response) => {
     });
 
     if (!globalPool || !globalPool.settings) {
-      res.json({ 
+      res.json({
         pool: null,
         standings: [],
         totalMembers: 0,
@@ -99,7 +99,7 @@ router.get('/global/standings', async (req: AuthRequest, res: Response) => {
 
     // Create a map of categoryId -> winner nomineeId
     const winnerMap = new Map<string, string>();
-    winners.forEach(winner => {
+    winners.forEach((winner) => {
       const baseCategoryId = winner.categoryId.replace(/-\d{4}$/, '');
       winnerMap.set(baseCategoryId, winner.nomineeId);
     });
@@ -111,7 +111,7 @@ router.get('/global/standings', async (req: AuthRequest, res: Response) => {
 
     // Group predictions by userId
     const predictionsByUser = new Map<string, typeof predictions>();
-    predictions.forEach(pred => {
+    predictions.forEach((pred) => {
       if (!predictionsByUser.has(pred.userId)) {
         predictionsByUser.set(pred.userId, []);
       }
@@ -156,7 +156,7 @@ router.get('/global/standings', async (req: AuthRequest, res: Response) => {
       for (const category of allCategories) {
         const baseCategoryId = category.id.replace(/-\d{4}$/, '');
         const basePoints = categoryPoints[baseCategoryId] || category.defaultPoints || 10;
-        const userPrediction = userPredictions.find(p => p.categoryId === baseCategoryId);
+        const userPrediction = userPredictions.find((p) => p.categoryId === baseCategoryId);
         const winnerNomineeId = winnerMap.get(baseCategoryId);
 
         if (winnerNomineeId) {
@@ -230,7 +230,7 @@ router.get('/global/standings', async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     // Return empty response instead of error for public endpoint
-    res.json({ 
+    res.json({
       pool: null,
       standings: [],
       totalMembers: 0,

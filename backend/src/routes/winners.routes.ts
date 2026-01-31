@@ -80,7 +80,7 @@ router.get('/pool/:poolId', authenticate, async (req: AuthRequest, res: Response
 
     // Normalize categoryId to base format (remove year suffix) for frontend compatibility
     // Frontend expects base IDs like "best-picture", not "best-picture-2026"
-    const normalizedWinners = winners.map(winner => ({
+    const normalizedWinners = winners.map((winner) => ({
       ...winner,
       categoryId: winner.categoryId.replace(/-\d{4}$/, ''),
     }));
@@ -124,7 +124,7 @@ router.get('/global/:year', authenticate, async (req: AuthRequest, res: Response
 
     // Normalize categoryId to base format (remove year suffix) for frontend compatibility
     // Frontend expects base IDs like "best-picture", not "best-picture-2026"
-    const normalizedWinners = winners.map(winner => ({
+    const normalizedWinners = winners.map((winner) => ({
       ...winner,
       categoryId: winner.categoryId.replace(/-\d{4}$/, ''),
     }));
@@ -215,54 +215,58 @@ router.post('/global', authenticate, async (req: AuthRequest, res: Response) => 
 });
 
 // Delete global winner for a category (superuser only)
-router.delete('/global/:year/:categoryId', authenticate, async (req: AuthRequest, res: Response) => {
-  try {
-    const { year, categoryId } = req.params;
-    const isSuperuser = req.user!.role === 'SUPERUSER';
+router.delete(
+  '/global/:year/:categoryId',
+  authenticate,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { year, categoryId } = req.params;
+      const isSuperuser = req.user!.role === 'SUPERUSER';
 
-    if (!isSuperuser) {
-      res.status(403).json({ error: 'Superuser access required' });
-      return;
-    }
+      if (!isSuperuser) {
+        res.status(403).json({ error: 'Superuser access required' });
+        return;
+      }
 
-    if (!year || !categoryId) {
-      res.status(400).json({ error: 'Year and category ID are required' });
-      return;
-    }
+      if (!year || !categoryId) {
+        res.status(400).json({ error: 'Year and category ID are required' });
+        return;
+      }
 
-    // Get global pool for this year
-    const globalPool = await prisma.pool.findFirst({
-      where: {
-        name: `Global Oscars Pool ${year}`,
-        year,
-        isPublic: true,
-      },
-    });
-
-    if (!globalPool) {
-      res.status(404).json({ error: 'Global pool not found' });
-      return;
-    }
-
-    // Delete the winner for this category
-    await prisma.actualWinner.delete({
-      where: {
-        poolId_categoryId: {
-          poolId: globalPool.id,
-          categoryId,
+      // Get global pool for this year
+      const globalPool = await prisma.pool.findFirst({
+        where: {
+          name: `Global Oscars Pool ${year}`,
+          year,
+          isPublic: true,
         },
-      },
-    });
+      });
 
-    res.json({ success: true });
-  } catch (error: any) {
-    if (error.code === 'P2025') {
-      // Record not found
-      res.status(404).json({ error: 'Winner not found' });
-    } else {
-      res.status(400).json({ error: error.message });
+      if (!globalPool) {
+        res.status(404).json({ error: 'Global pool not found' });
+        return;
+      }
+
+      // Delete the winner for this category
+      await prisma.actualWinner.delete({
+        where: {
+          poolId_categoryId: {
+            poolId: globalPool.id,
+            categoryId,
+          },
+        },
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      if (error.code === 'P2025') {
+        // Record not found
+        res.status(404).json({ error: 'Winner not found' });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
     }
-  }
-});
+  },
+);
 
 export default router;

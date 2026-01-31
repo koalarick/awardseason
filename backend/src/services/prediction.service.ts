@@ -11,7 +11,7 @@ export class PredictionService {
     userId: string,
     poolId: string,
     categoryId: string,
-    nomineeId: string
+    nomineeId: string,
   ) {
     // Verify user is a member of the pool
     const membership = await prisma.poolMember.findUnique({
@@ -49,7 +49,7 @@ export class PredictionService {
     if (globalPool) {
       // Normalize categoryId for comparison (handle both base and full IDs)
       const normalizedCategoryId = categoryId.replace(/-\d{4}$/, '');
-      
+
       // Check if any winner exists for this category (could be stored as base or full ID)
       const globalWinner = await prisma.actualWinner.findFirst({
         where: {
@@ -62,7 +62,9 @@ export class PredictionService {
       });
 
       if (globalWinner) {
-        throw new Error('Cannot change prediction: winner has already been announced for this category');
+        throw new Error(
+          'Cannot change prediction: winner has already been announced for this category',
+        );
       }
     }
 
@@ -89,7 +91,7 @@ export class PredictionService {
         oddsPercentage: currentOdds,
         updatedAt: new Date(),
       };
-      
+
       const createData: any = {
         poolId,
         userId,
@@ -97,14 +99,15 @@ export class PredictionService {
         nomineeId,
         oddsPercentage: currentOdds,
       };
-      
+
       // Try to include originalOddsPercentage - will fail if Prisma Client not regenerated
       if (existingPrediction) {
         // If switching to a different nominee, reset originalOddsPercentage to current odds
         // Only preserve originalOddsPercentage if it's the same nominee (odds upgrade scenario)
         if (existingPrediction.nomineeId === nomineeId) {
           // Same nominee - preserve originalOddsPercentage if it exists, otherwise set to current
-          updateData.originalOddsPercentage = existingPrediction.originalOddsPercentage ?? currentOdds;
+          updateData.originalOddsPercentage =
+            existingPrediction.originalOddsPercentage ?? currentOdds;
         } else {
           // Different nominee - reset originalOddsPercentage to current odds (new selection)
           updateData.originalOddsPercentage = currentOdds;
@@ -112,7 +115,7 @@ export class PredictionService {
       } else {
         createData.originalOddsPercentage = currentOdds;
       }
-      
+
       prediction = existingPrediction
         ? await prisma.prediction.update({
             where: {
@@ -129,9 +132,12 @@ export class PredictionService {
           });
     } catch (error: any) {
       // If error is about unknown field, use raw SQL as fallback
-      if (error.message?.includes('originalOddsPercentage') || error.message?.includes('original_odds_percentage')) {
+      if (
+        error.message?.includes('originalOddsPercentage') ||
+        error.message?.includes('original_odds_percentage')
+      ) {
         console.warn('Prisma Client not regenerated, using raw SQL fallback');
-        
+
         if (existingPrediction) {
           // If switching to a different nominee, reset original_odds_percentage to current odds
           // Only preserve original_odds_percentage if it's the same nominee (odds upgrade scenario)
@@ -172,7 +178,7 @@ export class PredictionService {
               updated_at = NOW()
           `;
         }
-        
+
         // Fetch the prediction
         prediction = await prisma.prediction.findUnique({
           where: {
@@ -188,7 +194,7 @@ export class PredictionService {
         throw error;
       }
     }
-    
+
     if (!prediction) {
       throw new Error('Failed to create or update prediction');
     }
@@ -348,17 +354,13 @@ export class PredictionService {
       },
     });
 
-    return { 
+    return {
       success: true,
       skippedCategories: announcedCategoryIds.length,
     };
   }
 
-  async updateOddsIfBetter(
-    userId: string,
-    poolId: string,
-    categoryId: string
-  ) {
+  async updateOddsIfBetter(userId: string, poolId: string, categoryId: string) {
     // Verify user is a member of the pool
     const membership = await prisma.poolMember.findUnique({
       where: {
@@ -408,7 +410,7 @@ export class PredictionService {
     // If current odds are lower (better for bonus), upgrade to current
     const storedOdds = prediction.oddsPercentage;
     const originalOdds = prediction.originalOddsPercentage;
-    
+
     let oddsToUse: number | null = null;
     if (currentOdds !== null && currentOdds !== undefined) {
       if (originalOdds !== null && originalOdds !== undefined) {
@@ -419,10 +421,14 @@ export class PredictionService {
         oddsToUse = currentOdds;
       }
     }
-    
+
     // Only update if stored odds differ from what they should be
-    if (oddsToUse !== null && storedOdds !== null && storedOdds !== undefined &&
-        Math.abs(storedOdds - oddsToUse) > 0.01) {
+    if (
+      oddsToUse !== null &&
+      storedOdds !== null &&
+      storedOdds !== undefined &&
+      Math.abs(storedOdds - oddsToUse) > 0.01
+    ) {
       const updated = await prisma.prediction.update({
         where: {
           poolId_userId_categoryId: {
@@ -454,7 +460,10 @@ export class PredictionService {
     };
   }
 
-  async upgradeAllPredictionsForCategory(categoryId: string, year: string): Promise<{ upgraded: number; checked: number }> {
+  async upgradeAllPredictionsForCategory(
+    categoryId: string,
+    year: string,
+  ): Promise<{ upgraded: number; checked: number }> {
     // Get all predictions for this category across all pools
     // categoryId here is the base ID (e.g., "best-picture")
     // We need to find all predictions where the pool's year matches
@@ -467,7 +476,7 @@ export class PredictionService {
       return { upgraded: 0, checked: 0 };
     }
 
-    const poolIds = pools.map(p => p.id);
+    const poolIds = pools.map((p) => p.id);
     const predictions = await prisma.prediction.findMany({
       where: {
         poolId: { in: poolIds },
@@ -491,7 +500,7 @@ export class PredictionService {
       // If current odds are higher (worse for bonus), keep original
       // If current odds are lower (better for bonus), upgrade to current
       let oddsToUse: number | null = null;
-      
+
       if (currentOdds !== null && currentOdds !== undefined) {
         if (originalOdds !== null && originalOdds !== undefined) {
           // Use min of current and original - lower percentage = better bonus
@@ -503,8 +512,12 @@ export class PredictionService {
       }
 
       // Only update if stored odds differ from what they should be
-      if (oddsToUse !== null && storedOdds !== null && storedOdds !== undefined &&
-          Math.abs(storedOdds - oddsToUse) > 0.01) {
+      if (
+        oddsToUse !== null &&
+        storedOdds !== null &&
+        storedOdds !== undefined &&
+        Math.abs(storedOdds - oddsToUse) > 0.01
+      ) {
         await prisma.prediction.update({
           where: {
             poolId_userId_categoryId: {
@@ -560,7 +573,7 @@ export class PredictionService {
     });
 
     // Get predictions for each pool
-    const poolIds = memberships.map(m => m.pool.id);
+    const poolIds = memberships.map((m) => m.pool.id);
     const allPredictions = await prisma.prediction.findMany({
       where: {
         userId,
@@ -569,8 +582,8 @@ export class PredictionService {
     });
 
     // Get unique years from pools
-    const years = [...new Set(memberships.map(m => m.pool.year))];
-    
+    const years = [...new Set(memberships.map((m) => m.pool.year))];
+
     // Get total category count for each year
     const categoryCountsByYear: Record<string, number> = {};
     for (const year of years) {
@@ -581,31 +594,32 @@ export class PredictionService {
     }
 
     // Group predictions by pool and count them
-    const submissions = memberships.map(membership => {
-      const poolPredictions = allPredictions.filter(p => p.poolId === membership.pool.id);
-      const totalCategories = categoryCountsByYear[membership.pool.year] || 0;
-      return {
-        poolId: membership.pool.id,
-        poolName: membership.pool.name,
-        year: membership.pool.year,
-        submissionName: membership.submissionName,
-        predictionCount: poolPredictions.length,
-        totalCategories,
-        predictions: poolPredictions,
-      };
-    }).filter(submission => {
-      // Only return pools with all categories completed
-      return submission.predictionCount > 0 && submission.predictionCount === submission.totalCategories;
-    });
+    const submissions = memberships
+      .map((membership) => {
+        const poolPredictions = allPredictions.filter((p) => p.poolId === membership.pool.id);
+        const totalCategories = categoryCountsByYear[membership.pool.year] || 0;
+        return {
+          poolId: membership.pool.id,
+          poolName: membership.pool.name,
+          year: membership.pool.year,
+          submissionName: membership.submissionName,
+          predictionCount: poolPredictions.length,
+          totalCategories,
+          predictions: poolPredictions,
+        };
+      })
+      .filter((submission) => {
+        // Only return pools with all categories completed
+        return (
+          submission.predictionCount > 0 &&
+          submission.predictionCount === submission.totalCategories
+        );
+      });
 
     return submissions;
   }
 
-  async copyPredictionsFromPool(
-    userId: string,
-    targetPoolId: string,
-    sourcePoolId: string
-  ) {
+  async copyPredictionsFromPool(userId: string, targetPoolId: string, sourcePoolId: string) {
     // Verify user is a member of both pools
     const targetMembership = await prisma.poolMember.findUnique({
       where: {
@@ -700,7 +714,10 @@ export class PredictionService {
 
       // Get current odds for the nominee in the target pool
       const fullCategoryId = `${sourcePrediction.categoryId}-${targetPool.year}`;
-      const currentOdds = await oddsService.getCurrentOdds(fullCategoryId, sourcePrediction.nomineeId);
+      const currentOdds = await oddsService.getCurrentOdds(
+        fullCategoryId,
+        sourcePrediction.nomineeId,
+      );
 
       // Check if prediction already exists in target pool
       const existingPrediction = await prisma.prediction.findUnique({

@@ -6,18 +6,18 @@ const KALSHI_API_BASE = 'https://api.elections.kalshi.com/trade-api/v2';
 // Map Oscar categories to Kalshi event tickers
 const categoryToKalshiEvent: Record<string, string> = {
   'best-picture': 'KXOSCARPIC-26',
-  'directing': 'KXOSCARDIR-26',
+  directing: 'KXOSCARDIR-26',
   'actor-leading': 'KXOSCARACTO-26',
   'actress-leading': 'KXOSCARACTR-26',
   'actor-supporting': 'KXOSCARSUPACTO-26',
   'actress-supporting': 'KXOSCARSUPACTR-26',
   'writing-original': 'KXOSCARSPLAY-26',
   'writing-adapted': 'KXOSCARASPLAY-26',
-  'cinematography': 'KXOSCARCINE-26',
+  cinematography: 'KXOSCARCINE-26',
   'film-editing': 'KXOSCAREDIT-26',
   'music-score': 'KXOSCARSCORE-26',
   'music-song': 'KXOSCARSONG-26',
-  'sound': 'KXOSCARSOUND-26',
+  sound: 'KXOSCARSOUND-26',
   'production-design': 'KXOSCARPROD-26',
   'visual-effects': 'KXOSCARVIS-26',
   'costume-design': 'KXOSCARCOSTUME-26',
@@ -28,7 +28,7 @@ const categoryToKalshiEvent: Record<string, string> = {
   'documentary-short': 'KXOSCARDSFILM-26',
   'animated-short': 'KXOSCARAS-26b',
   'live-action-short': 'KXOSCARLASF-26',
-  'casting': 'KXOSCARCASTING-26',
+  casting: 'KXOSCARCASTING-26',
 };
 
 const CORS_PROXIES = [
@@ -55,7 +55,7 @@ export class KalshiService {
           const response = await fetch(proxyUrl);
 
           if (response.ok) {
-            const data = await response.json() as any;
+            const data = (await response.json()) as any;
 
             if (data.error) {
               if (data.error.code === 'not_found' || response.status === 404) {
@@ -68,19 +68,25 @@ export class KalshiService {
             }
 
             if (data.event && data.event.markets && data.event.markets.length > 0) {
-              console.log(`Found ${data.event.markets.length} markets for ${eventTicker} via events endpoint`);
+              console.log(
+                `Found ${data.event.markets.length} markets for ${eventTicker} via events endpoint`,
+              );
               return { markets: data.event.markets };
             }
 
             if (data.markets && data.markets.length > 0) {
-              console.log(`Found ${data.markets.length} markets for ${eventTicker} via markets endpoint`);
+              console.log(
+                `Found ${data.markets.length} markets for ${eventTicker} via markets endpoint`,
+              );
               return data;
             }
           } else if (response.status === 404) {
             console.log(`404 response for ${eventTicker} (URL: ${apiUrl})`);
             break;
           } else {
-            console.log(`Non-200 response (${response.status}) for ${eventTicker} (URL: ${apiUrl})`);
+            console.log(
+              `Non-200 response (${response.status}) for ${eventTicker} (URL: ${apiUrl})`,
+            );
           }
         } catch (error) {
           console.log(`Error fetching ${eventTicker} from ${apiUrl}:`, error);
@@ -131,7 +137,7 @@ export class KalshiService {
   matchNomineeToMarket(
     nomineeName: string,
     nomineeFilm: string | null,
-    markets: any
+    markets: any,
   ): { market: any; price: number } | null {
     if (!markets || !markets.markets || markets.markets.length === 0) {
       return null;
@@ -147,8 +153,12 @@ export class KalshiService {
       // Normalize market fields for comparison
       const marketTitle = market.title ? this.normalizeSpecialCharacters(market.title) : '';
       const marketTicker = market.ticker ? this.normalizeSpecialCharacters(market.ticker) : '';
-      const marketSubtitle = market.subtitle ? this.normalizeSpecialCharacters(market.subtitle) : '';
-      const marketYesSubTitle = market.yes_sub_title ? this.normalizeSpecialCharacters(market.yes_sub_title) : '';
+      const marketSubtitle = market.subtitle
+        ? this.normalizeSpecialCharacters(market.subtitle)
+        : '';
+      const marketYesSubTitle = market.yes_sub_title
+        ? this.normalizeSpecialCharacters(market.yes_sub_title)
+        : '';
 
       // Strategy 1: Exact match
       if (marketTitle === searchName || (searchFilm && marketTitle === searchFilm)) {
@@ -166,20 +176,27 @@ export class KalshiService {
       if (
         marketTicker.includes(searchNameSlug) ||
         marketTitle.includes(searchNameSlug) ||
-        (searchFilmSlug && (marketTicker.includes(searchFilmSlug) || marketTitle.includes(searchFilmSlug)))
+        (searchFilmSlug &&
+          (marketTicker.includes(searchFilmSlug) || marketTitle.includes(searchFilmSlug)))
       ) {
         const price = this.getMarketPrice(market);
         if (price !== null) return { market, price };
       }
 
       // Strategy 4: Subtitle match
-      if (marketSubtitle.includes(searchName) || (searchFilm && marketSubtitle.includes(searchFilm))) {
+      if (
+        marketSubtitle.includes(searchName) ||
+        (searchFilm && marketSubtitle.includes(searchFilm))
+      ) {
         const price = this.getMarketPrice(market);
         if (price !== null) return { market, price };
       }
 
       // Strategy 5: Yes subtitle match
-      if (marketYesSubTitle.includes(searchName) || (searchFilm && marketYesSubTitle.includes(searchFilm))) {
+      if (
+        marketYesSubTitle.includes(searchName) ||
+        (searchFilm && marketYesSubTitle.includes(searchFilm))
+      ) {
         const price = this.getMarketPrice(market);
         if (price !== null) return { market, price };
       }
@@ -206,10 +223,10 @@ export class KalshiService {
   async createOddsSnapshot(categoryId: string, nominees: any[]): Promise<void> {
     // Extract base category ID (remove year suffix if present)
     // categoryId might be "best-picture-2026", but we need "best-picture" for the lookup
-    const baseCategoryId = categoryId.includes('-2026') 
-      ? categoryId.replace('-2026', '') 
+    const baseCategoryId = categoryId.includes('-2026')
+      ? categoryId.replace('-2026', '')
       : categoryId.replace(/-\d{4}$/, ''); // Remove any 4-digit year suffix
-    
+
     const markets = await this.getCategoryMarkets(baseCategoryId);
     if (!markets) {
       console.log(`No markets found for category ${baseCategoryId} (full ID: ${categoryId})`);
@@ -232,12 +249,12 @@ export class KalshiService {
         // Try matching with just the film name first (e.g., "Sirāt" instead of "Spain - Sirāt")
         match = this.matchNomineeToMarket(nomineeFilm, null, markets);
       }
-      
+
       // If no match yet, try standard approach
       if (!match) {
         match = this.matchNomineeToMarket(nomineeName, nomineeFilm, markets);
       }
-      
+
       // If no match and this is casting category, try multiple strategies:
       // 1. Try matching with casting director name as primary
       // 2. Try matching with film name only (no director)
@@ -258,20 +275,27 @@ export class KalshiService {
           data: {
             categoryId, // Use full category ID with year for database
             nomineeId: nominee.id,
-            nomineeName: baseCategoryId === 'casting' ? (castingDirector || nomineeName) : nomineeName,
+            nomineeName:
+              baseCategoryId === 'casting' ? castingDirector || nomineeName : nomineeName,
             nomineeFilm: baseCategoryId === 'casting' ? nomineeName : nomineeFilm,
             oddsPercentage: match.price,
             snapshotTime,
           },
         });
-        console.log(`✓ Created odds snapshot for ${baseCategoryId} nominee ${nominee.id} (${nomineeName}): ${match.price}%`);
+        console.log(
+          `✓ Created odds snapshot for ${baseCategoryId} nominee ${nominee.id} (${nomineeName}): ${match.price}%`,
+        );
       } else {
-        console.log(`✗ No odds match found for ${baseCategoryId} nominee ${nominee.id}: ${nomineeName}${castingDirector ? ` (director: ${castingDirector})` : ''}`);
+        console.log(
+          `✗ No odds match found for ${baseCategoryId} nominee ${nominee.id}: ${nomineeName}${castingDirector ? ` (director: ${castingDirector})` : ''}`,
+        );
       }
     }
   }
 
-  async checkMarketResolution(categoryId: string): Promise<{ nomineeId: string | null; resolved: boolean }> {
+  async checkMarketResolution(
+    categoryId: string,
+  ): Promise<{ nomineeId: string | null; resolved: boolean }> {
     const markets = await this.getCategoryMarkets(categoryId);
     if (!markets || !markets.markets) {
       return { nomineeId: null, resolved: false };

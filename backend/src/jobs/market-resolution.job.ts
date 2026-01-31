@@ -10,18 +10,18 @@ const scoringService = new ScoringService();
 // Category to Kalshi event mapping (same as in kalshi.service.ts)
 const categoryToKalshiEvent: Record<string, string> = {
   'best-picture': 'KXOSCARPIC-26',
-  'directing': 'KXOSCARDIR-26',
+  directing: 'KXOSCARDIR-26',
   'actor-leading': 'KXOSCARACTO-26',
   'actress-leading': 'KXOSCARACTR-26',
   'actor-supporting': 'KXOSCARSUPACTO-26',
   'actress-supporting': 'KXOSCARSUPACTR-26',
   'writing-original': 'KXOSCARSPLAY-26',
   'writing-adapted': 'KXOSCARASPLAY-26',
-  'cinematography': 'KXOSCARCINE-26',
+  cinematography: 'KXOSCARCINE-26',
   'film-editing': 'KXOSCAREDIT-26',
   'music-score': 'KXOSCARSCORE-26',
   'music-song': 'KXOSCARSONG-26',
-  'sound': 'KXOSCARSOUND-26',
+  sound: 'KXOSCARSOUND-26',
   'production-design': 'KXOSCARPROD-26',
   'visual-effects': 'KXOSCARVIS-26',
   'costume-design': 'KXOSCARCOSTUME-26',
@@ -32,13 +32,13 @@ const categoryToKalshiEvent: Record<string, string> = {
   'documentary-short': 'KXOSCARDSFILM-26',
   'animated-short': 'KXOSCARAS-26b',
   'live-action-short': 'KXOSCARLASF-26',
-  'casting': 'KXOSCARCasting-26',
+  casting: 'KXOSCARCasting-26',
 };
 
 async function matchWinnerToNominee(
   winnerName: string,
   categoryId: string,
-  nominees: any[]
+  nominees: any[],
 ): Promise<string | null> {
   const searchName = winnerName.toLowerCase().trim();
 
@@ -103,10 +103,10 @@ export function startMarketResolutionJob() {
       for (const category of categories) {
         // Extract base category ID (remove year suffix) for Kalshi lookup
         // category.id is like "best-picture-2026", but Kalshi needs "best-picture"
-        const baseCategoryId = category.id.includes('-2026') 
-          ? category.id.replace('-2026', '') 
+        const baseCategoryId = category.id.includes('-2026')
+          ? category.id.replace('-2026', '')
           : category.id.replace(/-\d{4}$/, ''); // Remove any 4-digit year suffix
-        
+
         const markets = await kalshiService.getCategoryMarkets(baseCategoryId);
 
         if (!markets || !markets.markets) {
@@ -118,18 +118,17 @@ export function startMarketResolutionJob() {
           if (market.status === 'resolved' || market.status === 'closed') {
             // Check if YES outcome won
             if (market.yes_price === 100 || market.last_price === 100) {
-              const winnerName =
-                market.yes_sub_title || market.subtitle || market.title || '';
+              const winnerName = market.yes_sub_title || market.subtitle || market.title || '';
 
               // Match winner to nominee
               const nomineeId = await matchWinnerToNominee(
                 winnerName,
                 category.id, // Use full category ID with year for database
-                category.nominees.map(n => ({
+                category.nominees.map((n) => ({
                   id: n.id,
                   name: n.name,
                   film: n.film || undefined,
-                }))
+                })),
               );
 
               if (nomineeId) {
@@ -137,7 +136,7 @@ export function startMarketResolutionJob() {
                 for (const pool of pools) {
                   // Check if winner already set (don't overwrite manual entries)
                   const existingWinner = pool.actualWinners.find(
-                    (w) => w.categoryId === category.id
+                    (w) => w.categoryId === category.id,
                   );
 
                   if (!existingWinner || existingWinner.isAutoDetected) {
@@ -164,7 +163,7 @@ export function startMarketResolutionJob() {
                     });
 
                     console.log(
-                      `Auto-detected winner for pool ${pool.id}, category ${category.id}: ${nomineeId}`
+                      `Auto-detected winner for pool ${pool.id}, category ${category.id}: ${nomineeId}`,
                     );
                   }
                 }

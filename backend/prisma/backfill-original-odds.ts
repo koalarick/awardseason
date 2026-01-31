@@ -28,7 +28,7 @@ async function main() {
   // Filter predictions that need updating (where originalOddsPercentage would be null)
   // We'll update all predictions that have oddsPercentage set
   const predictionsToUpdate = allPredictions.filter(
-    (p) => p.oddsPercentage !== null && p.oddsPercentage !== undefined
+    (p) => p.oddsPercentage !== null && p.oddsPercentage !== undefined,
   );
 
   console.log(`Found ${predictionsToUpdate.length} predictions to update`);

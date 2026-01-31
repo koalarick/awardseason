@@ -13,7 +13,8 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     const { poolId } = req.params;
     const userId = req.user!.id;
     const userRole = req.user!.role;
-    const { categoryPoints, oddsMultiplierEnabled, oddsMultiplierFormula, payoutStructure } = req.body;
+    const { categoryPoints, oddsMultiplierEnabled, oddsMultiplierFormula, payoutStructure } =
+      req.body;
 
     // Verify user is pool owner or superuser
     const isOwner = await poolService.isPoolOwner(poolId, userId);
@@ -60,20 +61,23 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     }
 
     if (hasWinners) {
-      res.status(403).json({ error: 'Cannot update pool settings after winners have been announced' });
+      res
+        .status(403)
+        .json({ error: 'Cannot update pool settings after winners have been announced' });
       return;
     }
 
     const updateData: any = {
       categoryPoints: categoryPoints || undefined,
-      oddsMultiplierEnabled: oddsMultiplierEnabled !== undefined ? oddsMultiplierEnabled : undefined,
+      oddsMultiplierEnabled:
+        oddsMultiplierEnabled !== undefined ? oddsMultiplierEnabled : undefined,
       oddsMultiplierFormula: oddsMultiplierFormula || undefined,
     };
-    
+
     if (payoutStructure !== undefined) {
       updateData.payoutStructure = payoutStructure;
     }
-    
+
     const settings = await prisma.poolSettings.update({
       where: { poolId },
       data: updateData,

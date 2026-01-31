@@ -22,10 +22,7 @@ router.get('/oauth/token', (req, res) => {
 });
 
 // Google OAuth routes
-router.get(
-  '/oauth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/oauth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get(
   '/oauth/google/callback',
@@ -33,7 +30,7 @@ router.get(
   (req, res) => {
     const { user, token } = req.user as any;
     const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:5173';
-    
+
     // Set token in httpOnly cookie instead of URL
     res.cookie('token', token, {
       httpOnly: true,
@@ -41,16 +38,18 @@ router.get(
       sameSite: 'lax', // Protection against CSRF
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
-    
+
     // Redirect to frontend without token in URL
     res.redirect(`${frontendUrl}/auth/callback`);
-  }
+  },
 );
 
 // Apple OAuth routes
 // Note: Apple Sign In requires additional setup - can be implemented later
 router.get('/oauth/apple', (req, res) => {
-  res.status(501).json({ error: 'Apple OAuth not yet implemented. Use Google OAuth or email/password.' });
+  res
+    .status(501)
+    .json({ error: 'Apple OAuth not yet implemented. Use Google OAuth or email/password.' });
 });
 
 export default router;

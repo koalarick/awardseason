@@ -59,10 +59,10 @@ async function main() {
   // Load nominees data from JSON file
   let nomineesByYear: any = {};
   const possiblePaths = [
-    '/app/nominees.json',           // Absolute path in container (mounted from root or backend/)
-    path.join(process.cwd(), 'nominees.json'),  // From current working directory (/app)
-    path.join(__dirname, '../nominees.json'),  // Relative from prisma/ to backend/nominees.json
-    path.join(__dirname, '../../nominees.json'),  // Relative from prisma/ to root
+    '/app/nominees.json', // Absolute path in container (mounted from root or backend/)
+    path.join(process.cwd(), 'nominees.json'), // From current working directory (/app)
+    path.join(__dirname, '../nominees.json'), // Relative from prisma/ to backend/nominees.json
+    path.join(__dirname, '../../nominees.json'), // Relative from prisma/ to root
   ];
 
   console.log('Looking for nominees.json...');
@@ -96,7 +96,7 @@ async function main() {
   }
 
   console.log('Loaded nomineesByYear. Available years:', Object.keys(nomineesByYear));
-  
+
   if (nomineesByYear['2026']) {
     console.log('2026 data type:', typeof nomineesByYear['2026']);
     console.log('2026 data isArray:', Array.isArray(nomineesByYear['2026']));
@@ -109,9 +109,9 @@ async function main() {
   // Create superuser (you can change the email/password)
   const superuserEmail = process.env.SUPERUSER_EMAIL || 'admin@example.com';
   const superuserPassword = process.env.SUPERUSER_PASSWORD || 'admin123';
-  
+
   const passwordHash = await bcrypt.hash(superuserPassword, 10);
-  
+
   const superuser = await prisma.user.upsert({
     where: { email: superuserEmail },
     update: {},
@@ -127,7 +127,7 @@ async function main() {
   // Create public global pool for 2026 Oscars
   const currentYear = '2026';
   const ceremonyDate = new Date('2026-03-08T20:00:00Z'); // Oscars ceremony date (adjust as needed)
-  
+
   // Check if global pool already exists
   let globalPool = await prisma.pool.findFirst({
     where: {
@@ -194,14 +194,14 @@ async function main() {
     has2026Number: !!nomineesByYear[parseInt(year)],
     type2026: typeof nomineesByYear[year],
     isArray2026: Array.isArray(nomineesByYear[year]),
-    length2026: nomineesByYear[year]?.length
+    length2026: nomineesByYear[year]?.length,
   });
-  
+
   const yearData = nomineesByYear[year] || nomineesByYear[parseInt(year)];
-  
+
   if (yearData && Array.isArray(yearData)) {
     console.log(`Seeding ${yearData.length} categories for year ${year}...`);
-    
+
     // Clear existing nominees and categories for this year first (in case of schema changes)
     console.log('Clearing existing data for year', year);
     await prisma.nominee.deleteMany({
@@ -216,17 +216,18 @@ async function main() {
         year: year,
       },
     });
-    
+
     for (const categoryData of yearData) {
       // Create composite ID: categoryId-year
       const categoryId = `${categoryData.id}-${year}`;
-      
+
       // Determine default points based on category type
       // Use explicit defaultPoints from JSON if provided, otherwise use category type defaults
-      const defaultPoints = categoryData.defaultPoints !== undefined 
-        ? categoryData.defaultPoints 
-        : getDefaultPointsForCategory(categoryData.id);
-      
+      const defaultPoints =
+        categoryData.defaultPoints !== undefined
+          ? categoryData.defaultPoints
+          : getDefaultPointsForCategory(categoryData.id);
+
       // Upsert category
       const category = await prisma.category.upsert({
         where: {
@@ -281,9 +282,9 @@ async function main() {
         console.log(`  - Seeded ${categoryData.nominees.length} nominees for ${category.name}`);
       }
     }
-    
+
     console.log(`Categories and nominees seeded for year ${year}`);
-    
+
     // Create initial odds snapshots after seeding categories and nominees
     console.log('Creating initial odds snapshots...');
     try {
@@ -297,11 +298,11 @@ async function main() {
         },
         orderBy: { name: 'asc' },
       });
-      
-      const formattedCategories = categoriesWithNominees.map(category => ({
+
+      const formattedCategories = categoriesWithNominees.map((category) => ({
         id: category.id, // Full ID with year: "best-picture-2026"
         name: category.name,
-        nominees: category.nominees.map(nominee => ({
+        nominees: category.nominees.map((nominee) => ({
           id: nominee.id,
           name: nominee.name,
           film: nominee.film || undefined,
@@ -309,11 +310,14 @@ async function main() {
           producers: nominee.producers || undefined,
         })),
       }));
-      
+
       await oddsService.createSnapshotForYear(year, formattedCategories);
       console.log('Odds snapshots created successfully');
     } catch (error: any) {
-      console.error('Error creating odds snapshots (this is okay if Kalshi API is not configured):', error.message);
+      console.error(
+        'Error creating odds snapshots (this is okay if Kalshi API is not configured):',
+        error.message,
+      );
       console.log('Odds snapshots will be created automatically by the hourly cron job');
     }
   } else {

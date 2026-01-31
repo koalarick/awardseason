@@ -20,7 +20,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       userId,
       poolId,
       categoryId,
-      nomineeId
+      nomineeId,
     );
 
     res.json(prediction);
@@ -133,7 +133,11 @@ router.post('/copy-from-pool', authenticate, async (req: AuthRequest, res: Respo
       return;
     }
 
-    const result = await predictionService.copyPredictionsFromPool(userId, targetPoolId, sourcePoolId);
+    const result = await predictionService.copyPredictionsFromPool(
+      userId,
+      targetPoolId,
+      sourcePoolId,
+    );
     res.json(result);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

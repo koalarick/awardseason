@@ -9,7 +9,7 @@ declare global {
   namespace Express {
     // Override Express's User type with SafeUser (no passwordHash)
     interface User extends SafeUser {}
-    
+
     interface Request {
       user?: SafeUser;
     }

@@ -1,38 +1,41 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const { register } = useAuth()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
+      setError('Passwords do not match');
+      return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
-      return
+      setError('Password must be at least 6 characters long');
+      return;
     }
 
     try {
-      await register(email, password)
-      navigate('/')
+      await register(email, password);
+      navigate('/');
     } catch (err: any) {
-      console.error('Registration error:', err)
-      const errorMessage = err.response?.data?.error || err.message || 'Registration failed. Please check your connection and try again.'
-      setError(errorMessage)
+      console.error('Registration error:', err);
+      const errorMessage =
+        err.response?.data?.error ||
+        err.message ||
+        'Registration failed. Please check your connection and try again.';
+      setError(errorMessage);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -98,5 +101,5 @@ export default function Register() {
         </form>
       </div>
     </div>
-  )
+  );
 }

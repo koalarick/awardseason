@@ -3,10 +3,7 @@ export type MemberWithJoin = {
   joinedAt?: Date | string | null;
 };
 
-export const buildFallbackNameMap = (
-  members: MemberWithJoin[],
-  label: string = 'Ballot'
-) => {
+export const buildFallbackNameMap = (members: MemberWithJoin[], label: string = 'Ballot') => {
   const sorted = [...members].sort((a, b) => {
     const aTime = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
     const bTime = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
@@ -25,7 +22,7 @@ export const buildFallbackNameMap = (
 
 export const resolveSubmissionName = (
   submissionName: string | null | undefined,
-  fallbackName: string
+  fallbackName: string,
 ) => {
   const trimmed = submissionName?.trim();
   return trimmed ? trimmed : fallbackName;

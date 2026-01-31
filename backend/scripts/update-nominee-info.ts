@@ -29,7 +29,9 @@ function getArgValue(flag: string): string | undefined {
   return arg ? arg.slice(prefix.length) : undefined;
 }
 
-async function loadNominees(possiblePaths: string[]): Promise<{ data: NomineesByYear; source: string } | null> {
+async function loadNominees(
+  possiblePaths: string[],
+): Promise<{ data: NomineesByYear; source: string } | null> {
   for (const jsonPath of possiblePaths) {
     try {
       await fs.access(jsonPath);
@@ -103,9 +105,10 @@ async function updateNomineeInfo() {
             blurb_sentence_1: nomineeData.blurb_sentence_1,
             blurb_sentence_2: nomineeData.blurb_sentence_2,
             imdb_url: nomineeData.imdb_url,
-            letterboxd_url: nomineeData.letterboxd_url && nomineeData.letterboxd_url.trim()
-              ? nomineeData.letterboxd_url
-              : null,
+            letterboxd_url:
+              nomineeData.letterboxd_url && nomineeData.letterboxd_url.trim()
+                ? nomineeData.letterboxd_url
+                : null,
           },
         });
         updated++;

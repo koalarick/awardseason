@@ -1,7 +1,7 @@
-const js = require('@eslint/js')
-const tsParser = require('@typescript-eslint/parser')
-const tsPlugin = require('@typescript-eslint/eslint-plugin')
-const globals = require('globals')
+const js = require('@eslint/js');
+const tsParser = require('@typescript-eslint/parser');
+const tsPlugin = require('@typescript-eslint/eslint-plugin');
+const globals = require('globals');
 
 module.exports = [
   { ignores: ['dist', 'node_modules'] },
@@ -27,4 +27,4 @@ module.exports = [
       'no-console': 'off',
     },
   },
-]
+];

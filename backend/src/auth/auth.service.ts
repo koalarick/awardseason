@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient, User } from '@prisma/client';
 import { JwtPayload } from '../types';
+import { emailService } from '../services/email.service';
 
 const prisma = new PrismaClient();
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
@@ -94,6 +95,20 @@ export class AuthService {
     // Generate token
     const token = this.generateToken(user);
 
+    try {
+      await emailService.sendWelcomeEmail(user.email);
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+    }
+    const inboundEmail = process.env.INBOUND_EMAIL;
+    if (inboundEmail && inboundEmail !== user.email) {
+      try {
+        await emailService.sendNewUserAlert(inboundEmail, user.email, 'password');
+      } catch (error) {
+        console.error('Failed to send superuser new user email:', error);
+      }
+    }
+
     return { user, token };
   }
 
@@ -127,7 +142,7 @@ export class AuthService {
   async findOrCreateOAuthUser(
     email: string,
     oauthProvider: string,
-    oauthId: string
+    oauthId: string,
   ): Promise<{ user: User; token: string }> {
     // Try to find existing user by email
     let user = await prisma.user.findUnique({
@@ -189,6 +204,21 @@ export class AuthService {
       } catch (error) {
         // Don't fail OAuth if auto-join fails
         console.error('Failed to auto-join global pool:', error);
+      }
+
+      try {
+        await emailService.sendWelcomeEmail(user.email);
+      } catch (error) {
+        console.error('Failed to send welcome email:', error);
+      }
+
+      const inboundEmail = process.env.INBOUND_EMAIL;
+      if (inboundEmail && inboundEmail !== user.email) {
+        try {
+          await emailService.sendNewUserAlert(inboundEmail, user.email, oauthProvider);
+        } catch (error) {
+          console.error('Failed to send superuser new user email:', error);
+        }
       }
     }
 
