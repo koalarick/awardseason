@@ -1782,73 +1782,18 @@ function SubmissionsList({
                   >
                     {/* Header Section */}
                     <div className="px-4 pt-4 pb-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <span className="font-bold oscars-gold text-xl flex-shrink-0 leading-none">
-                            #{submission.originalRank}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold oscars-dark text-base mb-0.5 leading-tight whitespace-normal break-words">
-                              {displayName}
-                            </div>
-                            {!pool?.isPublic && (
-                              <div className="text-xs text-gray-500 truncate mt-0.5">
-                                {submission.userEmail}
-                              </div>
-                            )}
+                      <div className="flex items-start gap-3">
+                        <span className="font-bold oscars-gold text-xl flex-shrink-0 leading-none">
+                          #{submission.originalRank}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold oscars-dark text-base mb-1 leading-tight whitespace-normal break-words">
+                            {displayName}
                           </div>
-                        </div>
-
-                        {/* Status Badges - Inline */}
-                        <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
-                          <span
-                            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${
-                              submission.isComplete
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
-                            {submission.isComplete ? '✓ Complete' : 'In Progress'}
-                          </span>
-                          {pool?.isPaidPool && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (canEditSettings) {
-                                  updatePaymentStatus.mutate({
-                                    userId: submission.userId,
-                                    hasPaid: !submission.hasPaid,
-                                  });
-                                }
-                              }}
-                              disabled={!canEditSettings || updatePaymentStatus.isPending}
-                              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
-                                submission.hasPaid
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
-                              } ${canEditSettings ? 'cursor-pointer' : 'cursor-default'} disabled:opacity-50`}
-                            >
-                              {updatePaymentStatus.isPending
-                                ? '...'
-                                : submission.hasPaid
-                                  ? '✓ Paid'
-                                  : 'Unpaid'}
-                            </button>
-                          )}
-                          {canRemove && submission.userId !== pool?.ownerId && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSubmissionToRemove({
-                                  userId: submission.userId,
-                                  submissionName: submission.submissionName,
-                                });
-                              }}
-                              className="px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-colors whitespace-nowrap"
-                              title="Remove ballot"
-                            >
-                              ×
-                            </button>
+                          {!pool?.isPublic && (
+                            <div className="text-xs text-gray-500 truncate mt-0.5">
+                              {submission.userEmail}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1881,6 +1826,61 @@ function SubmissionsList({
                             {submission.totalEarnedPoints.toFixed(1)}
                           </p>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Status Badges - Below Stats */}
+                    <div className="px-4 pb-4 pt-3 border-t border-gray-200">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${
+                            submission.isComplete
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {submission.isComplete ? '✓ Complete' : 'In Progress'}
+                        </span>
+                        {pool?.isPaidPool && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (canEditSettings) {
+                                updatePaymentStatus.mutate({
+                                  userId: submission.userId,
+                                  hasPaid: !submission.hasPaid,
+                                });
+                              }
+                            }}
+                            disabled={!canEditSettings || updatePaymentStatus.isPending}
+                            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                              submission.hasPaid
+                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                            } ${canEditSettings ? 'cursor-pointer' : 'cursor-default'} disabled:opacity-50`}
+                          >
+                            {updatePaymentStatus.isPending
+                              ? '...'
+                              : submission.hasPaid
+                                ? '✓ Paid'
+                                : 'Unpaid'}
+                          </button>
+                        )}
+                        {canRemove && submission.userId !== pool?.ownerId && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSubmissionToRemove({
+                                userId: submission.userId,
+                                submissionName: submission.submissionName,
+                              });
+                            }}
+                            className="px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-colors whitespace-nowrap"
+                            title="Remove ballot"
+                          >
+                            ×
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
