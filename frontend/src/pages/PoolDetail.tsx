@@ -1525,7 +1525,7 @@ function InviteModal({
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Generate invite link - using invite route
-  const inviteLink = `${window.location.origin}/pool/${pool.id}/invite`;
+  const inviteLink = `https://awardseason.fun/pool/${pool.id}/invite`;
 
   const copyToClipboard = async (text: string, setCopied: (value: boolean) => void) => {
     try {
