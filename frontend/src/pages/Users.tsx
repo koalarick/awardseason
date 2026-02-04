@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -18,6 +18,12 @@ type UserSummary = {
   };
 };
 
+type RoleUpdate = {
+  userId: string;
+  role: string;
+  previousRole: string;
+};
+
 const formatDate = (value?: string) => {
   if (!value) return '-';
   const date = new Date(value);
@@ -28,13 +34,25 @@ const formatDate = (value?: string) => {
 export default function Users() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const [roleEdits, setRoleEdits] = useState<Record<string, string>>({});
+  const [roleSaving, setRoleSaving] = useState<Record<string, boolean>>({});
+  const [passwordEdits, setPasswordEdits] = useState<Record<string, string>>({});
+  const [passwordEditing, setPasswordEditing] = useState<Record<string, boolean>>({});
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && user.role !== 'SUPERUSER') {
       navigate('/');
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (!statusMessage) return;
+    const timer = setTimeout(() => setStatusMessage(null), 2500);
+    return () => clearTimeout(timer);
+  }, [statusMessage]);
 
   const {
     data: users,
@@ -47,6 +65,54 @@ export default function Users() {
       return response.data as UserSummary[];
     },
     enabled: user?.role === 'SUPERUSER',
+  });
+
+  useEffect(() => {
+    if (!users) return;
+    const initialRoles: Record<string, string> = {};
+    users.forEach((entry) => {
+      initialRoles[entry.id] = entry.role;
+    });
+    setRoleEdits(initialRoles);
+  }, [users]);
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: RoleUpdate) => {
+      const response = await api.patch(`/users/${userId}/role`, { role });
+      return response.data;
+    },
+    onMutate: (variables) => {
+      setRoleSaving((prev) => ({ ...prev, [variables.userId]: true }));
+      return { userId: variables.userId };
+    },
+    onSuccess: () => {
+      setStatusMessage('Role updated.');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (error: any, variables) => {
+      setRoleEdits((prev) => ({ ...prev, [variables.userId]: variables.previousRole }));
+      setStatusMessage(error?.response?.data?.error || 'Failed to update role.');
+    },
+    onSettled: (_data, _error, variables) => {
+      if (variables?.userId) {
+        setRoleSaving((prev) => ({ ...prev, [variables.userId]: false }));
+      }
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const response = await api.patch(`/users/${userId}/password`, { password });
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      setStatusMessage('Password updated.');
+      setPasswordEdits((prev) => ({ ...prev, [variables.userId]: '' }));
+      setPasswordEditing((prev) => ({ ...prev, [variables.userId]: false }));
+    },
+    onError: (error: any) => {
+      setStatusMessage(error?.response?.data?.error || 'Failed to update password.');
+    },
   });
 
   const filteredUsers = useMemo(() => {
@@ -63,6 +129,15 @@ export default function Users() {
   const totalUsers = users?.length || 0;
   const superuserCount = users?.filter((entry) => entry.role === 'SUPERUSER').length || 0;
   const oauthUsers = users?.filter((entry) => entry.oauthProvider).length || 0;
+
+  const handleRoleChange = (userId: string, serverRole: string, nextRole: string) => {
+    const previousRole = roleEdits[userId] ?? serverRole;
+    setRoleEdits((prev) => ({ ...prev, [userId]: nextRole }));
+    if (nextRole === serverRole) {
+      return;
+    }
+    updateRoleMutation.mutate({ userId, role: nextRole, previousRole });
+  };
 
   if (user?.role !== 'SUPERUSER') {
     return null;
@@ -157,6 +232,12 @@ export default function Users() {
               </div>
             </div>
 
+            {statusMessage && (
+              <div className="text-sm text-slate-700 bg-slate-100 border border-slate-200 rounded-md px-3 py-2">
+                {statusMessage}
+              </div>
+            )}
+
             {isLoading && <p className="text-sm text-gray-600">Loading users...</p>}
 
             {isError && <p className="text-sm text-red-600">Failed to load users.</p>}
@@ -178,48 +259,219 @@ export default function Users() {
                         <th className="text-right px-4 py-2">Owned</th>
                         <th className="text-right px-4 py-2">Member</th>
                         <th className="text-right px-4 py-2">Predictions</th>
+                        <th className="text-left px-4 py-2">Password</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((entry) => (
-                        <tr key={entry.id} className="border-t border-gray-200">
-                          <td className="px-4 py-3">
-                            <div className="font-medium oscars-dark">{entry.email}</div>
-                            <div className="text-xs text-gray-500">ID: {entry.id}</div>
-                          </td>
-                          <td className="px-4 py-3">{entry.role}</td>
-                          <td className="px-4 py-3">{entry.oauthProvider || 'Password'}</td>
-                          <td className="px-4 py-3">{formatDate(entry.createdAt)}</td>
-                          <td className="px-4 py-3 text-right">{entry._count.ownedPools}</td>
-                          <td className="px-4 py-3 text-right">{entry._count.poolMemberships}</td>
-                          <td className="px-4 py-3 text-right">{entry._count.predictions}</td>
-                        </tr>
-                      ))}
+                      {filteredUsers.map((entry) => {
+                        const currentRole = roleEdits[entry.id] ?? entry.role;
+                        const isOauthUser = Boolean(entry.oauthProvider);
+                        const passwordValue = passwordEdits[entry.id] ?? '';
+                        const isEditingPassword = passwordEditing[entry.id] ?? false;
+                        const canSetPassword = !isOauthUser && passwordValue.trim().length >= 6;
+                        const isSavingRole = roleSaving[entry.id] ?? false;
+
+                        return (
+                          <tr key={entry.id} className="border-t border-gray-200">
+                            <td className="px-4 py-3">
+                              <div className="font-medium oscars-dark">{entry.email}</div>
+                              <div className="text-xs text-gray-500">ID: {entry.id}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <select
+                                  className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                  value={currentRole}
+                                  onChange={(event) =>
+                                    handleRoleChange(entry.id, entry.role, event.target.value)
+                                  }
+                                  disabled={isSavingRole}
+                                >
+                                  <option value="USER">USER</option>
+                                  <option value="SUPERUSER">SUPERUSER</option>
+                                </select>
+                                {isSavingRole && (
+                                  <span className="text-xs text-gray-500">Saving...</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">{entry.oauthProvider || 'Password'}</td>
+                            <td className="px-4 py-3">{formatDate(entry.createdAt)}</td>
+                            <td className="px-4 py-3 text-right">{entry._count.ownedPools}</td>
+                            <td className="px-4 py-3 text-right">{entry._count.poolMemberships}</td>
+                            <td className="px-4 py-3 text-right">{entry._count.predictions}</td>
+                            <td className="px-4 py-3">
+                              {isOauthUser ? (
+                                <span className="text-xs text-gray-500">OAuth user</span>
+                              ) : (
+                                <div className="space-y-2">
+                                  {!isEditingPassword ? (
+                                    <button
+                                      onClick={() =>
+                                        setPasswordEditing((prev) => ({
+                                          ...prev,
+                                          [entry.id]: true,
+                                        }))
+                                      }
+                                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 text-slate-700"
+                                    >
+                                      Change
+                                    </button>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="password"
+                                        value={passwordValue}
+                                        onChange={(event) =>
+                                          setPasswordEdits((prev) => ({
+                                            ...prev,
+                                            [entry.id]: event.target.value,
+                                          }))
+                                        }
+                                        placeholder="New password"
+                                        className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          updatePasswordMutation.mutate({
+                                            userId: entry.id,
+                                            password: passwordValue,
+                                          })
+                                        }
+                                        disabled={!canSetPassword || updatePasswordMutation.isPending}
+                                        className="px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 disabled:opacity-50"
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          setPasswordEditing((prev) => ({
+                                            ...prev,
+                                            [entry.id]: false,
+                                          }))
+                                        }
+                                        className="px-3 py-1.5 text-xs font-semibold rounded-md border border-transparent text-gray-500"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 <div className="md:hidden space-y-3">
-                  {filteredUsers.map((entry) => (
-                    <div key={entry.id} className="border border-gray-200 rounded-lg p-4 bg-white">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold oscars-dark">{entry.email}</p>
-                          <p className="text-xs text-gray-500">ID: {entry.id}</p>
+                  {filteredUsers.map((entry) => {
+                    const currentRole = roleEdits[entry.id] ?? entry.role;
+                    const isSavingRole = roleSaving[entry.id] ?? false;
+                    const isEditingPassword = passwordEditing[entry.id] ?? false;
+                    const passwordValue = passwordEdits[entry.id] ?? '';
+                    const canSetPassword = passwordValue.trim().length >= 6;
+
+                    return (
+                      <div key={entry.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold oscars-dark">{entry.email}</p>
+                            <p className="text-xs text-gray-500">ID: {entry.id}</p>
+                          </div>
+                          <span className="text-[10px] uppercase tracking-wide px-2 py-1 rounded border border-gray-200 bg-gray-50 text-gray-600">
+                            {currentRole}
+                          </span>
                         </div>
-                        <span className="text-[10px] uppercase tracking-wide px-2 py-1 rounded border border-gray-200 bg-gray-50 text-gray-600">
-                          {entry.role}
-                        </span>
+                        <div className="mt-3 text-xs text-gray-600 space-y-1">
+                          <div>Provider: {entry.oauthProvider || 'Password'}</div>
+                          <div>Joined: {formatDate(entry.createdAt)}</div>
+                          <div>Owned pools: {entry._count.ownedPools}</div>
+                          <div>Memberships: {entry._count.poolMemberships}</div>
+                          <div>Predictions: {entry._count.predictions}</div>
+                          <div className="pt-2">
+                            <div className="flex items-center gap-2">
+                              <select
+                                className="border border-gray-300 rounded-md px-2 py-1 text-xs"
+                                value={currentRole}
+                                onChange={(event) =>
+                                  handleRoleChange(entry.id, entry.role, event.target.value)
+                                }
+                                disabled={isSavingRole}
+                              >
+                                <option value="USER">USER</option>
+                                <option value="SUPERUSER">SUPERUSER</option>
+                              </select>
+                              {isSavingRole && (
+                                <span className="text-[10px] text-gray-500">Saving...</span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              {entry.oauthProvider ? (
+                                <span className="text-[10px] text-gray-500">OAuth user</span>
+                              ) : (
+                                <>
+                                  {isEditingPassword ? (
+                                    <>
+                                      <input
+                                        type="password"
+                                        value={passwordValue}
+                                        onChange={(event) =>
+                                          setPasswordEdits((prev) => ({
+                                            ...prev,
+                                            [entry.id]: event.target.value,
+                                          }))
+                                        }
+                                        placeholder="New password"
+                                        className="border border-gray-300 rounded-md px-2 py-1 text-xs"
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          updatePasswordMutation.mutate({
+                                            userId: entry.id,
+                                            password: passwordValue,
+                                          })
+                                        }
+                                        disabled={!canSetPassword || updatePasswordMutation.isPending}
+                                        className="px-3 py-1 text-[10px] font-semibold rounded-md border border-slate-300 text-slate-700 disabled:opacity-50"
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          setPasswordEditing((prev) => ({
+                                            ...prev,
+                                            [entry.id]: false,
+                                          }))
+                                        }
+                                        className="px-3 py-1 text-[10px] font-semibold rounded-md border border-transparent text-gray-500"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() =>
+                                        setPasswordEditing((prev) => ({
+                                          ...prev,
+                                          [entry.id]: true,
+                                        }))
+                                      }
+                                      className="px-3 py-1 text-[10px] font-semibold rounded-md border border-slate-300 text-slate-700"
+                                    >
+                                      Change password
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-3 text-xs text-gray-600 space-y-1">
-                        <div>Provider: {entry.oauthProvider || 'Password'}</div>
-                        <div>Joined: {formatDate(entry.createdAt)}</div>
-                        <div>Owned pools: {entry._count.ownedPools}</div>
-                        <div>Memberships: {entry._count.poolMemberships}</div>
-                        <div>Predictions: {entry._count.predictions}</div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
