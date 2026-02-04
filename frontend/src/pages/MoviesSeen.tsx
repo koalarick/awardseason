@@ -113,6 +113,14 @@ export default function MoviesSeen() {
   const confettiColors = watchLevelStyle.confettiColors;
 
   const fireRankConfetti = (colors: string[]) => {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+
     const originY = 0.02;
 
     confetti({
@@ -145,14 +153,6 @@ export default function MoviesSeen() {
     }
     previousRankIndexRef.current = rankIndex;
   }, [rankIndex, confettiColors]);
-
-  const watchLevelCopy = useMemo(() => {
-    if (seenCount === 0) return 'You are a First-Timer.';
-    if (seenCount <= 5) return 'You are a Red Carpet Regular.';
-    if (seenCount <= 10) return 'You are a Contender Tracker.';
-    if (seenCount <= 30) return 'You are a Cinephile.';
-    return 'You are an Auteur.';
-  }, [seenCount]);
 
   useEffect(() => {
     const measureHeader = () => {
@@ -255,7 +255,7 @@ export default function MoviesSeen() {
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         <div ref={summaryRef} className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
           <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between">
-            <h2 className="oscars-font text-base sm:text-lg font-bold">Seen It Checklist</h2>
+            <h2 className="oscars-font text-base sm:text-lg font-bold">Checklist</h2>
             <div
               className={`flex items-center gap-2 rounded-full bg-gradient-to-r px-3 py-1 shadow-sm border ${watchLevelStyle.badge}`}
             >

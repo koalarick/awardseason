@@ -443,7 +443,6 @@ export default function Dashboard() {
 
   const totalMovies = movieEntries.length;
   const movieProgress = totalMovies ? Math.round((seenMovieCount / totalMovies) * 100) : 0;
-  const unseenMovieCount = Math.max(totalMovies - seenMovieCount, 0);
   const watchLevelCopy = useMemo(() => {
     if (seenMovieCount === 0) return 'You are a First-Timer.';
     if (seenMovieCount <= 5) return 'You are a Red Carpet Regular.';

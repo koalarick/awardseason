@@ -22,13 +22,14 @@ export default function MoviePoster({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMissing, setIsMissing] = useState(false);
 
+  const fallbackKey = fallbackSrcs?.join('|') ?? '';
   const sources = [src, ...(fallbackSrcs ?? [])].filter(Boolean);
   const activeSrc = sources[currentIndex] ?? '';
 
   useEffect(() => {
     setCurrentIndex(0);
     setIsMissing(false);
-  }, [src, fallbackSrcs?.join('|')]);
+  }, [src, fallbackKey]);
 
   return (
     <div className={`relative overflow-hidden ${containerClassName}`}>

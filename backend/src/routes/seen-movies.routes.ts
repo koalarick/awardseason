@@ -27,8 +27,9 @@ router.get('/:year', authenticate, async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ movieIds: seenMovies.map((entry) => entry.movieId) });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load seen movies';
+    res.status(500).json({ error: message });
   }
 });
 
@@ -57,6 +58,12 @@ router.put('/:year', authenticate, async (req: AuthRequest, res: Response) => {
 
     const now = new Date();
 
+    if (sanitized.length === 0) {
+      await prisma.seenMovie.deleteMany({ where: { userId, year } });
+      res.json({ movieIds: [] });
+      return;
+    }
+
     await prisma.$transaction([
       prisma.seenMovie.deleteMany({ where: { userId, year } }),
       prisma.seenMovie.createMany({
@@ -72,8 +79,9 @@ router.put('/:year', authenticate, async (req: AuthRequest, res: Response) => {
     ]);
 
     res.json({ movieIds: sanitized });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update seen movies';
+    res.status(500).json({ error: message });
   }
 });
 
@@ -123,8 +131,9 @@ router.post('/:year', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     res.json({ movieId, seen: shouldMarkSeen });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update seen movie';
+    res.status(500).json({ error: message });
   }
 });
 
