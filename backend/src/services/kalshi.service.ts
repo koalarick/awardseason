@@ -31,13 +31,15 @@ const categoryToKalshiEvent: Record<string, string> = {
   casting: 'KXOSCARCASTING-26',
 };
 
-const CORS_PROXIES = [
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url=',
-  'https://thingproxy.freeboard.io/fetch/',
-];
-
 const FETCH_TIMEOUT_MS = 10_000;
+const REQUEST_SPACING_MS = 750;
+const MAX_RETRIES = 3;
+const BACKOFF_BASE_MS = 500;
+const BACKOFF_CAP_MS = 5_000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function fetchWithTimeout(url: string): Promise<Response> {
   const controller = new AbortController();
@@ -46,6 +48,35 @@ async function fetchWithTimeout(url: string): Promise<Response> {
     return await fetch(url, { signal: controller.signal });
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+function shouldRetryStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+function getBackoffDelayMs(attempt: number): number {
+  const baseDelay = Math.min(BACKOFF_BASE_MS * 2 ** (attempt - 1), BACKOFF_CAP_MS);
+  const jitter = Math.floor(Math.random() * 200);
+  return baseDelay + jitter;
+}
+
+async function fetchWithRetry(url: string): Promise<Response> {
+  let attempt = 0;
+  while (true) {
+    attempt += 1;
+    try {
+      const response = await fetchWithTimeout(url);
+      if (!shouldRetryStatus(response.status) || attempt > MAX_RETRIES) {
+        return response;
+      }
+    } catch (error) {
+      if (attempt > MAX_RETRIES) {
+        throw error;
+      }
+    }
+
+    await sleep(getBackoffDelayMs(attempt));
   }
 }
 
@@ -60,9 +91,14 @@ export class KalshiService {
     ];
 
     let lastError: any = null;
-    for (const apiUrl of apiUrls) {
+    for (let i = 0; i < apiUrls.length; i += 1) {
+      if (i > 0) {
+        await sleep(REQUEST_SPACING_MS);
+      }
+
+      const apiUrl = apiUrls[i];
       try {
-        const response = await fetchWithTimeout(apiUrl);
+        const response = await fetchWithRetry(apiUrl);
 
         if (response.ok) {
           const data = (await response.json()) as any;
@@ -96,52 +132,6 @@ export class KalshiService {
       } catch (error) {
         console.log(`Error fetching ${eventTicker} from ${apiUrl}:`, error);
         lastError = error;
-      }
-
-      for (const proxyBase of CORS_PROXIES) {
-        try {
-          const proxyUrl = `${proxyBase}${encodeURIComponent(apiUrl)}`;
-          const response = await fetchWithTimeout(proxyUrl);
-
-          if (response.ok) {
-            const data = (await response.json()) as any;
-
-            if (data.error) {
-              if (data.error.code === 'not_found' || response.status === 404) {
-                console.log(`Kalshi API returned not_found for ${eventTicker} (URL: ${apiUrl})`);
-                return null;
-              }
-              console.log(`Kalshi API error for ${eventTicker}: ${JSON.stringify(data.error)}`);
-              lastError = data.error;
-              continue;
-            }
-
-            if (data.event && data.event.markets && data.event.markets.length > 0) {
-              console.log(
-                `Found ${data.event.markets.length} markets for ${eventTicker} via events endpoint`,
-              );
-              return { markets: data.event.markets };
-            }
-
-            if (data.markets && data.markets.length > 0) {
-              console.log(
-                `Found ${data.markets.length} markets for ${eventTicker} via markets endpoint`,
-              );
-              return data;
-            }
-          } else if (response.status === 404) {
-            console.log(`404 response for ${eventTicker} (URL: ${apiUrl})`);
-            break;
-          } else {
-            console.log(
-              `Non-200 response (${response.status}) for ${eventTicker} (URL: ${apiUrl})`,
-            );
-          }
-        } catch (error) {
-          console.log(`Error fetching ${eventTicker} from ${apiUrl}:`, error);
-          lastError = error;
-          continue;
-        }
       }
     }
 

@@ -72,10 +72,12 @@ import winnersRoutes from './routes/winners.routes';
 import settingsRoutes from './routes/settings.routes';
 import scoresRoutes from './routes/scores.routes';
 import emailRoutes from './routes/email.routes';
+import seenMoviesRoutes from './routes/seen-movies.routes';
 app.use('/api/winners', winnersRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/scores', scoresRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/seen-movies', seenMoviesRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

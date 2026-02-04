@@ -1,8 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, type RefObject } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import type { Category } from '../types/pool';
+import MoviePoster from '../components/MoviePoster';
+import { getMovieEntries } from '../utils/movieNominees';
+import { useSeenMovies } from '../hooks/useSeenMovies';
 
 // Countdown component
 function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
@@ -301,6 +305,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [testEmailStatus, setTestEmailStatus] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const currentYear = new Date().getFullYear().toString();
+  const watchedCarouselRef = useRef<HTMLDivElement | null>(null);
+  const recommendedCarouselRef = useRef<HTMLDivElement | null>(null);
 
   const { data: pools, isLoading } = useQuery({
     queryKey: ['pools'],
@@ -408,6 +415,71 @@ export default function Dashboard() {
       return response.data;
     },
   });
+
+  const {
+    data: nomineeCategories,
+    isLoading: isLoadingNominees,
+    isError: isNomineesError,
+  } = useQuery({
+    queryKey: ['nominees', currentYear],
+    queryFn: async () => {
+      const response = await api.get(`/nominees/${currentYear}`);
+      return response.data as Category[];
+    },
+    enabled: !!currentYear,
+  });
+
+  const movieEntries = useMemo(
+    () => (nomineeCategories ? getMovieEntries(nomineeCategories) : []),
+    [nomineeCategories],
+  );
+
+  const { seenSet } = useSeenMovies({ userId: user?.id, year: currentYear });
+
+  const seenMovieCount = useMemo(() => {
+    if (!movieEntries.length) return 0;
+    return movieEntries.reduce((count, movie) => (seenSet.has(movie.id) ? count + 1 : count), 0);
+  }, [movieEntries, seenSet]);
+
+  const totalMovies = movieEntries.length;
+  const movieProgress = totalMovies ? Math.round((seenMovieCount / totalMovies) * 100) : 0;
+  const unseenMovieCount = Math.max(totalMovies - seenMovieCount, 0);
+  const watchLevelCopy = useMemo(() => {
+    if (seenMovieCount === 0) return 'You are a First-Timer.';
+    if (seenMovieCount <= 5) return 'You are a Red Carpet Regular.';
+    if (seenMovieCount <= 10) return 'You are a Contender Tracker.';
+    if (seenMovieCount <= 30) return 'You are a Cinephile.';
+    return 'You are an Auteur.';
+  }, [seenMovieCount]);
+
+  const watchedMovies = useMemo(
+    () =>
+      movieEntries
+        .filter((movie) => seenSet.has(movie.id))
+        .sort((a, b) => a.title.localeCompare(b.title)),
+    [movieEntries, seenSet],
+  );
+
+  const recommendedMovies = useMemo(
+    () =>
+      movieEntries
+        .filter((movie) => !seenSet.has(movie.id))
+        .sort((a, b) => {
+          const nominationDiff = b.categories.length - a.categories.length;
+          if (nominationDiff !== 0) return nominationDiff;
+          return a.title.localeCompare(b.title);
+        }),
+    [movieEntries, seenSet],
+  );
+
+  const scrollCarousel = (ref: RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+    if (!ref.current) return;
+    const amount = ref.current.clientWidth * 0.8;
+    ref.current.scrollBy({
+      left: direction === 'left' ? -amount : amount,
+      behavior: 'smooth',
+    });
+  };
 
   const sendTestEmail = useMutation({
     mutationFn: async (to: string) => {
@@ -700,6 +772,251 @@ export default function Dashboard() {
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+                  <h2 className="oscars-font text-base sm:text-lg font-bold">Movie Checklist</h2>
+                  <button
+                    onClick={() => navigate('/movies/seen')}
+                    className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
+                  >
+                    Update List
+                  </button>
+                </div>
+                <div className="p-4 sm:p-6 space-y-4">
+                  {isLoadingNominees ? (
+                    <p className="text-sm text-gray-600">Loading nominated films...</p>
+                  ) : isNomineesError ? (
+                    <p className="text-sm text-red-600">
+                      Unable to load nominated films for {currentYear}.
+                    </p>
+                  ) : totalMovies === 0 ? (
+                    <p className="text-sm text-gray-600">
+                      No nominated films found for {currentYear}.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm sm:text-base text-gray-700">
+                          You&apos;ve seen{' '}
+                          <span className="font-semibold text-gray-900">{seenMovieCount}</span> of{' '}
+                          <span className="font-semibold text-gray-900">{totalMovies}</span>{' '}
+                          nominated films.
+                        </p>
+                        <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                          <div
+                            className="h-full bg-yellow-500 transition-all"
+                            style={{ width: `${movieProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500">{watchLevelCopy}</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Watched
+                              </h3>
+                              <span className="text-xs text-gray-500">
+                                {watchedMovies.length}
+                              </span>
+                            </div>
+                            <div className="hidden md:flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => scrollCarousel(watchedCarouselRef, 'left')}
+                                className="w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors flex items-center justify-center"
+                                aria-label="Scroll watched movies left"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M15 19l-7-7 7-7"
+                                  />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => scrollCarousel(watchedCarouselRef, 'right')}
+                                className="w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors flex items-center justify-center"
+                                aria-label="Scroll watched movies right"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          {watchedMovies.length === 0 ? (
+                            <p className="text-sm text-gray-600">No watched movies yet.</p>
+                          ) : (
+                            <div
+                              ref={watchedCarouselRef}
+                              className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth snap-x snap-mandatory"
+                            >
+                              {watchedMovies.map((movie) => {
+                                const posterSources = movie.posterIds.map(
+                                  (posterId) => `/images/${currentYear}_movie_${posterId}.jpg`,
+                                );
+                                const [primarySource, ...fallbackSources] = posterSources;
+                                const letterboxdUrl = movie.letterboxdUrl ?? null;
+                                return (
+                                  <a
+                                    key={movie.id}
+                                    href={letterboxdUrl || undefined}
+                                    target={letterboxdUrl ? '_blank' : undefined}
+                                    rel={letterboxdUrl ? 'noreferrer' : undefined}
+                                    className={letterboxdUrl ? '' : 'pointer-events-none'}
+                                    aria-label={
+                                      letterboxdUrl
+                                        ? `Open ${movie.title} on Letterboxd`
+                                        : undefined
+                                    }
+                                  >
+                                    <MoviePoster
+                                      title={movie.title}
+                                      src={primarySource}
+                                      fallbackSrcs={fallbackSources}
+                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-yellow-400 snap-start"
+                                      imageClassName="w-full h-full object-cover"
+                                      fallbackVariant="compact"
+                                      badge={
+                                        <div className="absolute top-1.5 right-1.5 bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
+                                          ✓
+                                        </div>
+                                      }
+                                    />
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Recommended Next
+                              </h3>
+                              <span className="text-xs text-gray-500">
+                                {recommendedMovies.length}
+                              </span>
+                            </div>
+                            <div className="hidden md:flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => scrollCarousel(recommendedCarouselRef, 'left')}
+                                className="w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors flex items-center justify-center"
+                                aria-label="Scroll recommended movies left"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M15 19l-7-7 7-7"
+                                  />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => scrollCarousel(recommendedCarouselRef, 'right')}
+                                className="w-8 h-8 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors flex items-center justify-center"
+                                aria-label="Scroll recommended movies right"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          {recommendedMovies.length === 0 ? (
+                            <p className="text-sm text-gray-600">You&apos;ve seen them all.</p>
+                          ) : (
+                            <div
+                              ref={recommendedCarouselRef}
+                              className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth snap-x snap-mandatory"
+                            >
+                              {recommendedMovies.map((movie) => {
+                                const posterSources = movie.posterIds.map(
+                                  (posterId) => `/images/${currentYear}_movie_${posterId}.jpg`,
+                                );
+                                const [primarySource, ...fallbackSources] = posterSources;
+                                const letterboxdUrl = movie.letterboxdUrl ?? null;
+                                return (
+                                  <a
+                                    key={movie.id}
+                                    href={letterboxdUrl || undefined}
+                                    target={letterboxdUrl ? '_blank' : undefined}
+                                    rel={letterboxdUrl ? 'noreferrer' : undefined}
+                                    className={letterboxdUrl ? '' : 'pointer-events-none'}
+                                    aria-label={
+                                      letterboxdUrl
+                                        ? `Open ${movie.title} on Letterboxd`
+                                        : undefined
+                                    }
+                                  >
+                                    <MoviePoster
+                                      title={movie.title}
+                                      src={primarySource}
+                                      fallbackSrcs={fallbackSources}
+                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-gray-200 snap-start"
+                                      imageClassName="w-full h-full object-cover"
+                                      fallbackVariant="compact"
+                                      badge={
+                                        <div className="absolute bottom-1.5 left-1.5 bg-white/90 text-gray-700 text-[10px] font-semibold rounded px-1.5 py-0.5 shadow">
+                                          {movie.categories.length} noms
+                                        </div>
+                                      }
+                                    />
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>

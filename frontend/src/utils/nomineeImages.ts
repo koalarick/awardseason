@@ -44,3 +44,8 @@ export function getNomineeImage(
 
   return `/images/${year}_movie_${movieId}.jpg`;
 }
+
+export function getMoviePosterImage(movieTitle: string, year: string = '2026'): string {
+  const movieId = filmNameToSlug(movieTitle);
+  return `/images/${year}_movie_${movieId}.jpg`;
+}

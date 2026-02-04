@@ -5,9 +5,9 @@ import { OddsService } from '../services/odds.service';
 const prisma = new PrismaClient();
 const oddsService = new OddsService();
 
-// Run every 5 minutes
+// Run every 10 minutes
 export function startOddsSnapshotJob() {
-  cron.schedule('*/5 * * * *', async () => {
+  cron.schedule('*/10 * * * *', async () => {
     console.log('Starting odds snapshot job...');
 
     // Get current year
@@ -47,5 +47,5 @@ export function startOddsSnapshotJob() {
     await oddsService.createSnapshotForYear(currentYear, formattedCategories);
   });
 
-  console.log('Odds snapshot cron job scheduled (runs every 5 minutes)');
+  console.log('Odds snapshot cron job scheduled (runs every 10 minutes)');
 }

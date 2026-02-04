@@ -26,8 +26,24 @@ model User {
   predictions  Prediction[]
   enteredWinners ActualWinner[]
   passwordResetTokens PasswordResetToken[]
+  seenMovies SeenMovie[]
 
   @@map("users")
+}
+
+model SeenMovie {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  year      String
+  movieId   String   @map("movie_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, movieId])
+  @@index([userId, year])
+  @@map("seen_movies")
 }
 
 model PasswordResetToken {

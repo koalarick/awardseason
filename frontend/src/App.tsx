@@ -12,6 +12,7 @@ import PoolInvite from './pages/PoolInvite';
 import GlobalWinners from './pages/GlobalWinners';
 import NomineeMetadata from './pages/NomineeMetadata';
 import Users from './pages/Users';
+import MoviesSeen from './pages/MoviesSeen';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -70,6 +71,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/movies/seen"
+            element={
+              <ProtectedRoute>
+                <MoviesSeen />
               </ProtectedRoute>
             }
           />
