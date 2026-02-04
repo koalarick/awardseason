@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import { authenticate, requireSuperuser, AuthRequest } from '../middleware/auth.middleware';
 import { AuthService } from '../auth/auth.service';
 
@@ -40,20 +40,21 @@ router.patch('/:userId/role', authenticate, requireSuperuser, async (req: AuthRe
   try {
     const { userId } = req.params;
     const { role } = req.body as { role?: string };
+    const roleValue = role as UserRole;
 
-    if (!role || !['USER', 'SUPERUSER'].includes(role)) {
+    if (!role || !Object.values(UserRole).includes(roleValue)) {
       res.status(400).json({ error: 'Role must be USER or SUPERUSER' });
       return;
     }
 
-    if (req.user?.id === userId && role !== 'SUPERUSER') {
+    if (req.user?.id === userId && roleValue !== 'SUPERUSER') {
       res.status(400).json({ error: 'You cannot remove your own superuser role' });
       return;
     }
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: { role: roleValue },
       select: {
         id: true,
         email: true,
