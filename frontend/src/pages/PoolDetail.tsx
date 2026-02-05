@@ -1819,6 +1819,7 @@ function SubmissionsList({
                   submission.userId === user?.id && /^Ballot #\d+$/.test(submission.submissionName)
                     ? 'My Ballot'
                     : submission.submissionName;
+                const isOwnSubmission = submission.userId === user?.id;
                 const seenCount = seenCounts[submission.userId] ?? 0;
                 const watchLevel = getWatchLevel(seenCount);
                 const watchStyle = getWatchLevelStyle(seenCount);
@@ -1870,13 +1871,36 @@ function SubmissionsList({
                                 </span>
                               </button>
                               <div
-                                className={`pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg transition-all z-10 ${
+                                className={`absolute left-1/2 top-full mt-1 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg transition-all z-10 before:content-[''] before:absolute before:left-0 before:right-0 before:-top-2 before:h-2 ${
                                   isBadgeOpen
                                     ? 'opacity-100 translate-y-0'
-                                    : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'
+                                    : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 hover:opacity-100 hover:translate-y-0'
+                                } ${
+                                  isOwnSubmission
+                                    ? isBadgeOpen
+                                      ? 'pointer-events-auto'
+                                      : 'pointer-events-none group-hover:pointer-events-auto hover:pointer-events-auto'
+                                    : 'pointer-events-none'
                                 }`}
                               >
-                                {seenCount}/{totalNomineeFilms} nominated films seen
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="whitespace-nowrap">
+                                    {seenCount}/{totalNomineeFilms} films seen
+                                  </span>
+                                  {isOwnSubmission && (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        navigate('/movies/seen');
+                                        setOpenBadgeUserId(null);
+                                      }}
+                                      className="px-3 py-1 rounded-full bg-yellow-400/20 text-[11px] font-semibold text-yellow-100 hover:bg-yellow-400/30 transition-colors"
+                                    >
+                                      Add
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1979,13 +2003,7 @@ function SubmissionsList({
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-center py-3 px-4 font-semibold oscars-dark w-12">#</th>
-                    <th className="text-left py-3 px-4 font-semibold oscars-dark">Ballot Name</th>
-                    <th className="text-left py-3 px-4 font-semibold oscars-dark">
-                      <span className="sr-only">Rank</span>
-                    </th>
-                    <th className="text-right py-3 px-4 font-semibold oscars-dark">Correct</th>
-                    <th className="text-right py-3 px-4 font-semibold oscars-dark">Possible</th>
-                    <th className="text-right py-3 px-4 font-semibold oscars-dark">Earned</th>
+                    <th className="text-left py-3 px-4 font-semibold oscars-dark">Ballot</th>
                     {canRemove && (
                       <th className="text-center py-3 px-4 font-semibold oscars-dark min-w-[140px]">
                         Actions
@@ -2000,10 +2018,14 @@ function SubmissionsList({
                       /^Ballot #\d+$/.test(submission.submissionName)
                         ? 'My Ballot'
                         : submission.submissionName;
+                    const isOwnSubmission = submission.userId === user?.id;
                     const seenCount = seenCounts[submission.userId] ?? 0;
                     const watchLevel = getWatchLevel(seenCount);
                     const watchStyle = getWatchLevelStyle(seenCount);
                     const isBadgeOpen = openBadgeUserId === submission.userId;
+                    const rowBase = submission.userId === user?.id ? 'bg-yellow-50' : 'bg-white';
+                    const rowHover =
+                      submission.userId === user?.id ? 'hover:bg-yellow-100' : 'hover:bg-gray-50';
 
                     return (
                       <tr
@@ -2015,62 +2037,99 @@ function SubmissionsList({
                             navigate(`/pool/${poolId}/edit?userId=${submission.userId}`);
                           }
                         }}
-                        className={`border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
-                          submission.userId === user?.id ? 'bg-yellow-50' : ''
-                        }`}
+                        className={`border-b border-gray-100 cursor-pointer transition-colors ${rowBase} ${rowHover}`}
                       >
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-4 text-center align-middle">
                           <span className="font-bold oscars-gold text-lg">
                             {submission.originalRank}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold oscars-dark whitespace-normal break-words">
-                            {displayName}
-                          </div>
-                          {!pool?.isPublic && (
-                            <div className="text-xs text-gray-500">{submission.userEmail}</div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="inline-flex relative group">
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setOpenBadgeUserId((current) =>
-                                  current === submission.userId ? null : submission.userId,
-                                );
-                              }}
-                              className={`inline-flex items-center rounded-full px-3 py-1 shadow-sm border ${watchStyle.badge}`}
-                              aria-label={`${seenCount}/${totalNomineeFilms} nominated films seen`}
-                            >
-                              <span className={`oscars-font text-sm font-bold ${watchStyle.text}`}>
-                                {watchLevel}
+                          <div className="grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] gap-x-3 gap-y-1 items-center">
+                            <div className="row-start-1 col-start-1 font-semibold oscars-dark whitespace-normal break-words">
+                              {displayName}
+                            </div>
+                            <div className="row-start-2 col-start-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                              <span className="uppercase tracking-wide font-semibold text-gray-400">
+                                Correct
                               </span>
-                            </button>
-                            <div
-                              className={`pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg transition-all z-10 ${
-                                isBadgeOpen
-                                  ? 'opacity-100 translate-y-0'
-                                  : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'
-                              }`}
-                            >
-                              {seenCount}/{totalNomineeFilms} nominated films seen
+                              <span className="font-semibold text-gray-900">
+                                {submission.correctCount || 0} / {submission.totalCategories}
+                              </span>
+                              <span className="text-gray-300">•</span>
+                              <span className="uppercase tracking-wide font-semibold text-gray-400">
+                                Possible
+                              </span>
+                              <span className="font-semibold oscars-gold">
+                                {submission.totalPossiblePoints.toFixed(1)}
+                              </span>
+                              <span className="text-gray-300">•</span>
+                              <span className="uppercase tracking-wide font-semibold text-gray-400">
+                                Earned
+                              </span>
+                              <span className="font-bold text-gray-900">
+                                {submission.totalEarnedPoints.toFixed(1)}
+                              </span>
+                              {!pool?.isPublic && (
+                                <>
+                                  <span className="text-gray-300">•</span>
+                                  <span className="truncate">{submission.userEmail}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="row-span-2 col-start-2 inline-flex relative group self-center flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setOpenBadgeUserId((current) =>
+                                    current === submission.userId ? null : submission.userId,
+                                  );
+                                }}
+                                className={`inline-flex items-center rounded-full px-3 py-1 shadow-sm border ${watchStyle.badge}`}
+                                aria-label={`${seenCount}/${totalNomineeFilms} nominated films seen`}
+                              >
+                                <span className={`oscars-font text-sm font-bold ${watchStyle.text}`}>
+                                  {watchLevel}
+                                </span>
+                              </button>
+                              <div
+                                className={`absolute left-1/2 top-full mt-1 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg transition-all z-10 before:content-[''] before:absolute before:left-0 before:right-0 before:-top-2 before:h-2 ${
+                                  isBadgeOpen
+                                    ? 'opacity-100 translate-y-0'
+                                    : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 hover:opacity-100 hover:translate-y-0'
+                                } ${
+                                  isOwnSubmission
+                                    ? isBadgeOpen
+                                      ? 'pointer-events-auto'
+                                      : 'pointer-events-none group-hover:pointer-events-auto hover:pointer-events-auto'
+                                    : 'pointer-events-none'
+                                }`}
+                              >
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="whitespace-nowrap">
+                                    {seenCount}/{totalNomineeFilms} films seen
+                                  </span>
+                                  {isOwnSubmission && (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        navigate('/movies/seen');
+                                        setOpenBadgeUserId(null);
+                                      }}
+                                      className="px-3 py-1 rounded-full bg-yellow-400/20 text-[11px] font-semibold text-yellow-100 hover:bg-yellow-400/30 transition-colors"
+                                    >
+                                      Add
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          {submission.correctCount || 0} / {submission.totalCategories}
-                        </td>
-                        <td className="py-3 px-4 text-right font-semibold oscars-gold">
-                          {submission.totalPossiblePoints.toFixed(1)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-bold oscars-dark">
-                          {submission.totalEarnedPoints.toFixed(1)}
-                        </td>
                         {canRemove && (
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-3 px-4 text-center align-middle">
                             <div className="flex items-center justify-center gap-2">
                               {pool?.isPaidPool && (
                                 <button
