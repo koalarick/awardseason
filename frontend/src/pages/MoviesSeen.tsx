@@ -49,10 +49,10 @@ export default function MoviesSeen() {
 
   const progress = movies.length ? Math.round((seenCount / movies.length) * 100) : 0;
   const watchLevel = useMemo(() => {
-    if (seenCount === 0) return 'First-Timer';
-    if (seenCount <= 5) return 'Red Carpet Regular';
-    if (seenCount <= 10) return 'Cinephile';
-    if (seenCount <= 30) return 'Film Buff';
+    if (seenCount === 0) return 'Newb';
+    if (seenCount <= 5) return 'Casual Fan';
+    if (seenCount <= 10) return 'Film Buff';
+    if (seenCount <= 30) return 'Cinephile';
     return 'Auteur';
   }, [seenCount]);
 
