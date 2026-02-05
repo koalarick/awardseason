@@ -50,7 +50,9 @@ export function getMovieEntries(categories: Category[]): MovieEntry[] {
       const primaryId = filmNameToSlug(title);
       const existing = movieMap.get(primaryId);
       const nomineeLetterboxd =
-        typeof nominee.letterboxd_url === 'string' ? nominee.letterboxd_url : undefined;
+        !isPersonCategory(category.id) && typeof nominee.letterboxd_url === 'string'
+          ? nominee.letterboxd_url
+          : undefined;
 
       let legacyPosterId: string | null = null;
       if (!isPersonCategory(category.id)) {
