@@ -2,6 +2,7 @@ import { Router } from 'express';
 import passport from 'passport';
 import { AuthController } from '../auth/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import { getFrontendUrl } from '../utils/frontend-url';
 
 const router = Router();
 const authController = new AuthController();
@@ -31,7 +32,7 @@ router.get(
   passport.authenticate('google', { session: false }),
   (req, res) => {
     const { user, token } = req.user as any;
-    const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:5173';
+    const frontendUrl = getFrontendUrl();
 
     // Set token in httpOnly cookie instead of URL
     res.cookie('token', token, {

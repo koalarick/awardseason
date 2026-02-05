@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient, User } from '@prisma/client';
 import { JwtPayload } from '../types';
 import { emailService } from '../services/email.service';
+import { getFrontendUrl } from '../utils/frontend-url';
 
 const prisma = new PrismaClient();
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
@@ -14,7 +15,7 @@ if (!JWT_SECRET_ENV) {
 const JWT_SECRET = JWT_SECRET_ENV as string;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 60);
-const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173';
+const FRONTEND_URL = getFrontendUrl();
 
 export class AuthService {
   async hashPassword(password: string): Promise<string> {
