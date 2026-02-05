@@ -1681,6 +1681,7 @@ function SubmissionsList({
     submissionName: string;
   } | null>(null);
   const [openBadgeUserId, setOpenBadgeUserId] = useState<string | null>(null);
+  const [isHoverDevice, setIsHoverDevice] = useState(false);
 
   const updatePaymentStatus = useMutation({
     mutationFn: async ({ userId, hasPaid }: { userId: string; hasPaid: boolean }) => {
@@ -1755,6 +1756,47 @@ function SubmissionsList({
   const isPoolOwner = pool?.ownerId === user?.id;
   const isSuperuser = user?.role === 'SUPERUSER';
   const canRemove = (isPoolOwner || isSuperuser) && canEditSettings;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const handleChange = () => setIsHoverDevice(mediaQuery.matches);
+    handleChange();
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (!openBadgeUserId) return;
+
+    const handleScroll = () => setOpenBadgeUserId(null);
+    const handleOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('[data-badge-popover]') || target.closest('[data-badge-trigger]')) {
+        return;
+      }
+      setOpenBadgeUserId(null);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('scroll', handleScroll, true);
+    document.addEventListener('pointerdown', handleOutside, true);
+    document.addEventListener('click', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll, true);
+      document.removeEventListener('pointerdown', handleOutside, true);
+      document.removeEventListener('click', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [openBadgeUserId]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -1857,10 +1899,12 @@ function SubmissionsList({
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
+                                  if (isHoverDevice) return;
                                   setOpenBadgeUserId((current) =>
                                     current === submission.userId ? null : submission.userId,
                                   );
                                 }}
+                                data-badge-trigger
                                 className={`inline-flex items-center rounded-full px-3 py-0.5 shadow-sm border ${watchStyle.badge}`}
                                 aria-label={`${seenCount}/${totalNomineeFilms} nominated films seen`}
                               >
@@ -1876,18 +1920,19 @@ function SubmissionsList({
                                     ? 'opacity-100 translate-y-0'
                                     : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 hover:opacity-100 hover:translate-y-0'
                                 } ${
-                                  isOwnSubmission
-                                    ? isBadgeOpen
+                                  isHoverDevice
+                                    ? 'pointer-events-none group-hover:pointer-events-auto hover:pointer-events-auto'
+                                    : isBadgeOpen
                                       ? 'pointer-events-auto'
-                                      : 'pointer-events-none group-hover:pointer-events-auto hover:pointer-events-auto'
-                                    : 'pointer-events-none'
+                                      : 'pointer-events-none'
                                 }`}
+                                data-badge-popover
                               >
                                 <div className="flex flex-col items-center gap-1">
                                   <span className="whitespace-nowrap">
                                     {seenCount}/{totalNomineeFilms} films seen
                                   </span>
-                                  {isOwnSubmission && (
+                                  {isOwnSubmission ? (
                                     <button
                                       type="button"
                                       onClick={(event) => {
@@ -1898,6 +1943,18 @@ function SubmissionsList({
                                       className="px-3 py-1 rounded-full bg-yellow-400/20 text-[11px] font-semibold text-yellow-100 hover:bg-yellow-400/30 transition-colors"
                                     >
                                       Add
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        navigate(`/movies/seen?userId=${submission.userId}`);
+                                        setOpenBadgeUserId(null);
+                                      }}
+                                      className="px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold text-white hover:bg-white/20 transition-colors"
+                                    >
+                                      View
                                     </button>
                                   )}
                                 </div>
@@ -1998,7 +2055,7 @@ function SubmissionsList({
             </div>
 
             {/* Desktop Table Layout */}
-            <div className="hidden md:block overflow-x-auto md:overflow-visible">
+            <div className="hidden md:block overflow-x-auto md:overflow-visible pb-6">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
@@ -2082,10 +2139,12 @@ function SubmissionsList({
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
+                                  if (isHoverDevice) return;
                                   setOpenBadgeUserId((current) =>
                                     current === submission.userId ? null : submission.userId,
                                   );
                                 }}
+                                data-badge-trigger
                                 className={`inline-flex items-center rounded-full px-3 py-1 shadow-sm border ${watchStyle.badge}`}
                                 aria-label={`${seenCount}/${totalNomineeFilms} nominated films seen`}
                               >
@@ -2099,18 +2158,19 @@ function SubmissionsList({
                                     ? 'opacity-100 translate-y-0'
                                     : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 hover:opacity-100 hover:translate-y-0'
                                 } ${
-                                  isOwnSubmission
-                                    ? isBadgeOpen
+                                  isHoverDevice
+                                    ? 'pointer-events-none group-hover:pointer-events-auto hover:pointer-events-auto'
+                                    : isBadgeOpen
                                       ? 'pointer-events-auto'
-                                      : 'pointer-events-none group-hover:pointer-events-auto hover:pointer-events-auto'
-                                    : 'pointer-events-none'
+                                      : 'pointer-events-none'
                                 }`}
+                                data-badge-popover
                               >
                                 <div className="flex flex-col items-center gap-1">
                                   <span className="whitespace-nowrap">
                                     {seenCount}/{totalNomineeFilms} films seen
                                   </span>
-                                  {isOwnSubmission && (
+                                  {isOwnSubmission ? (
                                     <button
                                       type="button"
                                       onClick={(event) => {
@@ -2122,6 +2182,20 @@ function SubmissionsList({
                                     >
                                       Add
                                     </button>
+                                  ) : (
+                                    isSuperuser && (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          navigate(`/movies/seen?userId=${submission.userId}`);
+                                          setOpenBadgeUserId(null);
+                                        }}
+                                        className="px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold text-white hover:bg-white/20 transition-colors"
+                                      >
+                                        View
+                                      </button>
+                                    )
                                   )}
                                 </div>
                               </div>

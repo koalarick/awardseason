@@ -31,6 +31,12 @@ export default function MoviesSeen() {
   const viewUserId =
     isSuperuser && requestedUserId && requestedUserId !== user?.id ? requestedUserId : null;
 
+  useEffect(() => {
+    if (viewUserId) {
+      setFilter('seen');
+    }
+  }, [viewUserId]);
+
   const {
     data: categories,
     isLoading,
@@ -277,9 +283,20 @@ export default function MoviesSeen() {
           <div className="p-4 sm:p-6 space-y-4">
               <div className="flex flex-col gap-2">
                 <p className="text-sm sm:text-base text-gray-700">
-                  You&apos;ve seen{' '}
-                  <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
-                  <span className="font-semibold text-gray-900">{movies.length}</span> nominated films.
+                  {viewUserId ? (
+                    <>
+                      Seen <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
+                      <span className="font-semibold text-gray-900">{movies.length}</span> nominated
+                      films.
+                    </>
+                  ) : (
+                    <>
+                      You&apos;ve seen{' '}
+                      <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
+                      <span className="font-semibold text-gray-900">{movies.length}</span> nominated
+                      films.
+                    </>
+                  )}
                 </p>
                 {isReadOnly && (
                   <p className="text-xs text-gray-500">
