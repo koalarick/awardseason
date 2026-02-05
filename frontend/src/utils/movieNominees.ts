@@ -54,25 +54,12 @@ export function getMovieEntries(categories: Category[]): MovieEntry[] {
           ? nominee.letterboxd_url
           : undefined;
 
-      let legacyPosterId: string | null = null;
-      if (!isPersonCategory(category.id)) {
-        if (category.id === 'music-song') {
-          const song = typeof nominee.song === 'string' ? nominee.song : '';
-          const match = song.match(/from\s+([^;]+)/i);
-          if (!match || !match[1]) {
-            legacyPosterId = nominee.id;
-          }
-        } else if (!nominee.film) {
-          legacyPosterId = nominee.id;
-        }
-      }
-
       if (!existing) {
         movieMap.set(primaryId, {
           id: primaryId,
           title,
           categories: [category.name],
-          posterIds: legacyPosterId ? [primaryId, legacyPosterId] : [primaryId],
+          posterIds: [primaryId],
           letterboxdUrl: nomineeLetterboxd,
         });
         return;
@@ -80,9 +67,6 @@ export function getMovieEntries(categories: Category[]): MovieEntry[] {
 
       if (!existing.categories.includes(category.name)) {
         existing.categories.push(category.name);
-      }
-      if (legacyPosterId && !existing.posterIds.includes(legacyPosterId)) {
-        existing.posterIds.push(legacyPosterId);
       }
       if (!existing.letterboxdUrl && nomineeLetterboxd) {
         existing.letterboxdUrl = nomineeLetterboxd;

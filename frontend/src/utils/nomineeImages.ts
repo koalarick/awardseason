@@ -38,6 +38,8 @@ export function getNomineeImage(
     }
   } else if (nominee.film) {
     movieId = filmNameToSlug(nominee.film);
+  } else if (nominee.name) {
+    movieId = filmNameToSlug(nominee.name);
   } else {
     movieId = nominee.id;
   }
