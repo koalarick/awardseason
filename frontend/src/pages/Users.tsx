@@ -67,6 +67,16 @@ export default function Users() {
     enabled: user?.role === 'SUPERUSER',
   });
 
+  const year = new Date().getFullYear().toString();
+  const { data: seenCounts = {} } = useQuery({
+    queryKey: ['users-seen-counts', year],
+    queryFn: async () => {
+      const response = await api.get(`/users/seen-movies/${year}/counts`);
+      return (response.data?.counts ?? {}) as Record<string, number>;
+    },
+    enabled: user?.role === 'SUPERUSER',
+  });
+
   useEffect(() => {
     if (!users) return;
     const initialRoles: Record<string, string> = {};
@@ -254,12 +264,13 @@ export default function Users() {
                       <tr>
                         <th className="text-left px-4 py-2">Email</th>
                         <th className="text-left px-4 py-2">Role</th>
-                        <th className="text-left px-4 py-2">Provider</th>
                         <th className="text-left px-4 py-2">Joined</th>
                         <th className="text-right px-4 py-2">Owned</th>
                         <th className="text-right px-4 py-2">Member</th>
                         <th className="text-right px-4 py-2">Predictions</th>
+                        <th className="text-right px-4 py-2">Films Seen</th>
                         <th className="text-left px-4 py-2">Password</th>
+                        <th className="text-left px-4 py-2">Checklist</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -295,11 +306,13 @@ export default function Users() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3">{entry.oauthProvider || 'Password'}</td>
                             <td className="px-4 py-3">{formatDate(entry.createdAt)}</td>
                             <td className="px-4 py-3 text-right">{entry._count.ownedPools}</td>
                             <td className="px-4 py-3 text-right">{entry._count.poolMemberships}</td>
                             <td className="px-4 py-3 text-right">{entry._count.predictions}</td>
+                            <td className="px-4 py-3 text-right">
+                              {seenCounts[entry.id] ?? 0}
+                            </td>
                             <td className="px-4 py-3">
                               {isOauthUser ? (
                                 <span className="text-xs text-gray-500">OAuth user</span>
@@ -359,6 +372,14 @@ export default function Users() {
                                 </div>
                               )}
                             </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => navigate(`/movies/seen?userId=${entry.id}`)}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 text-slate-700"
+                              >
+                                View
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -386,11 +407,19 @@ export default function Users() {
                           </span>
                         </div>
                         <div className="mt-3 text-xs text-gray-600 space-y-1">
-                          <div>Provider: {entry.oauthProvider || 'Password'}</div>
+                          <div>Films seen: {seenCounts[entry.id] ?? 0}</div>
                           <div>Joined: {formatDate(entry.createdAt)}</div>
                           <div>Owned pools: {entry._count.ownedPools}</div>
                           <div>Memberships: {entry._count.poolMemberships}</div>
                           <div>Predictions: {entry._count.predictions}</div>
+                          <div className="pt-2">
+                            <button
+                              onClick={() => navigate(`/movies/seen?userId=${entry.id}`)}
+                              className="px-3 py-1 text-[10px] font-semibold rounded-md border border-slate-300 text-slate-700"
+                            >
+                              View checklist
+                            </button>
+                          </div>
                           <div className="pt-2">
                             <div className="flex items-center gap-2">
                               <select

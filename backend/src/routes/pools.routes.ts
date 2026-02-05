@@ -293,6 +293,73 @@ router.get('/:poolId/submissions', authenticate, async (req: AuthRequest, res: R
   }
 });
 
+// Get seen movie counts for members of a pool
+router.get('/:poolId/seen-movies/:year/counts', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { poolId, year } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    if (!year) {
+      res.status(400).json({ error: 'Year is required' });
+      return;
+    }
+
+    const pool = await prisma.pool.findUnique({
+      where: { id: poolId },
+      select: { isPublic: true },
+    });
+
+    if (!pool) {
+      res.status(404).json({ error: 'Pool not found' });
+      return;
+    }
+
+    if (userRole !== 'SUPERUSER') {
+      const membership = await prisma.poolMember.findUnique({
+        where: {
+          poolId_userId: {
+            poolId,
+            userId,
+          },
+        },
+      });
+
+      if (!membership && !pool.isPublic) {
+        res.status(403).json({ error: 'Not a member of this pool' });
+        return;
+      }
+    }
+
+    const members = await prisma.poolMember.findMany({
+      where: { poolId },
+      select: { userId: true },
+    });
+
+    const memberIds = members.map((member) => member.userId);
+    if (memberIds.length === 0) {
+      res.json({ counts: {} });
+      return;
+    }
+
+    const counts = await prisma.seenMovie.groupBy({
+      by: ['userId'],
+      where: { year, userId: { in: memberIds } },
+      _count: { _all: true },
+    });
+
+    const countMap = counts.reduce<Record<string, number>>((acc, entry) => {
+      acc[entry.userId] = entry._count._all;
+      return acc;
+    }, {});
+
+    res.json({ counts: countMap });
+  } catch (error: any) {
+    const message = error instanceof Error ? error.message : 'Failed to load seen counts';
+    res.status(500).json({ error: message });
+  }
+});
+
 // Update pool (owner only)
 router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => {
   try {

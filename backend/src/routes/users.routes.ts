@@ -109,4 +109,63 @@ router.patch('/:userId/password', authenticate, requireSuperuser, async (req: Au
   }
 });
 
+// Get a user's seen movies for a given year (superuser only)
+router.get(
+  '/:userId/seen-movies/:year',
+  authenticate,
+  requireSuperuser,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { userId, year } = req.params;
+      if (!userId || !year) {
+        res.status(400).json({ error: 'User ID and year are required' });
+        return;
+      }
+
+      const seenMovies = await prisma.seenMovie.findMany({
+        where: { userId, year },
+        select: { movieId: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      res.json({ movieIds: seenMovies.map((entry) => entry.movieId) });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load seen movies';
+      res.status(500).json({ error: message });
+    }
+  },
+);
+
+// Get seen movie counts for all users (superuser only)
+router.get(
+  '/seen-movies/:year/counts',
+  authenticate,
+  requireSuperuser,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { year } = req.params;
+      if (!year) {
+        res.status(400).json({ error: 'Year is required' });
+        return;
+      }
+
+      const counts = await prisma.seenMovie.groupBy({
+        by: ['userId'],
+        where: { year },
+        _count: { _all: true },
+      });
+
+      const countMap = counts.reduce<Record<string, number>>((acc, entry) => {
+        acc[entry.userId] = entry._count._all;
+        return acc;
+      }, {});
+
+      res.json({ counts: countMap });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load seen counts';
+      res.status(500).json({ error: message });
+    }
+  },
+);
+
 export default router;

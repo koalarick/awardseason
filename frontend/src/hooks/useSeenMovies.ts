@@ -4,18 +4,35 @@ import api from '../services/api';
 
 const buildStorageKey = (userId: string, year: string) => `seen-movies:${year}:${userId}`;
 
-export function useSeenMovies({ userId, year }: { userId?: string | null; year: string }) {
+export function useSeenMovies({
+  userId,
+  year,
+  targetUserId,
+  readOnly = false,
+}: {
+  userId?: string | null;
+  year: string;
+  targetUserId?: string | null;
+  readOnly?: boolean;
+}) {
   const queryClient = useQueryClient();
-  const queryKey = ['seen-movies', userId, year];
+  const effectiveUserId = targetUserId ?? userId ?? null;
+  const isViewingOtherUser = Boolean(targetUserId && targetUserId !== userId);
+  const queryKey = ['seen-movies', effectiveUserId, year];
 
   const { data: seenMovieIds = [], isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      const response = await api.get(`/seen-movies/${year}`);
+      const endpoint = isViewingOtherUser
+        ? `/users/${targetUserId}/seen-movies/${year}`
+        : `/seen-movies/${year}`;
+      const response = await api.get(endpoint);
       return (response.data?.movieIds ?? []) as string[];
     },
-    enabled: !!userId && !!year,
+    enabled: !!effectiveUserId && !!year,
   });
+
+  const canEdit = Boolean(userId) && !readOnly && !isViewingOtherUser;
 
   const bulkSync = useMutation({
     mutationFn: async (movieIds: string[]) => {
@@ -56,7 +73,7 @@ export function useSeenMovies({ userId, year }: { userId?: string | null; year: 
   });
 
   useEffect(() => {
-    if (!userId || !year || isLoading || bulkSync.isPending) return;
+    if (!userId || !year || isLoading || bulkSync.isPending || !canEdit) return;
     const storageKey = buildStorageKey(userId, year);
     const stored = localStorage.getItem(storageKey);
     if (!stored) return;
@@ -82,6 +99,7 @@ export function useSeenMovies({ userId, year }: { userId?: string | null; year: 
   const seenSet = useMemo(() => new Set(seenMovieIds), [seenMovieIds]);
 
   const toggleSeen = (movieId: string) => {
+    if (!canEdit) return;
     const isSeen = seenSet.has(movieId);
     toggleMutation.mutate({ movieId, seen: !isSeen });
   };
@@ -92,5 +110,6 @@ export function useSeenMovies({ userId, year }: { userId?: string | null; year: 
     toggleSeen,
     isLoading,
     isSaving: toggleMutation.isPending || bulkSync.isPending,
+    isReadOnly: !canEdit,
   };
 }

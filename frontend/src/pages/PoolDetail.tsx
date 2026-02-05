@@ -17,6 +17,50 @@ import type {
   Prediction,
 } from '../types/pool';
 
+type WatchLevelStyle = {
+  badge: string;
+  text: string;
+};
+
+const getWatchLevel = (seenCount: number) => {
+  if (seenCount === 0) return 'Newb';
+  if (seenCount <= 5) return 'Casual Fan';
+  if (seenCount <= 10) return 'Film Buff';
+  if (seenCount <= 30) return 'Cinephile';
+  return 'Auteur';
+};
+
+const getWatchLevelStyle = (seenCount: number): WatchLevelStyle => {
+  if (seenCount === 0) {
+    return {
+      badge: 'bg-slate-100 border-slate-200',
+      text: 'text-slate-700',
+    };
+  }
+  if (seenCount <= 5) {
+    return {
+      badge: 'bg-amber-50 border-amber-200',
+      text: 'text-amber-800',
+    };
+  }
+  if (seenCount <= 10) {
+    return {
+      badge: 'bg-emerald-50 border-emerald-200',
+      text: 'text-emerald-800',
+    };
+  }
+  if (seenCount <= 30) {
+    return {
+      badge: 'bg-blue-50 border-blue-200',
+      text: 'text-blue-800',
+    };
+  }
+  return {
+    badge: 'bg-yellow-50 border-yellow-200',
+    text: 'text-yellow-900',
+  };
+};
+
 // Submissions Lock Countdown Component
 function SubmissionsLockCountdown({ ceremonyDate }: { ceremonyDate: Date | string }) {
   const [timeLeft, setTimeLeft] = useState({
@@ -1636,6 +1680,7 @@ function SubmissionsList({
     userId: string;
     submissionName: string;
   } | null>(null);
+  const [openBadgeUserId, setOpenBadgeUserId] = useState<string | null>(null);
 
   const updatePaymentStatus = useMutation({
     mutationFn: async ({ userId, hasPaid }: { userId: string; hasPaid: boolean }) => {
@@ -1672,6 +1717,17 @@ function SubmissionsList({
     queryFn: async () => {
       const response = await api.get(`/pools/${poolId}/submissions`);
       return response.data as PoolSubmission[];
+    },
+    enabled: !!poolId && poolId !== 'new',
+  });
+
+  const poolYear = pool?.year ?? new Date().getFullYear().toString();
+  const totalNomineeFilms = 50;
+  const { data: seenCounts = {} } = useQuery({
+    queryKey: ['pool-seen-movie-counts', poolId, poolYear],
+    queryFn: async () => {
+      const response = await api.get(`/pools/${poolId}/seen-movies/${poolYear}/counts`);
+      return (response.data?.counts ?? {}) as Record<string, number>;
     },
     enabled: !!poolId && poolId !== 'new',
   });
@@ -1763,6 +1819,10 @@ function SubmissionsList({
                   submission.userId === user?.id && /^Ballot #\d+$/.test(submission.submissionName)
                     ? 'My Ballot'
                     : submission.submissionName;
+                const seenCount = seenCounts[submission.userId] ?? 0;
+                const watchLevel = getWatchLevel(seenCount);
+                const watchStyle = getWatchLevelStyle(seenCount);
+                const isBadgeOpen = openBadgeUserId === submission.userId;
 
                 return (
                   <div
@@ -1787,8 +1847,38 @@ function SubmissionsList({
                           #{submission.originalRank}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold oscars-dark text-base mb-1 leading-tight whitespace-normal break-words">
-                            {displayName}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="font-semibold oscars-dark text-base leading-tight whitespace-normal break-words min-w-0 flex-1">
+                              {displayName}
+                            </div>
+                            <div className="inline-flex relative group flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setOpenBadgeUserId((current) =>
+                                    current === submission.userId ? null : submission.userId,
+                                  );
+                                }}
+                                className={`inline-flex items-center rounded-full px-3 py-0.5 shadow-sm border ${watchStyle.badge}`}
+                                aria-label={`${seenCount}/${totalNomineeFilms} nominated films seen`}
+                              >
+                                <span
+                                  className={`oscars-font text-xs font-bold ${watchStyle.text}`}
+                                >
+                                  {watchLevel}
+                                </span>
+                              </button>
+                              <div
+                                className={`pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg transition-all z-10 ${
+                                  isBadgeOpen
+                                    ? 'opacity-100 translate-y-0'
+                                    : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'
+                                }`}
+                              >
+                                {seenCount}/{totalNomineeFilms} nominated films seen
+                              </div>
+                            </div>
                           </div>
                           {!pool?.isPublic && (
                             <div className="text-xs text-gray-500 truncate mt-0.5">
@@ -1829,78 +1919,75 @@ function SubmissionsList({
                       </div>
                     </div>
 
-                    {/* Status Badges - Below Stats */}
-                    <div className="px-4 pb-4 pt-3 border-t border-gray-200">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${
-                            submission.isComplete
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {submission.isComplete ? '✓ Complete' : 'In Progress'}
-                        </span>
-                        {pool?.isPaidPool && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (canEditSettings) {
-                                updatePaymentStatus.mutate({
-                                  userId: submission.userId,
-                                  hasPaid: !submission.hasPaid,
-                                });
-                              }
-                            }}
-                            disabled={!canEditSettings || updatePaymentStatus.isPending}
-                            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
-                              submission.hasPaid
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                : 'bg-red-100 text-red-800 hover:bg-red-200'
-                            } ${canEditSettings ? 'cursor-pointer' : 'cursor-default'} disabled:opacity-50`}
-                          >
-                            {updatePaymentStatus.isPending
-                              ? '...'
-                              : submission.hasPaid
-                                ? '✓ Paid'
-                                : 'Unpaid'}
-                          </button>
-                        )}
-                        {canRemove && submission.userId !== pool?.ownerId && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSubmissionToRemove({
-                                userId: submission.userId,
-                                submissionName: submission.submissionName,
-                              });
-                            }}
-                            className="px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-colors whitespace-nowrap"
-                            title="Remove ballot"
-                          >
-                            ×
-                          </button>
-                        )}
+                    {(pool?.isPaidPool || canRemove) && (
+                      <div className="px-4 pb-4 pt-3 border-t border-gray-200">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {pool?.isPaidPool && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (canEditSettings) {
+                                  updatePaymentStatus.mutate({
+                                    userId: submission.userId,
+                                    hasPaid: !submission.hasPaid,
+                                  });
+                                }
+                              }}
+                              disabled={!canEditSettings || updatePaymentStatus.isPending}
+                              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
+                                submission.hasPaid
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                              } ${canEditSettings ? 'cursor-pointer' : 'cursor-default'} disabled:opacity-50`}
+                            >
+                              {updatePaymentStatus.isPending
+                                ? '...'
+                                : submission.hasPaid
+                                  ? '✓ Paid'
+                                  : 'Unpaid'}
+                            </button>
+                          )}
+                          {canRemove &&
+                            (submission.userId !== pool?.ownerId ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSubmissionToRemove({
+                                    userId: submission.userId,
+                                    submissionName: submission.submissionName,
+                                  });
+                                }}
+                                className="px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-colors whitespace-nowrap"
+                                title="Remove ballot"
+                              >
+                                Remove
+                              </button>
+                            ) : (
+                              <span className="text-xs text-gray-400">Owner</span>
+                            ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
             {/* Desktop Table Layout */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto md:overflow-visible">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-center py-3 px-4 font-semibold oscars-dark w-12">#</th>
                     <th className="text-left py-3 px-4 font-semibold oscars-dark">Ballot Name</th>
-                    <th className="text-left py-3 px-4 font-semibold oscars-dark">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold oscars-dark">
+                      <span className="sr-only">Rank</span>
+                    </th>
                     <th className="text-right py-3 px-4 font-semibold oscars-dark">Correct</th>
                     <th className="text-right py-3 px-4 font-semibold oscars-dark">Possible</th>
                     <th className="text-right py-3 px-4 font-semibold oscars-dark">Earned</th>
                     {canRemove && (
-                      <th className="text-center py-3 px-4 font-semibold oscars-dark w-16">
+                      <th className="text-center py-3 px-4 font-semibold oscars-dark min-w-[140px]">
                         Actions
                       </th>
                     )}
@@ -1913,6 +2000,10 @@ function SubmissionsList({
                       /^Ballot #\d+$/.test(submission.submissionName)
                         ? 'My Ballot'
                         : submission.submissionName;
+                    const seenCount = seenCounts[submission.userId] ?? 0;
+                    const watchLevel = getWatchLevel(seenCount);
+                    const watchStyle = getWatchLevelStyle(seenCount);
+                    const isBadgeOpen = openBadgeUserId === submission.userId;
 
                     return (
                       <tr
@@ -1942,41 +2033,31 @@ function SubmissionsList({
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-semibold ${
-                                submission.isComplete
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
+                          <div className="inline-flex relative group">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setOpenBadgeUserId((current) =>
+                                  current === submission.userId ? null : submission.userId,
+                                );
+                              }}
+                              className={`inline-flex items-center rounded-full px-3 py-1 shadow-sm border ${watchStyle.badge}`}
+                              aria-label={`${seenCount}/${totalNomineeFilms} nominated films seen`}
+                            >
+                              <span className={`oscars-font text-sm font-bold ${watchStyle.text}`}>
+                                {watchLevel}
+                              </span>
+                            </button>
+                            <div
+                              className={`pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg transition-all z-10 ${
+                                isBadgeOpen
+                                  ? 'opacity-100 translate-y-0'
+                                  : 'opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'
                               }`}
                             >
-                              {submission.isComplete ? '✓ Complete' : 'In Progress'}
-                            </span>
-                            {pool?.isPaidPool && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (canEditSettings) {
-                                    updatePaymentStatus.mutate({
-                                      userId: submission.userId,
-                                      hasPaid: !submission.hasPaid,
-                                    });
-                                  }
-                                }}
-                                disabled={!canEditSettings || updatePaymentStatus.isPending}
-                                className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
-                                  submission.hasPaid
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                } ${canEditSettings ? 'cursor-pointer' : 'cursor-default'} disabled:opacity-50`}
-                              >
-                                {updatePaymentStatus.isPending
-                                  ? '...'
-                                  : submission.hasPaid
-                                    ? '✓ Paid'
-                                    : 'Unpaid'}
-                              </button>
-                            )}
+                              {seenCount}/{totalNomineeFilms} nominated films seen
+                            </div>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -1990,23 +2071,50 @@ function SubmissionsList({
                         </td>
                         {canRemove && (
                           <td className="py-3 px-4 text-center">
-                            {submission.userId !== pool?.ownerId ? (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSubmissionToRemove({
-                                    userId: submission.userId,
-                                    submissionName: submission.submissionName,
-                                  });
-                                }}
-                                className="px-3 py-1.5 rounded text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
-                                title="Remove ballot"
-                              >
-                                Remove
-                              </button>
-                            ) : (
-                              <span className="text-xs text-gray-400">Owner</span>
-                            )}
+                            <div className="flex items-center justify-center gap-2">
+                              {pool?.isPaidPool && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (canEditSettings) {
+                                      updatePaymentStatus.mutate({
+                                        userId: submission.userId,
+                                        hasPaid: !submission.hasPaid,
+                                      });
+                                    }
+                                  }}
+                                  disabled={!canEditSettings || updatePaymentStatus.isPending}
+                                  className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                                    submission.hasPaid
+                                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                      : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  } ${canEditSettings ? 'cursor-pointer' : 'cursor-default'} disabled:opacity-50`}
+                                >
+                                  {updatePaymentStatus.isPending
+                                    ? '...'
+                                    : submission.hasPaid
+                                      ? '✓ Paid'
+                                      : 'Unpaid'}
+                                </button>
+                              )}
+                              {submission.userId !== pool?.ownerId ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSubmissionToRemove({
+                                      userId: submission.userId,
+                                      submissionName: submission.submissionName,
+                                    });
+                                  }}
+                                  className="px-3 py-1.5 rounded text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+                                  title="Remove ballot"
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <span className="text-xs text-gray-400">Owner</span>
+                              )}
+                            </div>
                           </td>
                         )}
                       </tr>

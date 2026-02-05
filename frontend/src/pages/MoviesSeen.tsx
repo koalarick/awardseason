@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -16,6 +16,7 @@ type FilterOption = (typeof filterOptions)[number];
 export default function MoviesSeen() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterOption>('all');
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +26,10 @@ export default function MoviesSeen() {
   const previousRankIndexRef = useRef<number | null>(null);
 
   const year = new Date().getFullYear().toString();
+  const requestedUserId = searchParams.get('userId');
+  const isSuperuser = user?.role === 'SUPERUSER';
+  const viewUserId =
+    isSuperuser && requestedUserId && requestedUserId !== user?.id ? requestedUserId : null;
 
   const {
     data: categories,
@@ -40,7 +45,12 @@ export default function MoviesSeen() {
 
   const movies = useMemo(() => (categories ? getMovieEntries(categories) : []), [categories]);
 
-  const { seenSet, toggleSeen } = useSeenMovies({ userId: user?.id, year });
+  const { seenSet, toggleSeen, isReadOnly } = useSeenMovies({
+    userId: user?.id,
+    year,
+    targetUserId: viewUserId ?? undefined,
+    readOnly: Boolean(viewUserId),
+  });
 
   const seenCount = useMemo(() => {
     if (!movies.length) return 0;
@@ -271,6 +281,11 @@ export default function MoviesSeen() {
                   <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
                   <span className="font-semibold text-gray-900">{movies.length}</span> nominated films.
                 </p>
+                {isReadOnly && (
+                  <p className="text-xs text-gray-500">
+                    View-only mode (superuser).
+                  </p>
+                )}
                 <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
                   <div
                     className="h-full bg-yellow-500 transition-all"
@@ -386,8 +401,17 @@ export default function MoviesSeen() {
                   key={movie.id}
                   type="button"
                   aria-pressed={isSeen}
-                  onClick={() => toggleSeen(movie.id)}
-                  className={`border-2 rounded-lg p-4 md:p-3 transition-all flex md:flex-col gap-4 md:gap-0 text-left cursor-pointer active:scale-[0.99] ${
+                  onClick={() => {
+                    if (!isReadOnly) {
+                      toggleSeen(movie.id);
+                    }
+                  }}
+                  aria-disabled={isReadOnly}
+                  className={`border-2 rounded-lg p-4 md:p-3 transition-all flex md:flex-col gap-4 md:gap-0 text-left ${
+                    isReadOnly
+                      ? 'border-gray-200 bg-white cursor-default'
+                      : 'cursor-pointer active:scale-[0.99]'
+                  } ${
                     isSeen
                       ? 'border-yellow-400 bg-yellow-50'
                       : 'border-gray-200 hover:border-yellow-300 hover:bg-yellow-50/30 bg-white'

@@ -938,7 +938,7 @@ export default function Dashboard() {
                                       title={movie.title}
                                       src={primarySource}
                                       fallbackSrcs={fallbackSources}
-                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-yellow-400 snap-start"
+                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-yellow-400 snap-start hover:border-yellow-300 hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
                                       imageClassName="w-full h-full object-cover"
                                       fallbackVariant="compact"
                                       badge={
@@ -1037,7 +1037,7 @@ export default function Dashboard() {
                                       title={movie.title}
                                       src={primarySource}
                                       fallbackSrcs={fallbackSources}
-                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-gray-200 snap-start"
+                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-gray-200 snap-start hover:border-yellow-300 hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
                                       imageClassName="w-full h-full object-cover"
                                       fallbackVariant="compact"
                                       badge={
