@@ -51,8 +51,8 @@ export default function MoviesSeen() {
   const watchLevel = useMemo(() => {
     if (seenCount === 0) return 'First-Timer';
     if (seenCount <= 5) return 'Red Carpet Regular';
-    if (seenCount <= 10) return 'Contender Tracker';
-    if (seenCount <= 30) return 'Cinephile';
+    if (seenCount <= 10) return 'Cinephile';
+    if (seenCount <= 30) return 'Film Buff';
     return 'Auteur';
   }, [seenCount]);
 

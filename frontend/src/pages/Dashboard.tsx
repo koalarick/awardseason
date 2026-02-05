@@ -443,12 +443,43 @@ export default function Dashboard() {
 
   const totalMovies = movieEntries.length;
   const movieProgress = totalMovies ? Math.round((seenMovieCount / totalMovies) * 100) : 0;
-  const watchLevelCopy = useMemo(() => {
-    if (seenMovieCount === 0) return 'You are a First-Timer.';
-    if (seenMovieCount <= 5) return 'You are a Red Carpet Regular.';
-    if (seenMovieCount <= 10) return 'You are a Contender Tracker.';
-    if (seenMovieCount <= 30) return 'You are a Cinephile.';
-    return 'You are an Auteur.';
+  const watchLevel = useMemo(() => {
+    if (seenMovieCount === 0) return 'First-Timer';
+    if (seenMovieCount <= 5) return 'Red Carpet Regular';
+    if (seenMovieCount <= 10) return 'Cinephile';
+    if (seenMovieCount <= 30) return 'Film Buff';
+    return 'Auteur';
+  }, [seenMovieCount]);
+
+  const watchLevelStyle = useMemo(() => {
+    if (seenMovieCount === 0) {
+      return {
+        badge: 'bg-slate-100 border-slate-200',
+        text: 'text-slate-700',
+      };
+    }
+    if (seenMovieCount <= 5) {
+      return {
+        badge: 'bg-amber-50 border-amber-200',
+        text: 'text-amber-800',
+      };
+    }
+    if (seenMovieCount <= 10) {
+      return {
+        badge: 'bg-emerald-50 border-emerald-200',
+        text: 'text-emerald-800',
+      };
+    }
+    if (seenMovieCount <= 30) {
+      return {
+        badge: 'bg-blue-50 border-blue-200',
+        text: 'text-blue-800',
+      };
+    }
+    return {
+      badge: 'bg-yellow-50 border-yellow-200',
+      text: 'text-yellow-900',
+    };
   }, [seenMovieCount]);
 
   const watchedMovies = useMemo(
@@ -799,19 +830,28 @@ export default function Dashboard() {
                   ) : (
                     <>
                       <div className="flex flex-col gap-2">
-                        <p className="text-sm sm:text-base text-gray-700">
-                          You&apos;ve seen{' '}
-                          <span className="font-semibold text-gray-900">{seenMovieCount}</span> of{' '}
-                          <span className="font-semibold text-gray-900">{totalMovies}</span>{' '}
-                          nominated films.
-                        </p>
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <p className="text-sm sm:text-base text-gray-700">
+                            <span className="font-semibold text-gray-900">{seenMovieCount}</span> /{' '}
+                            <span className="font-semibold text-gray-900">{totalMovies}</span>{' '}
+                            nominated movies
+                          </p>
+                          <div
+                            className={`inline-flex items-center rounded-full px-3 py-1 shadow-sm border ${watchLevelStyle.badge}`}
+                          >
+                            <span
+                              className={`oscars-font text-xs font-bold ${watchLevelStyle.text}`}
+                            >
+                              {watchLevel}
+                            </span>
+                          </div>
+                        </div>
                         <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
                           <div
                             className="h-full bg-yellow-500 transition-all"
                             style={{ width: `${movieProgress}%` }}
                           />
                         </div>
-                        <p className="text-xs text-gray-500">{watchLevelCopy}</p>
                       </div>
 
                       <div className="space-y-4">
