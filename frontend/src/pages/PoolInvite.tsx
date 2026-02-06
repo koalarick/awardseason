@@ -8,7 +8,7 @@ export default function PoolInvite() {
   const { poolId } = useParams<{ poolId: string }>();
   const navigate = useNavigate();
   const { user, login, register } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
