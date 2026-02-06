@@ -3733,6 +3733,17 @@ function SubmissionNameEditor({
   });
 
   const displayName = currentName || defaultName;
+  const trimmedCurrentName = (currentName ?? '').trim();
+  const trimmedDefaultName = defaultName.trim();
+  const isDefaultName = trimmedCurrentName.length === 0 || trimmedCurrentName === trimmedDefaultName;
+  const renameButtonClasses = isDefaultName
+    ? 'flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-full border-2 border-yellow-200 text-yellow-100 bg-yellow-100/10 shadow-md hover:bg-yellow-100/20 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900'
+    : 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors';
+  const displayNameClasses = `oscars-font text-lg sm:text-xl font-bold text-white whitespace-normal break-words ${
+    isDefaultName
+      ? 'inline-block px-2 py-1 rounded-md border border-dashed border-yellow-200/70 bg-yellow-100/10'
+      : ''
+  }`;
 
   if (isEditing) {
     return (
@@ -3769,32 +3780,38 @@ function SubmissionNameEditor({
         className="flex-1 text-left"
         aria-label="Edit ballot name"
       >
-        <h2 className="oscars-font text-lg sm:text-xl font-bold text-white whitespace-normal break-words">
-          {displayName}
-        </h2>
+        <h2 className={displayNameClasses}>{displayName}</h2>
+        {isDefaultName && (
+          <p className="mt-1 text-[11px] uppercase tracking-wide text-yellow-100/90">
+            Click to rename
+          </p>
+        )}
       </button>
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors"
-        title="Edit ballot name"
-      >
-        <svg
-          className="w-3.5 h-3.5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
+      {!isDefaultName && (
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className={renameButtonClasses}
+          title="Rename ballot"
+          aria-label="Rename ballot"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-          />
-        </svg>
-        Rename
-      </button>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+          Rename
+        </button>
+      )}
     </div>
   );
 }
