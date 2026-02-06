@@ -224,6 +224,16 @@ function getTextColorForMode(hex: string, isDarkMode: boolean): string {
   }
 }
 
+const isDefaultBallotName = (
+  submissionName: string | null | undefined,
+  fallbackName: string,
+) => {
+  const trimmed = (submissionName ?? '').trim();
+  if (!trimmed) return true;
+  if (trimmed === fallbackName.trim()) return true;
+  return /^Ballot #\d+$/.test(trimmed);
+};
+
 // Helper function to get a readable text color for dark backgrounds
 function getTextColorForDarkBg(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -444,11 +454,16 @@ export default function PoolEdit() {
   const [nomineeImageColors, setNomineeImageColors] = useState<
     Map<string, { primary: string; secondary: string; accent: string; averageBrightness: number }>
   >(new Map());
+  const [showRenamePrompt, setShowRenamePrompt] = useState(false);
+  const [hasDismissedRenamePrompt, setHasDismissedRenamePrompt] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState('');
 
   // Check if viewing someone else's submission
   const viewUserId = searchParams.get('userId');
   const isViewingOtherSubmission = Boolean(viewUserId && viewUserId !== user?.id);
   const targetUserId = isViewingOtherSubmission ? viewUserId : user?.id;
+  const defaultName = 'My Ballot';
 
   const { data: pool, isLoading: poolLoading } = useQuery({
     queryKey: ['pool', poolId],
@@ -525,6 +540,57 @@ export default function PoolEdit() {
     },
     enabled: !!poolId && !!user?.id,
   });
+
+  const updateSubmissionName = useMutation({
+    mutationFn: async (submissionName: string) => {
+      const response = await api.patch(`/pools/${poolId}/submission-name`, {
+        submissionName,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userMembership', poolId] });
+      queryClient.invalidateQueries({ queryKey: ['submissions', poolId] });
+      setShowRenamePrompt(false);
+      setHasDismissedRenamePrompt(true);
+      setRenameError('');
+    },
+    onError: (error: any) => {
+      setRenameError(error?.response?.data?.error || 'Failed to update ballot name');
+    },
+  });
+
+  useEffect(() => {
+    if (isViewingOtherSubmission) {
+      setShowRenamePrompt(false);
+      return;
+    }
+    if (!userMembership || hasDismissedRenamePrompt) return;
+    if (!isDefaultBallotName(userMembership.submissionName, defaultName)) {
+      setShowRenamePrompt(false);
+      return;
+    }
+    setShowRenamePrompt(true);
+    setRenameValue((current) =>
+      current ? current : (userMembership.submissionName ?? '').trim(),
+    );
+  }, [userMembership, hasDismissedRenamePrompt, isViewingOtherSubmission, defaultName]);
+
+  const handleRenameSubmit = () => {
+    if (!userMembership || updateSubmissionName.isPending) return;
+    setRenameError('');
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      setRenameError('Please enter a ballot name.');
+      return;
+    }
+    if (trimmed === (userMembership.submissionName ?? '').trim()) {
+      setShowRenamePrompt(false);
+      setHasDismissedRenamePrompt(true);
+      return;
+    }
+    updateSubmissionName.mutate(trimmed);
+  };
 
   // Fetch odds history for the selected nominee (from Jan 25 onwards)
   const { data: oddsHistory } = useQuery({
@@ -858,7 +924,6 @@ export default function PoolEdit() {
 
   const targetSubmission = submissions?.find((s: any) => s.userId === targetUserId);
 
-  const defaultName = 'My Ballot';
   const submissionName = isViewingOtherSubmission
     ? targetSubmission?.submissionName || 'Ballot'
     : userMembership?.submissionName || defaultName;
@@ -914,6 +979,54 @@ export default function PoolEdit() {
           </button>
         </div>
       </header>
+
+      {showRenamePrompt && !isViewingOtherSubmission && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold oscars-dark mb-4">Name your ballot</h3>
+            {renameError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded mb-4">
+                {renameError}
+              </div>
+            )}
+            <input
+              id="rename-ballot"
+              type="text"
+              aria-label="Ballot name"
+              value={renameValue}
+              onChange={(event) => setRenameValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  handleRenameSubmit();
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+              autoFocus
+            />
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRenamePrompt(false);
+                  setHasDismissedRenamePrompt(true);
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={handleRenameSubmit}
+                disabled={updateSubmissionName.isPending}
+                className="px-4 py-2 oscars-gold-bg text-white rounded hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50"
+              >
+                {updateSubmissionName.isPending ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Submission Header with Summary */}
