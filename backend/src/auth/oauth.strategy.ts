@@ -6,8 +6,17 @@ import type { SafeUser } from '../types/express';
 
 const prisma = new PrismaClient();
 const authService = new AuthService();
-type OAuthSessionUser = SafeUser & { token?: string; isNewUser?: boolean; oauthProvider?: string };
-type OAuthSessionEnvelope = { user: SafeUser; token?: string; isNewUser?: boolean; oauthProvider?: string };
+type OAuthSessionUser = SafeUser & {
+  token?: string;
+  isNewUser?: boolean;
+  oauthProvider?: string | null;
+};
+type OAuthSessionEnvelope = {
+  user: SafeUser;
+  token?: string;
+  isNewUser?: boolean;
+  oauthProvider?: string | null;
+};
 type SerializedOAuthUser = OAuthSessionUser | OAuthSessionEnvelope;
 
 // Google OAuth Strategy

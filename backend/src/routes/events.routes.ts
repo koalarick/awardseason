@@ -139,15 +139,12 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
     if (pageViews.length > 0) {
       const pageFilters = pageViews.map((value) => buildPageViewFilter(value));
       eventFilters.push(
-        Prisma.sql`(e.event_name = 'page.view' AND (${Prisma.join(
-          pageFilters,
-          Prisma.sql` OR `,
-        )}))`,
+        Prisma.sql`(e.event_name = 'page.view' AND (${Prisma.join(pageFilters, ' OR ')}))`,
       );
     }
 
     if (eventFilters.length > 0) {
-      conditions.push(Prisma.sql`(${Prisma.join(eventFilters, Prisma.sql` OR `)})`);
+      conditions.push(Prisma.sql`(${Prisma.join(eventFilters, ' OR ')})`);
     }
     if (email) {
       conditions.push(Prisma.sql`u.email ILIKE ${`%${email}%`}`);
@@ -173,7 +170,7 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
 
     const whereClause =
       conditions.length > 0
-        ? Prisma.sql`WHERE ${Prisma.join(conditions, Prisma.sql` AND `)}`
+        ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
         : Prisma.empty;
 
     const rows = await prisma.$queryRaw<
