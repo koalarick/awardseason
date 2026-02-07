@@ -193,22 +193,6 @@ export default function PoolInvite() {
           </div>
 
           <div className="space-y-6 order-1 lg:order-2">
-            {/* Mobile reassurance card */}
-            <div className="lg:hidden bg-white rounded-lg shadow overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 py-3">
-                <h2 className="oscars-font text-sm font-bold">Quick reassurance</h2>
-              </div>
-              <div className="px-4 py-4 text-sm text-gray-700 space-y-2">
-                <p className="font-semibold oscars-dark">
-                  Joining takes under a minute — no setup needed.
-                </p>
-                <ul className="space-y-1">
-                  <li>Pick winners, watch the show, see live scores.</li>
-                  <li>Private pools stay private. Invite-only access.</li>
-                </ul>
-              </div>
-            </div>
-
             {/* Pool Info Card */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
