@@ -195,37 +195,33 @@ export default function PoolInvite() {
           <div className="space-y-6 order-1 lg:order-2">
             {/* Pool Info Card */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-                <h2 className="oscars-font text-sm sm:text-base font-bold">You've been invited!</h2>
-              </div>
-              <div className="px-4 sm:px-6 py-4">
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Pool Name</p>
-                    <p className="text-base sm:text-lg font-bold oscars-dark">{pool.name}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Members</p>
-                      <p className="font-semibold oscars-dark">{pool._count?.members || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Type</p>
-                      <p className="font-semibold oscars-dark">
-                        {pool.isPublic ? 'Public' : 'Private'}
-                      </p>
-                    </div>
-                  </div>
-                  {pool.isPaidPool && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                      <p className="text-xs font-semibold text-yellow-900">💰 Paid Pool</p>
-                      <p className="text-xs text-yellow-800 mt-1">
-                        Entry fee: ${pool.entryAmount?.toFixed(2)} • Payment handled outside this
-                        platform
-                      </p>
-                    </div>
-                  )}
+              <div className="px-4 sm:px-6 py-3 sm:py-4">
+                <div className="text-[11px] uppercase tracking-[0.2em] text-amber-700/80">
+                  Invite
                 </div>
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <h2 className="oscars-font text-base sm:text-lg font-bold text-slate-900">
+                    {pool.name}
+                  </h2>
+                  <span className="text-xs text-slate-500">
+                    • {pool._count?.members || 0} members
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    • {pool.isPublic ? 'Public' : 'Private'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1">You've been invited!</p>
+
+                {pool.isPaidPool && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="inline-flex items-center rounded-full bg-yellow-50 border border-yellow-200 px-2 py-1 font-semibold text-yellow-900">
+                      💰 Paid Pool
+                    </span>
+                    <span className="text-yellow-800">
+                      Entry fee: ${pool.entryAmount?.toFixed(2)} • Paid outside this platform
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
