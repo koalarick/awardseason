@@ -171,9 +171,10 @@ export default function MoviesSeen() {
   }, [rankIndex, confettiColors]);
 
   useEffect(() => {
+    const headerEl = headerRef.current;
     const measureHeader = () => {
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
+      if (headerEl) {
+        setHeaderHeight(headerEl.offsetHeight);
       }
     };
 
@@ -181,17 +182,17 @@ export default function MoviesSeen() {
     window.addEventListener('resize', measureHeader);
 
     let resizeObserver: ResizeObserver | null = null;
-    if (headerRef.current) {
+    if (headerEl) {
       resizeObserver = new ResizeObserver(() => {
         measureHeader();
       });
-      resizeObserver.observe(headerRef.current);
+      resizeObserver.observe(headerEl);
     }
 
     return () => {
       window.removeEventListener('resize', measureHeader);
-      if (resizeObserver && headerRef.current) {
-        resizeObserver.unobserve(headerRef.current);
+      if (resizeObserver && headerEl) {
+        resizeObserver.unobserve(headerEl);
       }
     };
   }, []);

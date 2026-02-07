@@ -233,6 +233,26 @@ const categoryGroups = [
   },
 ];
 
+const payoutStructurePresets: Array<{ name: string; structure: PayoutStructureEntry[] }> = [
+  { name: 'Winner Takes All', structure: [{ position: 1, percentage: 100 }] },
+  {
+    name: '60/30/10',
+    structure: [
+      { position: 1, percentage: 60 },
+      { position: 2, percentage: 30 },
+      { position: 3, percentage: 10 },
+    ],
+  },
+  {
+    name: '50/30/20',
+    structure: [
+      { position: 1, percentage: 50 },
+      { position: 2, percentage: 30 },
+      { position: 3, percentage: 20 },
+    ],
+  },
+];
+
 // Get default points for a category based on its type
 function getDefaultPointsForCategory(categoryId: string): number {
   if (categoryGroups[0].categoryIds.includes(categoryId)) {
@@ -2291,26 +2311,6 @@ function PayoutStructureEditor({
   onUpdate: () => void;
   onSave?: (saveFn: () => Promise<boolean>) => void;
 }) {
-  const presets = [
-    { name: 'Winner Takes All', structure: [{ position: 1, percentage: 100 }] },
-    {
-      name: '60/30/10',
-      structure: [
-        { position: 1, percentage: 60 },
-        { position: 2, percentage: 30 },
-        { position: 3, percentage: 10 },
-      ],
-    },
-    {
-      name: '50/30/20',
-      structure: [
-        { position: 1, percentage: 50 },
-        { position: 2, percentage: 30 },
-        { position: 3, percentage: 20 },
-      ],
-    },
-  ];
-
   const defaultPayoutStructure = [{ position: 1, percentage: 100 }];
   const [payoutStructure, setPayoutStructure] = useState<PayoutStructureEntry[]>(
     currentSettings.payoutStructure || defaultPayoutStructure,
@@ -2322,7 +2322,9 @@ function PayoutStructureEditor({
   // Check if current structure matches a preset
   useEffect(() => {
     const currentStr = JSON.stringify(payoutStructure);
-    const matchingPreset = presets.find((p) => JSON.stringify(p.structure) === currentStr);
+    const matchingPreset = payoutStructurePresets.find(
+      (p) => JSON.stringify(p.structure) === currentStr,
+    );
     if (matchingPreset) {
       setSelectedPreset(matchingPreset.name);
       setIsCustom(false);
@@ -2396,7 +2398,7 @@ function PayoutStructureEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payoutStructure, onSave]);
 
-  const applyPreset = (preset: (typeof presets)[0]) => {
+  const applyPreset = (preset: (typeof payoutStructurePresets)[0]) => {
     setPayoutStructure(preset.structure);
     setSelectedPreset(preset.name);
     setIsCustom(false);
@@ -2476,7 +2478,7 @@ function PayoutStructureEditor({
         {/* Preset Selector */}
         <div className="mb-2">
           <div className="flex flex-wrap gap-1.5">
-            {presets.map((preset) => (
+            {payoutStructurePresets.map((preset) => (
               <button
                 key={preset.name}
                 type="button"

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import type { Category } from '../types/pool';
+import type { ActualWinner, Category } from '../types/pool';
 import { getNomineeImage } from '../utils/nomineeImages';
 
 // Category grouping configuration (same as PoolEdit)
@@ -75,9 +75,10 @@ export default function GlobalWinners() {
 
   // Measure header height
   useEffect(() => {
+    const headerEl = headerRef.current;
     const measureHeader = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
+      if (headerEl) {
+        const height = headerEl.offsetHeight;
         setHeaderHeight(height);
       }
     };
@@ -86,17 +87,17 @@ export default function GlobalWinners() {
     window.addEventListener('resize', measureHeader);
 
     let resizeObserver: ResizeObserver | null = null;
-    if (headerRef.current) {
+    if (headerEl) {
       resizeObserver = new ResizeObserver(() => {
         measureHeader();
       });
-      resizeObserver.observe(headerRef.current);
+      resizeObserver.observe(headerEl);
     }
 
     return () => {
       window.removeEventListener('resize', measureHeader);
-      if (resizeObserver && headerRef.current) {
-        resizeObserver.unobserve(headerRef.current);
+      if (resizeObserver && headerEl) {
+        resizeObserver.unobserve(headerEl);
       }
     };
   }, []);
@@ -118,9 +119,10 @@ export default function GlobalWinners() {
 
   // Measure sticky summary height
   useEffect(() => {
+    const stickyEl = stickySummaryRef.current;
     const measureStickySummary = () => {
-      if (stickySummaryRef.current) {
-        const height = stickySummaryRef.current.offsetHeight;
+      if (stickyEl) {
+        const height = stickyEl.offsetHeight;
         setStickySummaryHeight(height);
       }
     };
@@ -129,17 +131,17 @@ export default function GlobalWinners() {
     window.addEventListener('resize', measureStickySummary);
 
     let resizeObserver: ResizeObserver | null = null;
-    if (stickySummaryRef.current) {
+    if (stickyEl) {
       resizeObserver = new ResizeObserver(() => {
         measureStickySummary();
       });
-      resizeObserver.observe(stickySummaryRef.current);
+      resizeObserver.observe(stickyEl);
     }
 
     return () => {
       window.removeEventListener('resize', measureStickySummary);
-      if (resizeObserver && stickySummaryRef.current) {
-        resizeObserver.unobserve(stickySummaryRef.current);
+      if (resizeObserver && stickyEl) {
+        resizeObserver.unobserve(stickyEl);
       }
     };
   }, [showStickySummary]);
@@ -153,11 +155,11 @@ export default function GlobalWinners() {
     enabled: !!year,
   });
 
-  const { data: actualWinners } = useQuery({
+  const { data: actualWinners } = useQuery<ActualWinner[]>({
     queryKey: ['globalWinners', year],
     queryFn: async () => {
       const response = await api.get(`/winners/global/${year}`);
-      return response.data;
+      return response.data as ActualWinner[];
     },
     enabled: !!year,
   });
@@ -175,7 +177,7 @@ export default function GlobalWinners() {
       queryClient.invalidateQueries({ queryKey: ['globalWinners', year] });
       queryClient.invalidateQueries({ queryKey: ['submissions'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Failed to mark winner:', error);
     },
   });
@@ -189,13 +191,13 @@ export default function GlobalWinners() {
       queryClient.invalidateQueries({ queryKey: ['globalWinners', year] });
       queryClient.invalidateQueries({ queryKey: ['submissions'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Failed to unmark winner:', error);
     },
   });
 
   const handleNomineeSelect = (categoryId: string, nomineeId: string) => {
-    const currentWinner = actualWinners?.find((w: any) => w.categoryId === categoryId);
+    const currentWinner = actualWinners?.find((winner) => winner.categoryId === categoryId);
 
     // If clicking the same nominee, deselect it (remove winner)
     if (currentWinner && currentWinner.nomineeId === nomineeId) {
@@ -208,7 +210,7 @@ export default function GlobalWinners() {
   };
 
   const getWinnerForCategory = (categoryId: string) => {
-    return actualWinners?.find((w: any) => w.categoryId === categoryId);
+    return actualWinners?.find((winner) => winner.categoryId === categoryId);
   };
 
   if (user?.role !== 'SUPERUSER') {
@@ -517,9 +519,9 @@ export default function GlobalWinners() {
                                             {nominee.name}
                                           </h4>
                                         )}
-                                        {(nominee as any).song && (
+                                        {nominee.song && (
                                           <p className="text-xs text-gray-600 mt-0.5 truncate">
-                                            {(nominee as any).song}
+                                            {nominee.song}
                                           </p>
                                         )}
                                       </div>

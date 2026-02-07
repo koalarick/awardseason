@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 type UserSummary = {
   id: string;
@@ -99,9 +100,9 @@ export default function Users() {
       setStatusMessage('Role updated.');
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
-    onError: (error: any, variables) => {
+    onError: (error: unknown, variables) => {
       setRoleEdits((prev) => ({ ...prev, [variables.userId]: variables.previousRole }));
-      setStatusMessage(error?.response?.data?.error || 'Failed to update role.');
+      setStatusMessage(getApiErrorMessage(error) ?? 'Failed to update role.');
     },
     onSettled: (_data, _error, variables) => {
       if (variables?.userId) {
@@ -120,8 +121,8 @@ export default function Users() {
       setPasswordEdits((prev) => ({ ...prev, [variables.userId]: '' }));
       setPasswordEditing((prev) => ({ ...prev, [variables.userId]: false }));
     },
-    onError: (error: any) => {
-      setStatusMessage(error?.response?.data?.error || 'Failed to update password.');
+    onError: (error: unknown) => {
+      setStatusMessage(getApiErrorMessage(error) ?? 'Failed to update password.');
     },
   });
 

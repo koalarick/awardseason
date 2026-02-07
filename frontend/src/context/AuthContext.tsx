@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '../services/api';
+import { hasApiResponse } from '../utils/apiErrors';
 
 export interface AuthUser {
   id: string;
@@ -63,9 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(newToken);
       setUser(newUser);
       localStorage.setItem('token', newToken);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Re-throw with better error message for network/CORS issues
-      if (!error.response) {
+      if (!hasApiResponse(error)) {
         throw new Error(
           'Network error: Could not connect to server. Make sure you are on the same WiFi network and using the correct IP address.',
         );

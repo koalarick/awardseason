@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import type { Pool } from '../types/pool';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 export default function PoolInvite() {
   const { poolId } = useParams<{ poolId: string }>();
@@ -21,11 +23,11 @@ export default function PoolInvite() {
     data: pool,
     isLoading: poolLoading,
     error: poolError,
-  } = useQuery({
+  } = useQuery<Pool>({
     queryKey: ['pool-info', poolId],
     queryFn: async () => {
       const response = await api.get(`/pools/${poolId}/info`);
-      return response.data;
+      return response.data as Pool;
     },
     enabled: !!poolId,
   });
@@ -57,27 +59,25 @@ export default function PoolInvite() {
       });
       // Successfully joined, redirect to pool page
       navigate(`/pool/${poolId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err);
       // If already a member, just redirect
-      if (err.response?.data?.error?.includes('Already a member')) {
+      if (message?.includes('Already a member')) {
         navigate(`/pool/${poolId}`);
-      } else if (
-        err.response?.data?.error?.includes('Password required') ||
-        err.response?.data?.error?.includes('Invalid password')
-      ) {
+      } else if (message?.includes('Password required') || message?.includes('Invalid password')) {
         // Password needed or wrong, stay on page
-        setError(err.response?.data?.error || 'Failed to join pool');
+        setError(message ?? 'Failed to join pool');
         setIsJoining(false);
         setHasAttemptedJoin(false); // Allow retry
       } else {
-        setError(err.response?.data?.error || 'Failed to join pool');
+        setError(message ?? 'Failed to join pool');
         setIsJoining(false);
         setHasAttemptedJoin(false); // Allow retry
       }
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -89,12 +89,12 @@ export default function PoolInvite() {
     try {
       await login(email, password);
       // Auto-join will happen in useEffect after user state updates
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err) ?? 'Login failed');
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -116,8 +116,8 @@ export default function PoolInvite() {
     try {
       await register(email, password);
       // Auto-join will happen in useEffect after user state updates
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err) ?? 'Registration failed');
     }
   };
 

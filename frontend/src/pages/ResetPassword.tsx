@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -11,7 +12,7 @@ export default function ResetPassword() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -34,8 +35,8 @@ export default function ResetPassword() {
       await api.post('/auth/reset-password', { token, password });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Unable to reset password');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err) ?? 'Unable to reset password');
     }
   };
 

@@ -1,20 +1,21 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     try {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Unable to send reset email');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err) ?? 'Unable to send reset email');
     }
   };
 

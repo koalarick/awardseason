@@ -7,8 +7,8 @@ import './index.css';
 // Filter out Chrome extension errors from console
 if (import.meta.env.DEV) {
   const originalError = console.error;
-  console.error = (...args: any[]) => {
-    const errorMessage = args.join(' ');
+  console.error = (...args: Parameters<typeof originalError>) => {
+    const errorMessage = args.map(String).join(' ');
     // Filter out chrome-extension:// errors
     if (
       errorMessage.includes('chrome-extension://') ||

@@ -1,12 +1,30 @@
-import { useState, useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useState, useEffect, useMemo, useRef, type FormEvent, type RefObject } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import type { Category } from '../types/pool';
+import type { Category, Pool, PoolSubmission } from '../types/pool';
 import MoviePoster from '../components/MoviePoster';
-import { getMovieEntries } from '../utils/movieNominees';
+import { getMovieEntries, type MovieEntry } from '../utils/movieNominees';
 import { useSeenMovies } from '../hooks/useSeenMovies';
+import { getApiErrorMessage } from '../utils/apiErrors';
+
+type PoolStats = {
+  totalUsers?: number;
+  totalPools?: number;
+};
+
+type PoolScoreEntry = {
+  userId: string;
+  totalScore?: number;
+};
+
+type PoolRankSummary = {
+  rank: number | null;
+  totalMembers: number;
+  totalEarnedPoints: number;
+  totalPossiblePoints: number;
+};
 
 // Countdown component
 function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
@@ -146,12 +164,12 @@ function PoolSearch({ onJoinSuccess }: { onJoinSuccess: () => void }) {
   const [passwordError, setPasswordError] = useState('');
   const queryClient = useQueryClient();
 
-  const { data: searchResults, isLoading: isSearching } = useQuery({
+  const { data: searchResults = [], isLoading: isSearching } = useQuery<Pool[]>({
     queryKey: ['pool-search', searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return [];
       const response = await api.get(`/pools/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      return response.data;
+      return response.data as Pool[];
     },
     enabled: searchQuery.trim().length > 0,
   });
@@ -169,12 +187,12 @@ function PoolSearch({ onJoinSuccess }: { onJoinSuccess: () => void }) {
       setSearchQuery('');
       onJoinSuccess();
     },
-    onError: (error: any) => {
-      setPasswordError(error.response?.data?.error || 'Failed to join pool');
+    onError: (error: unknown) => {
+      setPasswordError(getApiErrorMessage(error) ?? 'Failed to join pool');
     },
   });
 
-  const handleJoinClick = (pool: any) => {
+  const handleJoinClick = (pool: Pool) => {
     if (!pool.isPublic) {
       setShowPasswordPrompt(pool.id);
       setPassword('');
@@ -184,7 +202,7 @@ function PoolSearch({ onJoinSuccess }: { onJoinSuccess: () => void }) {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent, poolId: string) => {
+  const handlePasswordSubmit = (e: FormEvent, poolId: string) => {
     e.preventDefault();
     setPasswordError('');
     if (!password.trim()) {
@@ -212,9 +230,9 @@ function PoolSearch({ onJoinSuccess }: { onJoinSuccess: () => void }) {
         </div>
       )}
 
-      {!isSearching && searchResults && searchResults.length > 0 && (
+      {!isSearching && searchResults.length > 0 && (
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {searchResults.map((pool: any) => (
+          {searchResults.map((pool) => (
             <div
               key={pool.id}
               className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"
@@ -309,51 +327,51 @@ export default function Dashboard() {
   const watchedCarouselRef = useRef<HTMLDivElement | null>(null);
   const recommendedCarouselRef = useRef<HTMLDivElement | null>(null);
 
-  const { data: pools, isLoading } = useQuery({
+  const { data: pools, isLoading } = useQuery<Pool[]>({
     queryKey: ['pools'],
     queryFn: async () => {
       const response = await api.get('/pools/my-pools');
-      return response.data;
+      return response.data as Pool[];
     },
   });
 
   const isSuperuser = user?.role === 'SUPERUSER';
 
-  const { data: allPools, isLoading: isLoadingAllPools } = useQuery({
+  const { data: allPools, isLoading: isLoadingAllPools } = useQuery<Pool[]>({
     queryKey: ['pools-all'],
     queryFn: async () => {
       const response = await api.get('/pools/all');
-      return response.data;
+      return response.data as Pool[];
     },
     enabled: isSuperuser,
   });
 
-  const { data: globalStats, isLoading: isLoadingStats } = useQuery({
+  const { data: globalStats, isLoading: isLoadingStats } = useQuery<PoolStats>({
     queryKey: ['global-stats'],
     queryFn: async () => {
       const response = await api.get('/pools/stats');
-      return response.data;
+      return response.data as PoolStats;
     },
     enabled: isSuperuser,
   });
 
   const otherPoolsForSuperuser = useMemo(() => {
     if (!allPools) return [];
-    const userPoolIds = new Set((pools || []).map((pool: any) => pool.id));
-    return allPools.filter((pool: any) => !userPoolIds.has(pool.id));
+    const userPoolIds = new Set((pools ?? []).map((pool) => pool.id));
+    return allPools.filter((pool) => !userPoolIds.has(pool.id));
   }, [allPools, pools]);
 
   // Fetch ranks, scores, and submission data for all pools
-  const { data: poolRanks } = useQuery({
-    queryKey: ['pool-ranks', pools?.map((p: any) => p.id)],
+  const { data: poolRanks } = useQuery<Map<string, PoolRankSummary>>({
+    queryKey: ['pool-ranks', pools?.map((p) => p.id)],
     queryFn: async () => {
-      if (!pools || !user?.id || pools.length === 0) return new Map();
-      const rankPromises = pools.map(async (pool: any) => {
+      if (!pools || !user?.id || pools.length === 0) return new Map<string, PoolRankSummary>();
+      const rankPromises = pools.map(async (pool) => {
         try {
           // Get scores for ranking
           const scoresResponse = await api.get(`/scores/pool/${pool.id}`);
-          const scores = scoresResponse.data?.scores || [];
-          const userIndex = scores.findIndex((score: any) => score.userId === user.id);
+          const scores = (scoresResponse.data?.scores ?? []) as PoolScoreEntry[];
+          const userIndex = scores.findIndex((score) => score.userId === user.id);
           const rank = userIndex >= 0 ? userIndex + 1 : null;
           const totalMembers = scores.length;
 
@@ -362,8 +380,8 @@ export default function Dashboard() {
           let totalPossiblePoints = 0;
           try {
             const submissionsResponse = await api.get(`/pools/${pool.id}/submissions`);
-            const submissions = submissionsResponse.data || [];
-            const userSubmission = submissions.find((s: any) => s.userId === user.id);
+            const submissions = (submissionsResponse.data ?? []) as PoolSubmission[];
+            const userSubmission = submissions.find((submission) => submission.userId === user.id);
             if (userSubmission) {
               totalEarnedPoints = userSubmission.totalEarnedPoints || 0;
               totalPossiblePoints = userSubmission.totalPossiblePoints || 0;
@@ -408,11 +426,11 @@ export default function Dashboard() {
   });
 
   // Get global pool ceremony date (all pools should use the same Oscars date)
-  const { data: globalPool } = useQuery({
+  const { data: globalPool } = useQuery<Pool | null>({
     queryKey: ['globalPool'],
     queryFn: async () => {
       const response = await api.get('/pools/global');
-      return response.data;
+      return response.data as Pool;
     },
   });
 
@@ -429,7 +447,7 @@ export default function Dashboard() {
     enabled: !!currentYear,
   });
 
-  const movieEntries = useMemo(
+  const movieEntries = useMemo<MovieEntry[]>(
     () => (nomineeCategories ? getMovieEntries(nomineeCategories) : []),
     [nomineeCategories],
   );
@@ -519,8 +537,8 @@ export default function Dashboard() {
     onSuccess: () => {
       setTestEmailStatus('Test email sent');
     },
-    onError: (error: any) => {
-      setTestEmailStatus(error.response?.data?.error || 'Failed to send test email');
+    onError: (error: unknown) => {
+      setTestEmailStatus(getApiErrorMessage(error) ?? 'Failed to send test email');
     },
   });
 
@@ -538,8 +556,8 @@ export default function Dashboard() {
   // Use global pool ceremony date, or fallback to earliest from user's pools
   const ceremonyDate =
     globalPool?.ceremonyDate ||
-    (pools?.length > 0
-      ? pools.reduce((earliest: any, pool: any) => {
+    (pools?.length
+      ? pools.reduce<Pool | null>((earliest, pool) => {
           const poolDate = new Date(pool.ceremonyDate);
           const earliestDate = earliest ? new Date(earliest.ceremonyDate) : null;
           if (!earliestDate || poolDate < earliestDate) {
@@ -603,7 +621,7 @@ export default function Dashboard() {
           <p className="text-sm text-gray-600">Loading pools...</p>
         ) : otherPoolsForSuperuser.length > 0 ? (
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {otherPoolsForSuperuser.map((pool: any) => (
+            {otherPoolsForSuperuser.map((pool) => (
               <div key={pool.id} className="border border-gray-200 rounded-lg p-3 bg-white">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -711,7 +729,7 @@ export default function Dashboard() {
                   </div>
                 ) : pools && pools.length > 0 ? (
                   <div className="space-y-3">
-                    {pools.map((pool: any) => {
+                    {pools.map((pool) => {
                       const rankData = poolRanks?.get(pool.id);
                       return (
                         <div

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -10,7 +11,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -27,13 +28,12 @@ export default function Register() {
     try {
       await register(email, password);
       navigate('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      const errorMessage =
-        err.response?.data?.error ||
-        err.message ||
-        'Registration failed. Please check your connection and try again.';
-      setError(errorMessage);
+      setError(
+        getApiErrorMessage(err) ??
+          'Registration failed. Please check your connection and try again.',
+      );
     }
   };
 

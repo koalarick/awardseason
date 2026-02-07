@@ -94,7 +94,7 @@ export function useSeenMovies({
     } catch {
       localStorage.removeItem(storageKey);
     }
-  }, [userId, year, isLoading, seenMovieIds, bulkSync]);
+  }, [userId, year, isLoading, seenMovieIds, bulkSync, canEdit]);
 
   const seenSet = useMemo(() => new Set(seenMovieIds), [seenMovieIds]);
 

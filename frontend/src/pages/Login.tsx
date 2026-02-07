@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,14 +10,14 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     try {
       await login(email, password);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err) ?? 'Login failed');
     }
   };
 

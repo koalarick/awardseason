@@ -1,10 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type MouseEvent } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import type { Category, Nominee } from '../types/pool';
+import type {
+  ActualWinner,
+  Category,
+  Nominee,
+  Pool,
+  PoolMember,
+  PoolSettings,
+  PoolSubmission,
+  Prediction,
+} from '../types/pool';
 import { getNomineeImage } from '../utils/nomineeImages';
+import { getApiErrorMessage } from '../utils/apiErrors';
 // Helper to get nominee info from nominee object
 function getNomineeInfoFromData(
   nominee: Nominee,
@@ -73,6 +83,28 @@ const categoryGroups = [
     ],
   },
 ];
+
+type PredictionWithUser = Prediction & {
+  user?: {
+    id?: string;
+  };
+};
+
+type OddsHistoryEntry = {
+  oddsPercentage: number;
+  snapshotTime: string;
+};
+
+type CategoryOdds = {
+  nomineeId: string;
+  odds: number | null;
+};
+
+type OtherPoolSubmission = {
+  poolId: string;
+  poolName: string;
+  year?: string;
+};
 
 function calculateScoringPreview(
   odds: number | null,
@@ -465,16 +497,16 @@ export default function PoolEdit() {
   const targetUserId = isViewingOtherSubmission ? viewUserId : user?.id;
   const defaultName = 'My Ballot';
 
-  const { data: pool, isLoading: poolLoading } = useQuery({
+  const { data: pool, isLoading: poolLoading } = useQuery<Pool>({
     queryKey: ['pool', poolId],
     queryFn: async () => {
       const response = await api.get(`/pools/${poolId}`);
-      return response.data;
+      return response.data as Pool;
     },
     enabled: !!poolId,
   });
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['nominees', pool?.year],
     queryFn: async () => {
       const response = await api.get(`/nominees/${pool?.year}`);
@@ -483,57 +515,58 @@ export default function PoolEdit() {
     enabled: !!pool?.year,
   });
 
-  const { data: predictions } = useQuery({
+  const { data: predictions } = useQuery<PredictionWithUser[]>({
     queryKey: ['predictions', poolId, targetUserId],
     queryFn: async () => {
       if (isViewingOtherSubmission && targetUserId) {
         // Fetch specific user's predictions (read-only view)
         const response = await api.get(`/predictions/pool/${poolId}/all`);
-        const allPredictions = response.data;
+        const allPredictions = response.data as PredictionWithUser[];
         // Filter by userId (predictions from /all include user.id in user object)
         return allPredictions.filter(
-          (p: any) => p.userId === targetUserId || p.user?.id === targetUserId,
+          (prediction) =>
+            prediction.userId === targetUserId || prediction.user?.id === targetUserId,
         );
       } else {
         // Fetch current user's predictions (editable)
         const response = await api.get(`/predictions/pool/${poolId}`);
-        return response.data;
+        return response.data as PredictionWithUser[];
       }
     },
     enabled: !!poolId && !!targetUserId,
   });
 
-  const { data: poolSettings } = useQuery({
+  const { data: poolSettings } = useQuery<PoolSettings | null>({
     queryKey: ['poolSettings', poolId],
     queryFn: async () => {
       const response = await api.get(`/settings/${poolId}`);
-      return response.data;
+      return response.data as PoolSettings;
     },
     enabled: !!poolId,
   });
 
   // Fetch global winners for the pool's year (used for all pools)
-  const { data: actualWinners } = useQuery({
+  const { data: actualWinners } = useQuery<ActualWinner[]>({
     queryKey: ['globalWinners', pool?.year],
     queryFn: async () => {
       if (!pool?.year) return [];
       const response = await api.get(`/winners/global/${pool.year}`);
-      return response.data;
+      return response.data as ActualWinner[];
     },
     enabled: !!poolId && !!pool?.year,
   });
 
-  const { data: userMembership } = useQuery({
+  const { data: userMembership } = useQuery<PoolMember | null>({
     queryKey: ['userMembership', poolId],
     queryFn: async () => {
       if (!poolId || !user?.id) return null;
       try {
         const response = await api.get(`/pools/${poolId}/members`);
-        const members = response.data;
-        return members.find((m: any) => m.userId === user.id) || null;
+        const members = response.data as PoolMember[];
+        return members.find((member) => member.userId === user.id) || null;
       } catch (error) {
         if (pool?.members && Array.isArray(pool.members) && pool.members.length > 0) {
-          return pool.members[0];
+          return pool.members[0] as PoolMember;
         }
         return null;
       }
@@ -555,8 +588,8 @@ export default function PoolEdit() {
       setHasDismissedRenamePrompt(true);
       setRenameError('');
     },
-    onError: (error: any) => {
-      setRenameError(error?.response?.data?.error || 'Failed to update ballot name');
+    onError: (error: unknown) => {
+      setRenameError(getApiErrorMessage(error) ?? 'Failed to update ballot name');
     },
   });
 
@@ -593,7 +626,7 @@ export default function PoolEdit() {
   };
 
   // Fetch odds history for the selected nominee (from Jan 25 onwards)
-  const { data: oddsHistory } = useQuery({
+  const { data: oddsHistory } = useQuery<OddsHistoryEntry[] | null>({
     queryKey: [
       'oddsHistory',
       selectedNomineeInfo?.category.id,
@@ -607,11 +640,11 @@ export default function PoolEdit() {
         const response = await api.get(
           `/odds/${fullCategoryId}/${selectedNomineeInfo.nominee.id}/history`,
         );
-        const history = response.data.history || [];
+        const history = (response.data?.history ?? []) as OddsHistoryEntry[];
         // Filter to only show data from Jan 25, 2026 onwards
         const cutoffDate = new Date('2026-01-25T00:00:00Z');
-        return history.filter((h: any) => new Date(h.snapshotTime) >= cutoffDate);
-      } catch (error) {
+        return history.filter((entry) => new Date(entry.snapshotTime) >= cutoffDate);
+      } catch (error: unknown) {
         console.error('Error fetching odds history:', error);
         return [];
       }
@@ -620,11 +653,13 @@ export default function PoolEdit() {
   });
 
   // Fetch odds for all categories at once
-  const { data: allCategoryOdds, isLoading: oddsLoading } = useQuery({
+  const { data: allCategoryOdds, isLoading: oddsLoading } = useQuery<
+    Record<string, CategoryOdds[]>
+  >({
     queryKey: ['odds', 'all', pool?.year],
     queryFn: async () => {
       if (!pool?.year || !categories) return {};
-      const oddsMap: Record<string, Array<{ nomineeId: string; odds: number | null }>> = {};
+      const oddsMap: Record<string, CategoryOdds[]> = {};
 
       // Fetch odds for all categories in parallel
       const oddsPromises = categories.map(async (category) => {
@@ -633,16 +668,13 @@ export default function PoolEdit() {
           const response = await api.get(`/odds/category/${categoryId}`);
           return {
             categoryId: category.id,
-            nominees: (response.data.nominees || []) as Array<{
-              nomineeId: string;
-              odds: number | null;
-            }>,
+            nominees: (response.data?.nominees ?? []) as CategoryOdds[],
           };
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error(`Error fetching odds for ${categoryId}:`, error);
           return {
             categoryId: category.id,
-            nominees: [] as Array<{ nomineeId: string; odds: number | null }>,
+            nominees: [] as CategoryOdds[],
           };
         }
       });
@@ -665,9 +697,10 @@ export default function PoolEdit() {
 
   // Measure header height
   useEffect(() => {
+    const headerEl = headerRef.current;
     const measureHeader = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
+      if (headerEl) {
+        const height = headerEl.offsetHeight;
         setHeaderHeight(height);
       }
     };
@@ -676,17 +709,17 @@ export default function PoolEdit() {
     window.addEventListener('resize', measureHeader);
 
     let resizeObserver: ResizeObserver | null = null;
-    if (headerRef.current) {
+    if (headerEl) {
       resizeObserver = new ResizeObserver(() => {
         measureHeader();
       });
-      resizeObserver.observe(headerRef.current);
+      resizeObserver.observe(headerEl);
     }
 
     return () => {
       window.removeEventListener('resize', measureHeader);
-      if (resizeObserver && headerRef.current) {
-        resizeObserver.unobserve(headerRef.current);
+      if (resizeObserver && headerEl) {
+        resizeObserver.unobserve(headerEl);
       }
     };
   }, []);
@@ -795,7 +828,7 @@ export default function PoolEdit() {
   });
 
   const getPredictionForCategory = (categoryId: string) => {
-    return predictions?.find((p: any) => p.categoryId === categoryId);
+    return predictions?.find((prediction) => prediction.categoryId === categoryId);
   };
 
   const handleNomineeSelect = (categoryId: string, nomineeId: string) => {
@@ -805,8 +838,9 @@ export default function PoolEdit() {
     }
 
     // Don't allow editing if a winner has been announced for this category
-    const winner = actualWinners?.find((w: any) => {
-      const normalizedWinnerCategoryId = w.categoryId?.replace(/-\d{4}$/, '') || w.categoryId;
+    const winner = actualWinners?.find((result) => {
+      const normalizedWinnerCategoryId =
+        result.categoryId?.replace(/-\d{4}$/, '') || result.categoryId;
       return normalizedWinnerCategoryId === categoryId;
     });
     if (winner) {
@@ -830,7 +864,7 @@ export default function PoolEdit() {
         const categoryOddsForThis = getCategoryOdds(categoryId);
         // Get current odds for the currently selected nominee (the one being changed from)
         const currentOddsForOldNominee =
-          categoryOddsForThis.find((o: any) => o.nomineeId === existingPrediction.nomineeId)
+          categoryOddsForThis.find((oddsEntry) => oddsEntry.nomineeId === existingPrediction.nomineeId)
             ?.odds || null;
 
         // Only show warning if odds have changed for the current selection
@@ -845,7 +879,8 @@ export default function PoolEdit() {
           );
           const newNominee = category?.nominees.find((n: Nominee) => n.id === nomineeId);
           const currentOddsForNewNominee =
-            categoryOddsForThis.find((o: any) => o.nomineeId === nomineeId)?.odds || null;
+            categoryOddsForThis.find((oddsEntry) => oddsEntry.nomineeId === nomineeId)?.odds ||
+            null;
 
           setPendingSelection({
             categoryId,
@@ -880,7 +915,7 @@ export default function PoolEdit() {
     setPendingSelection(null);
   };
 
-  const handleNomineeImageClick = (e: React.MouseEvent, nominee: Nominee, category: Category) => {
+  const handleNomineeImageClick = (e: MouseEvent, nominee: Nominee, category: Category) => {
     e.preventDefault();
     e.stopPropagation(); // Prevent triggering nominee selection
     const info = getNomineeInfoFromData(nominee, category);
@@ -897,11 +932,11 @@ export default function PoolEdit() {
   };
 
   // Get submission info for the target user (from submissions list)
-  const { data: submissions } = useQuery({
+  const { data: submissions } = useQuery<PoolSubmission[]>({
     queryKey: ['submissions', poolId],
     queryFn: async () => {
       const response = await api.get(`/pools/${poolId}/submissions`);
-      return response.data;
+      return response.data as PoolSubmission[];
     },
     enabled: Boolean(poolId && isViewingOtherSubmission),
   });
@@ -922,7 +957,7 @@ export default function PoolEdit() {
     );
   }
 
-  const targetSubmission = submissions?.find((s: any) => s.userId === targetUserId);
+  const targetSubmission = submissions?.find((submission) => submission.userId === targetUserId);
 
   const submissionName = isViewingOtherSubmission
     ? targetSubmission?.submissionName || 'Ballot'
@@ -1065,7 +1100,7 @@ export default function PoolEdit() {
               let correctCount = 0;
               let incorrectCount = 0;
 
-              predictions.forEach((prediction: any) => {
+              predictions.forEach((prediction) => {
                 const category = categories.find((c: Category) => c.id === prediction.categoryId);
                 if (category) {
                   const basePoints =
@@ -1082,7 +1117,7 @@ export default function PoolEdit() {
                   // Check if this prediction is correct (matches actual winner)
                   if (actualWinners) {
                     const winner = actualWinners.find(
-                      (w: any) => w.categoryId === prediction.categoryId,
+                      (result) => result.categoryId === prediction.categoryId,
                     );
                     if (winner) {
                       if (winner.nomineeId === prediction.nomineeId) {
@@ -1326,7 +1361,7 @@ export default function PoolEdit() {
                     let correctCount = 0;
                     let incorrectCount = 0;
 
-                    predictions.forEach((prediction: any) => {
+                    predictions.forEach((prediction) => {
                       const category = categories.find(
                         (c: Category) => c.id === prediction.categoryId,
                       );
@@ -1344,9 +1379,9 @@ export default function PoolEdit() {
 
                         // Check if this prediction is correct (matches actual winner)
                         if (actualWinners) {
-                          const winner = actualWinners.find(
-                            (w: any) => w.categoryId === prediction.categoryId,
-                          );
+                        const winner = actualWinners.find(
+                          (result) => result.categoryId === prediction.categoryId,
+                        );
                           if (winner) {
                             if (winner.nomineeId === prediction.nomineeId) {
                               totalEarnedPoints += scoring.totalPoints;
@@ -1444,7 +1479,10 @@ export default function PoolEdit() {
                             return { category, prediction };
                           })
                           .filter(
-                            (item): item is { category: any; prediction: any } => item !== null,
+                            (
+                              item,
+                            ): item is { category: Category; prediction: PredictionWithUser } =>
+                              item !== null,
                           ),
                       )
                       .map(({ category, prediction }) => {
@@ -1462,8 +1500,9 @@ export default function PoolEdit() {
                         if (!selectedNominee) return null;
 
                         const currentOdds =
-                          categoryOddsForThis.find((o: any) => o.nomineeId === selectedNominee.id)
-                            ?.odds || null;
+                          categoryOddsForThis.find(
+                            (oddsEntry) => oddsEntry.nomineeId === selectedNominee.id,
+                          )?.odds || null;
                         const oddsForScoring =
                           prediction?.oddsPercentage !== null &&
                           prediction?.oddsPercentage !== undefined
@@ -1478,9 +1517,10 @@ export default function PoolEdit() {
 
                         // Check if this prediction is correct
                         // Normalize categoryId for comparison (handle both base and full IDs)
-                        const winner = actualWinners?.find((w: any) => {
+                        const winner = actualWinners?.find((winnerEntry) => {
                           const normalizedWinnerCategoryId =
-                            w.categoryId?.replace(/-\d{4}$/, '') || w.categoryId;
+                            winnerEntry.categoryId?.replace(/-\d{4}$/, '') ||
+                            winnerEntry.categoryId;
                           return normalizedWinnerCategoryId === category.id;
                         });
                         const isCorrect = winner && winner.nomineeId === prediction.nomineeId;
@@ -1867,9 +1907,10 @@ export default function PoolEdit() {
 
                           // Check if winner has been announced for this category
                           // Normalize categoryId for comparison (handle both base and full IDs)
-                          const winner = actualWinners?.find((w: any) => {
+                          const winner = actualWinners?.find((winnerEntry) => {
                             const normalizedWinnerCategoryId =
-                              w.categoryId?.replace(/-\d{4}$/, '') || w.categoryId;
+                              winnerEntry.categoryId?.replace(/-\d{4}$/, '') ||
+                              winnerEntry.categoryId;
                             return normalizedWinnerCategoryId === category.id;
                           });
                           const hasWinner = !!winner;
@@ -1934,11 +1975,13 @@ export default function PoolEdit() {
                                 {[...category.nominees]
                                   .sort((a, b) => {
                                     const oddsA =
-                                      categoryOddsForThis.find((o: any) => o.nomineeId === a.id)
-                                        ?.odds || 0;
+                                      categoryOddsForThis.find(
+                                        (oddsEntry) => oddsEntry.nomineeId === a.id,
+                                      )?.odds || 0;
                                     const oddsB =
-                                      categoryOddsForThis.find((o: any) => o.nomineeId === b.id)
-                                        ?.odds || 0;
+                                      categoryOddsForThis.find(
+                                        (oddsEntry) => oddsEntry.nomineeId === b.id,
+                                      )?.odds || 0;
                                     if (oddsB !== oddsA) {
                                       return oddsB - oddsA;
                                     }
@@ -1948,7 +1991,7 @@ export default function PoolEdit() {
                                     const isSelected = prediction?.nomineeId === nominee.id;
                                     const currentOdds =
                                       categoryOddsForThis.find(
-                                        (o: any) => o.nomineeId === nominee.id,
+                                        (oddsEntry) => oddsEntry.nomineeId === nominee.id,
                                       )?.odds || null;
                                     // For scoring preview, use min of current and original odds
                                     // Lower percentage = worse odds = higher multiplier = more points
@@ -1994,9 +2037,10 @@ export default function PoolEdit() {
 
                                     // Check if winner has been announced and if this nominee is correct/incorrect
                                     // Normalize categoryId for comparison (handle both base and full IDs)
-                                    const winner = actualWinners?.find((w: any) => {
+                                    const winner = actualWinners?.find((winnerEntry) => {
                                       const normalizedWinnerCategoryId =
-                                        w.categoryId?.replace(/-\d{4}$/, '') || w.categoryId;
+                                        winnerEntry.categoryId?.replace(/-\d{4}$/, '') ||
+                                        winnerEntry.categoryId;
                                       return normalizedWinnerCategoryId === category.id;
                                     });
                                     const hasWinner = !!winner;
@@ -3591,11 +3635,11 @@ function CopyFromOtherPoolButton({
     total: number;
   } | null>(null);
 
-  const { data: otherSubmissions, isLoading } = useQuery({
+  const { data: otherSubmissions, isLoading } = useQuery<OtherPoolSubmission[]>({
     queryKey: ['otherPoolSubmissions', poolId],
     queryFn: async () => {
       const response = await api.get(`/predictions/other-pools/${poolId}`);
-      return response.data;
+      return response.data as OtherPoolSubmission[];
     },
     enabled: !!poolId,
   });
@@ -3617,12 +3661,13 @@ function CopyFromOtherPoolButton({
         onCopy();
       }, 2000);
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to copy predictions');
+    onError: (error: unknown) => {
+      alert(getApiErrorMessage(error) ?? 'Failed to copy predictions');
     },
   });
 
-  const filteredSubmissions = otherSubmissions?.filter((sub: any) => sub.year === poolYear) || [];
+  const filteredSubmissions =
+    otherSubmissions?.filter((submission) => submission.year === poolYear) || [];
   const hasCompletedSubmissions = filteredSubmissions.length > 0;
 
   if (!hasCompletedSubmissions) {
@@ -3655,7 +3700,7 @@ function CopyFromOtherPoolButton({
                   We'll copy your selections from another pool but use the current odds.
                 </p>
                 <div className="space-y-2 mb-4">
-                  {filteredSubmissions.map((submission: any) => (
+                  {filteredSubmissions.map((submission) => (
                     <button
                       key={submission.poolId}
                       onClick={() => setSelectedPoolId(submission.poolId)}
@@ -3727,7 +3772,7 @@ function ClearAllButton({
   onClear,
 }: {
   poolId: string;
-  actualWinners?: any[];
+  actualWinners?: ActualWinner[];
   onClear: () => void;
 }) {
   const [showConfirm, setShowConfirm] = useState(false);

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import type { Category, Nominee } from '../types/pool';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 type MetadataFormState = {
   blurb_sentence_1: string;
@@ -77,7 +78,7 @@ export default function NomineeMetadata() {
     return categories.find((category) => category.id === selectedCategoryId) || null;
   }, [categories, selectedCategoryId]);
 
-  const nominees = selectedCategory?.nominees ?? [];
+  const nominees = useMemo(() => selectedCategory?.nominees ?? [], [selectedCategory]);
 
   useEffect(() => {
     if (!nominees.length) {
@@ -142,8 +143,8 @@ export default function NomineeMetadata() {
       setSaveMessage('Saved nominee metadata.');
       setFormError(null);
     },
-    onError: (error: any) => {
-      setFormError(error.response?.data?.error || 'Failed to save nominee metadata.');
+    onError: (error: unknown) => {
+      setFormError(getApiErrorMessage(error) ?? 'Failed to save nominee metadata.');
     },
   });
 
