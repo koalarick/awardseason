@@ -34,6 +34,11 @@ const parseDate = (value: unknown) => {
   return date;
 };
 
+const parseBoolean = (value: unknown) => {
+  if (typeof value !== 'string') return false;
+  return value.toLowerCase() === 'true' || value === '1';
+};
+
 const buildPageViewFilter = (value: string) => {
   const pathExpr = Prisma.sql`split_part(e.metadata->>'path','?',1)`;
   const [type, scope] = value.split(':');
@@ -122,6 +127,7 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
     const eventNames = parseList(req.query.eventNames);
     const pageViews = parseList(req.query.pageViews);
     const email = typeof req.query.email === 'string' ? req.query.email.trim() : '';
+    const excludeSuperuser = parseBoolean(req.query.excludeSuperuser);
     const userId = typeof req.query.userId === 'string' ? req.query.userId.trim() : '';
     const poolId = typeof req.query.poolId === 'string' ? req.query.poolId.trim() : '';
     const requestId =
@@ -148,6 +154,9 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
     }
     if (email) {
       conditions.push(Prisma.sql`u.email ILIKE ${`%${email}%`}`);
+    }
+    if (excludeSuperuser) {
+      conditions.push(Prisma.sql`(e.user_id IS NULL OR u.role <> 'SUPERUSER')`);
     }
     if (userId) {
       conditions.push(Prisma.sql`e.user_id = ${userId}`);

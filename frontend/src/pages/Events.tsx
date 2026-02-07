@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -61,6 +61,7 @@ const createEmptyFilters = () => ({
   email: '',
   start: '',
   end: '',
+  excludeSuperuser: false,
 });
 
 const formatDateTime = (value?: string) => {
@@ -145,10 +146,19 @@ const getEventLabel = (event: EventRecord) => {
   return labelMap[event.eventName] ?? event.eventName;
 };
 
+const getEventBadgeClass = (eventName: string) => {
+  if (eventName === 'page.view') {
+    return 'bg-blue-50 text-blue-700';
+  }
+
+  return 'bg-yellow-50 text-yellow-700';
+};
+
 export default function Events() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const eventMenuRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState(createEmptyFilters);
   const [draftFilters, setDraftFilters] = useState(createEmptyFilters);
   const [events, setEvents] = useState<EventRecord[]>([]);
@@ -156,6 +166,7 @@ export default function Events() {
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isEventMenuOpen, setIsEventMenuOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventRecord | null>(null);
 
   useEffect(() => {
     if (user && user.role !== 'SUPERUSER') {
@@ -223,6 +234,7 @@ export default function Events() {
           email: filters.email || undefined,
           start: toIsoString(filters.start),
           end: toIsoString(filters.end),
+          excludeSuperuser: filters.excludeSuperuser ? '1' : undefined,
         },
       });
       return response.data as EventResponse;
@@ -235,6 +247,7 @@ export default function Events() {
     setEvents(data.events || []);
     setHasMore(Boolean(data.hasMore));
     setLoadMoreError(null);
+    setSelectedEvent(null);
   }, [data]);
 
   const handleApplyFilters = () => {
@@ -243,6 +256,7 @@ export default function Events() {
       email: draftFilters.email.trim(),
       start: draftFilters.start,
       end: draftFilters.end,
+      excludeSuperuser: draftFilters.excludeSuperuser,
     });
     setIsEventMenuOpen(false);
   };
@@ -254,7 +268,7 @@ export default function Events() {
     setIsEventMenuOpen(false);
   };
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore || events.length === 0) {
       return;
     }
@@ -280,6 +294,7 @@ export default function Events() {
           email: filters.email || undefined,
           start: toIsoString(filters.start),
           end: toIsoString(filters.end),
+          excludeSuperuser: filters.excludeSuperuser ? '1' : undefined,
         },
       });
       const payload = response.data as EventResponse;
@@ -290,7 +305,26 @@ export default function Events() {
     } finally {
       setIsLoadingMore(false);
     }
-  };
+  }, [events, filters, hasMore, isLoadingMore]);
+
+  useEffect(() => {
+    if (!hasMore || isLoadingMore || !loadMoreRef.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasMore, isLoadingMore]);
 
   const errorMessage = isError ? getApiErrorMessage(error) ?? 'Failed to load events.' : null;
 
@@ -313,6 +347,17 @@ export default function Events() {
       };
     });
   };
+
+  useEffect(() => {
+    if (!selectedEvent) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedEvent(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedEvent]);
 
   if (user?.role !== 'SUPERUSER') {
     return null;
@@ -490,6 +535,22 @@ export default function Events() {
             >
               Clear
             </button>
+            <div className="ml-auto flex items-center">
+              <label className="flex items-center gap-2 text-[11px] font-medium text-gray-500 uppercase tracking-wide">
+                <input
+                  type="checkbox"
+                  checked={draftFilters.excludeSuperuser}
+                  onChange={(e) =>
+                    setDraftFilters((prev) => ({
+                      ...prev,
+                      excludeSuperuser: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4"
+                />
+                Exclude Superusers
+              </label>
+            </div>
           </div>
         </section>
 
@@ -499,56 +560,61 @@ export default function Events() {
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
           {isLoading ? (
-            <div className="text-sm text-gray-600">Loading events...</div>
+            <div className="px-4 py-6 text-sm text-gray-600">Loading events...</div>
           ) : events.length === 0 ? (
-            <div className="text-sm text-gray-600">No events match those filters.</div>
+            <div className="px-4 py-6 text-sm text-gray-600">No events match those filters.</div>
           ) : (
-            events.map((event) => {
-              const metadata = event.metadata || {};
-              const eventLabel = getEventLabel(event);
-              return (
-                <div
-                  key={event.id}
-                  className="border border-gray-200 rounded-lg bg-white shadow-sm p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700">
-                        {eventLabel}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDateTime(event.createdAt)}
-                      </span>
-                      {event.deviceType && (
-                        <span className="text-[11px] uppercase tracking-wide text-gray-500">
-                          {event.deviceType}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      <span className="font-semibold text-gray-700">User:</span>{' '}
-                      <span className="break-all">{compact(event.userEmail)}</span>
-                    </span>
-                  </div>
-
-                  <details className="mt-3">
-                    <summary className="text-xs text-gray-600 cursor-pointer select-none">
-                      Details
-                    </summary>
-                    <div className="mt-2 text-xs text-gray-700 space-y-2">
-                      <div>
-                        <span className="font-semibold text-gray-700">Metadata:</span>
-                        <pre className="mt-1 bg-gray-50 border border-gray-200 rounded p-2 text-[11px] whitespace-pre-wrap break-words">
-                          {JSON.stringify(metadata, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  </details>
-                </div>
-              );
-            })
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs sm:text-sm">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[11px] tracking-wide">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-semibold">Time</th>
+                    <th className="text-left px-3 py-2 font-semibold">Event</th>
+                    <th className="text-left px-3 py-2 font-semibold">User</th>
+                    <th className="text-left px-3 py-2 font-semibold">Device</th>
+                    <th className="text-right px-3 py-2 font-semibold">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {events.map((event) => {
+                    const eventLabel = getEventLabel(event);
+                    return (
+                      <tr key={event.id} className="align-top">
+                        <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                          {formatDateTime(event.createdAt)}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${getEventBadgeClass(
+                              event.eventName,
+                            )}`}
+                          >
+                            {eventLabel}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700 max-w-[220px]">
+                          <span className="break-all">{compact(event.userEmail)}</span>
+                        </td>
+                        <td className="px-3 py-2 text-gray-500 uppercase text-[11px] tracking-wide">
+                          {event.deviceType || '-'}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEvent(event)}
+                            className="text-xs font-semibold text-gray-600 hover:text-gray-900"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -558,20 +624,75 @@ export default function Events() {
           </div>
         )}
 
-        <div className="mt-6 flex items-center justify-center">
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div ref={loadMoreRef} />
           {hasMore ? (
             <button
               onClick={handleLoadMore}
               disabled={isLoadingMore}
-              className="px-5 py-2 min-h-[44px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              className="px-4 py-2 min-h-[40px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium"
             >
-              {isLoadingMore ? 'Loading...' : 'Load older events'}
+              {isLoadingMore ? 'Loading more...' : 'Load older events'}
             </button>
           ) : (
             <p className="text-xs text-gray-500">No more events.</p>
           )}
         </div>
       </main>
+
+      {selectedEvent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="w-full max-w-2xl bg-white rounded-lg shadow-xl border border-gray-200"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Event Details</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  {getEventLabel(selectedEvent)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEvent(null)}
+                className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+              >
+                Close
+              </button>
+            </div>
+            <div className="px-4 py-3 text-xs text-gray-700">
+              <div className="flex flex-wrap gap-4 mb-3">
+                <div>
+                  <span className="text-gray-500">Time</span>
+                  <p className="font-semibold">{formatDateTime(selectedEvent.createdAt)}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">User</span>
+                  <p className="font-semibold">{compact(selectedEvent.userEmail)}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Device</span>
+                  <p className="font-semibold uppercase">
+                    {selectedEvent.deviceType || '-'}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-500">Metadata</span>
+                <pre className="mt-2 bg-gray-50 border border-gray-200 rounded p-2 text-[11px] whitespace-pre-wrap break-words max-h-[50vh] overflow-auto">
+                  {JSON.stringify(selectedEvent.metadata || {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
