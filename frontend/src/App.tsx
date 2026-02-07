@@ -14,6 +14,7 @@ import NomineeMetadata from './pages/NomineeMetadata';
 import Users from './pages/Users';
 import MoviesSeen from './pages/MoviesSeen';
 import Events from './pages/Events';
+import Metrics from './pages/Metrics';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageViewTracker from './components/PageViewTracker';
 
@@ -90,6 +91,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Events />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/metrics"
+            element={
+              <ProtectedRoute>
+                <Metrics />
               </ProtectedRoute>
             }
           />

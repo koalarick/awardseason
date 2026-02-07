@@ -30,6 +30,7 @@ const EVENT_LABEL_MAP: Record<string, string> = {
   'user.registered': 'User Registered',
   'user.logged_in': 'User Logged In',
   'pool.created': 'Pool Created',
+  'pool.invite_sent': 'Invite Sent',
   'pool.joined': 'Pool Joined',
   'prediction.submitted': 'Prediction Submitted',
   'winner.entered': 'Winner Entered',
@@ -46,6 +47,7 @@ const PAGE_VIEW_FILTERS: EventFilterOption[] = [
   { label: 'Global Winners View', value: 'page:global-winners' },
   { label: 'Homepage View', value: 'page:homepage' },
   { label: 'Login View', value: 'page:login' },
+  { label: 'Metrics View', value: 'page:metrics' },
   { label: 'Nominee Metadata View', value: 'page:nominee-metadata' },
   { label: 'Nominees View', value: 'page:nominees' },
   { label: 'OAuth Callback View', value: 'page:oauth-callback' },
@@ -104,6 +106,7 @@ const getPageViewLabel = (rawPath?: unknown, viewScope?: unknown) => {
 
   if (path === '/') return 'Homepage View';
   if (path === '/login') return 'Login View';
+  if (path === '/metrics') return 'Metrics View';
   if (path === '/register') return 'Register View';
   if (path === '/forgot-password') return 'Forgot Password View';
   if (path === '/reset-password') return 'Reset Password View';
@@ -135,6 +138,7 @@ const getEventLabel = (event: EventRecord) => {
     'user.registered': 'User Registered',
     'user.logged_in': 'User Logged In',
     'pool.created': 'Pool Created',
+    'pool.invite_sent': 'Invite Sent',
     'pool.joined': 'Pool Joined',
     'prediction.submitted': 'Prediction Submitted',
     'winner.entered': 'Winner Entered',

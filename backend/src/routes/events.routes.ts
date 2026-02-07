@@ -39,6 +39,16 @@ const parseBoolean = (value: unknown) => {
   return value.toLowerCase() === 'true' || value === '1';
 };
 
+const coerceCount = (value: unknown) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
+
 const buildPageViewFilter = (value: string) => {
   const pathExpr = Prisma.sql`split_part(e.metadata->>'path','?',1)`;
   const [type, scope] = value.split(':');
@@ -51,6 +61,9 @@ const buildPageViewFilter = (value: string) => {
       break;
     case 'login':
       base = Prisma.sql`${pathExpr} = '/login'`;
+      break;
+    case 'metrics':
+      base = Prisma.sql`${pathExpr} = '/metrics'`;
       break;
     case 'register':
       base = Prisma.sql`${pathExpr} = '/register'`;
@@ -114,6 +127,48 @@ router.get('/event-names', authenticate, requireSuperuser, async (_req, res: Res
     res.json(rows.map((row) => row.event_name));
   } catch (error) {
     res.status(500).json({ error: error.message || 'Failed to load event names' });
+  }
+});
+
+router.get('/metrics', authenticate, requireSuperuser, async (_req: AuthRequest, res: Response) => {
+  try {
+    const [row] = await prisma.$queryRaw<
+      Array<{
+        invite_login_viewers: unknown;
+        total_users: unknown;
+        users_with_predictions: unknown;
+        users_with_checklist_update: unknown;
+        users_created_pool: unknown;
+        users_sent_invite: unknown;
+      }>
+    >(Prisma.sql`
+      SELECT
+        (SELECT COUNT(*) FROM users) AS total_users,
+        (SELECT COUNT(DISTINCT user_id) FROM predictions) AS users_with_predictions,
+        (SELECT COUNT(DISTINCT owner_id) FROM pools) AS users_created_pool,
+        (SELECT COUNT(DISTINCT user_id) FROM events WHERE event_name = 'seen_movies.updated') AS users_with_checklist_update,
+        (SELECT COUNT(DISTINCT user_id) FROM events WHERE event_name = 'pool.invite_sent') AS users_sent_invite,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.user_id::text, e.ip::text))
+          FROM events e
+          WHERE e.event_name = 'page.view'
+            AND (
+              split_part(e.metadata->>'path','?',1) ~ '^/pool/[^/]+/invite/?$'
+              OR split_part(e.metadata->>'path','?',1) ~ '^/login/?$'
+            )
+        ) AS invite_login_viewers
+    `);
+
+    res.json({
+      inviteLoginViewers: coerceCount(row?.invite_login_viewers),
+      totalUsers: coerceCount(row?.total_users),
+      usersWithPredictions: coerceCount(row?.users_with_predictions),
+      usersWithChecklistUpdate: coerceCount(row?.users_with_checklist_update),
+      usersCreatedPool: coerceCount(row?.users_created_pool),
+      usersSentInvite: coerceCount(row?.users_sent_invite),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to load metrics' });
   }
 });
 
@@ -240,6 +295,33 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
     res.json({ events, hasMore });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Failed to load events' });
+  }
+});
+
+router.post('/invite-sent', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const poolId = typeof req.body?.poolId === 'string' ? req.body.poolId.trim() : '';
+    if (!poolId) {
+      res.status(400).json({ error: 'poolId is required' });
+      return;
+    }
+
+    void logEvent({
+      eventName: 'pool.invite_sent',
+      userId: req.user?.id,
+      poolId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        source: 'copy_link',
+      },
+    });
+
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to log invite event' });
   }
 });
 

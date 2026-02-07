@@ -1591,11 +1591,17 @@ function InviteModal({
   // Generate invite link - using invite route
   const inviteLink = `https://awardseason.fun/pool/${pool.id}/invite`;
 
+  const logInviteSent = () => {
+    if (!user?.id) return;
+    void api.post('/events/invite-sent', { poolId: pool.id }).catch(() => undefined);
+  };
+
   const copyToClipboard = async (text: string, setCopied: (value: boolean) => void) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      logInviteSent();
     } catch (err) {
       console.error('Failed to copy:', err);
     }
