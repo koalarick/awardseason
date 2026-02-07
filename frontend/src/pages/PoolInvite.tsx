@@ -176,7 +176,7 @@ export default function PoolInvite() {
             aria-label="Go to home"
           >
             <img src="/images/awardseason_logo_assets/awardseason_topnav_256.png" alt="Award Season" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
-            <span className="hidden sm:inline oscars-font text-lg sm:text-xl font-bold">
+            <span className="oscars-font text-[0.9rem] sm:text-xl font-medium sm:font-bold text-white/80 sm:text-white whitespace-nowrap">
               AWARD SEASON
             </span>
           </Link>
@@ -187,14 +187,14 @@ export default function PoolInvite() {
       </header>
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="mx-auto w-full max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr] items-start">
-          <div className="space-y-6 order-1 lg:order-1">
+        <div className="mx-auto w-full max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr] items-start lg:items-stretch">
+          <div className="space-y-6 order-1 lg:order-1 lg:col-start-1">
             <UnauthHero />
           </div>
 
-          <div className="space-y-6 order-2 lg:order-2">
+          <div className="space-y-6 order-2 lg:order-2 lg:col-start-2 lg:row-span-2 lg:flex lg:flex-col lg:h-full">
             {/* Pool Info Card */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-lg shadow overflow-hidden lg:flex-1">
               <div className="px-4 sm:px-6 py-3 sm:py-4">
                 <div className="text-[11px] uppercase tracking-[0.2em] text-amber-700/80">
                   Invite
@@ -392,7 +392,7 @@ export default function PoolInvite() {
             </div>
           </div>
 
-          <div className="space-y-6 order-3 lg:order-3 lg:col-span-2">
+          <div className="space-y-6 order-3 lg:order-3 lg:col-start-1">
             <UnauthHowItWorks />
           </div>
         </div>

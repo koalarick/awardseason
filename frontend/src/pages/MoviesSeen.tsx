@@ -252,7 +252,7 @@ export default function MoviesSeen() {
               alt="Award Season"
               className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
             />
-            <span className="hidden sm:inline oscars-font text-lg sm:text-xl font-bold">
+            <span className="oscars-font text-[0.9rem] sm:text-xl font-medium sm:font-bold text-white/80 sm:text-white whitespace-nowrap">
               AWARD SEASON
             </span>
           </button>
