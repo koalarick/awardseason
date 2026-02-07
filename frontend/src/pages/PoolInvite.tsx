@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import UnauthMarketing from '../components/UnauthMarketing';
 import type { Pool } from '../types/pool';
 import { getApiErrorMessage } from '../utils/apiErrors';
 
@@ -185,206 +186,230 @@ export default function PoolInvite() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto p-4 sm:p-6">
-        {/* Pool Info Card */}
-        <div className="bg-white rounded-lg shadow mb-6 overflow-hidden">
-          <div className="bg-slate-800 text-white px-4 sm:px-6 py-4">
-            <h2 className="oscars-font text-base sm:text-lg font-bold">You've been invited!</h2>
+      <main className="max-w-7xl mx-auto p-4 sm:p-6">
+        <div className="mx-auto w-full max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr] items-start">
+          <div className="space-y-6 order-2 lg:order-1">
+            <UnauthMarketing />
           </div>
-          <div className="px-4 sm:px-6 py-6">
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Pool Name</p>
-                <p className="text-lg font-bold oscars-dark">{pool.name}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Members</p>
-                  <p className="text-base font-semibold oscars-dark">{pool._count?.members || 0}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Type</p>
-                  <p className="text-base font-semibold oscars-dark">
-                    {pool.isPublic ? 'Public' : 'Private'}
-                  </p>
-                </div>
-              </div>
-              {pool.isPaidPool && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-sm font-semibold text-yellow-900">💰 Paid Pool</p>
-                  <p className="text-xs text-yellow-800 mt-1">
-                    Entry fee: ${pool.entryAmount?.toFixed(2)} • Payment handled outside this
-                    platform
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Auth Form */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-            <div className="flex gap-4">
-              <button
-                onClick={() => {
-                  setIsLogin(true);
-                  setError('');
-                }}
-                className={`px-4 py-2 rounded transition-colors ${
-                  isLogin ? 'bg-yellow-600 text-white' : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  setIsLogin(false);
-                  setError('');
-                }}
-                className={`px-4 py-2 rounded transition-colors ${
-                  !isLogin ? 'bg-yellow-600 text-white' : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-          </div>
-          <div className="px-4 sm:px-6 py-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded mb-4">
-                {error}
+          <div className="space-y-6 order-1 lg:order-2">
+            {/* Mobile reassurance card */}
+            <div className="lg:hidden bg-white rounded-lg shadow overflow-hidden">
+              <div className="bg-slate-800 text-white px-4 py-3">
+                <h2 className="oscars-font text-sm font-bold">Quick reassurance</h2>
               </div>
-            )}
-
-            {isJoining && (
-              <div className="bg-blue-50 border border-blue-200 text-blue-600 text-sm px-4 py-3 rounded mb-4">
-                Joining pool...
-              </div>
-            )}
-
-            {/* Pool Password (if private) */}
-            {!pool.isPublic && (
-              <div className="mb-4">
-                <label
-                  htmlFor="poolPassword"
-                  className="block text-sm font-medium oscars-dark mb-2"
-                >
-                  Pool Password *
-                </label>
-                <input
-                  id="poolPassword"
-                  type="password"
-                  required
-                  value={poolPassword}
-                  onChange={(e) => setPoolPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  placeholder="Enter pool password"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  The person who invited you should have shared this password with you.
+              <div className="px-4 py-4 text-sm text-gray-700 space-y-2">
+                <p className="font-semibold oscars-dark">
+                  Joining takes under a minute — no setup needed.
                 </p>
+                <ul className="space-y-1">
+                  <li>Pick winners, watch the show, see live scores.</li>
+                  <li>Private pools stay private. Invite-only access.</li>
+                </ul>
               </div>
-            )}
+            </div>
 
-            {isLogin ? (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium oscars-dark mb-2">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  />
+            {/* Pool Info Card */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
+                <h2 className="oscars-font text-sm sm:text-base font-bold">You've been invited!</h2>
+              </div>
+              <div className="px-4 sm:px-6 py-4">
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Pool Name</p>
+                    <p className="text-base sm:text-lg font-bold oscars-dark">{pool.name}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Members</p>
+                      <p className="font-semibold oscars-dark">{pool._count?.members || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Type</p>
+                      <p className="font-semibold oscars-dark">
+                        {pool.isPublic ? 'Public' : 'Private'}
+                      </p>
+                    </div>
+                  </div>
+                  {pool.isPaidPool && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                      <p className="text-xs font-semibold text-yellow-900">💰 Paid Pool</p>
+                      <p className="text-xs text-yellow-800 mt-1">
+                        Entry fee: ${pool.entryAmount?.toFixed(2)} • Payment handled outside this
+                        platform
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium oscars-dark mb-2">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isJoining}
-                  className="w-full flex justify-center py-2.5 px-4 min-h-[44px] border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white oscars-gold-bg hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-opacity touch-manipulation disabled:opacity-50"
-                >
-                  {isJoining ? 'Joining...' : 'Sign In & Join Pool'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label htmlFor="reg-email" className="block text-sm font-medium oscars-dark mb-2">
-                    Email
-                  </label>
-                  <input
-                    id="reg-email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="reg-password"
-                    className="block text-sm font-medium oscars-dark mb-2"
+              </div>
+            </div>
+
+            {/* Auth Form */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => {
+                      setIsLogin(true);
+                      setError('');
+                    }}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      isLogin ? 'bg-yellow-600 text-white' : 'text-gray-300 hover:text-white'
+                    }`}
                   >
-                    Password
-                  </label>
-                  <input
-                    id="reg-password"
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
-                </div>
-                <div>
-                  <label
-                    htmlFor="confirm-password"
-                    className="block text-sm font-medium oscars-dark mb-2"
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsLogin(false);
+                      setError('');
+                    }}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      !isLogin ? 'bg-yellow-600 text-white' : 'text-gray-300 hover:text-white'
+                    }`}
                   >
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirm-password"
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-                  />
+                    Sign Up
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  disabled={isJoining}
-                  className="w-full flex justify-center py-2.5 px-4 min-h-[44px] border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white oscars-gold-bg hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-opacity touch-manipulation disabled:opacity-50"
-                >
-                  {isJoining ? 'Joining...' : 'Create Account & Join Pool'}
-                </button>
-              </form>
-            )}
+              </div>
+              <div className="px-4 sm:px-6 py-6">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded mb-4">
+                    {error}
+                  </div>
+                )}
+
+                {isJoining && (
+                  <div className="bg-blue-50 border border-blue-200 text-blue-600 text-sm px-4 py-3 rounded mb-4">
+                    Joining pool...
+                  </div>
+                )}
+
+                {/* Pool Password (if private) */}
+                {!pool.isPublic && (
+                  <div className="mb-4">
+                    <label
+                      htmlFor="poolPassword"
+                      className="block text-sm font-medium oscars-dark mb-2"
+                    >
+                      Pool Password *
+                    </label>
+                    <input
+                      id="poolPassword"
+                      type="password"
+                      required
+                      value={poolPassword}
+                      onChange={(e) => setPoolPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      placeholder="Enter pool password"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      The person who invited you should have shared this password with you.
+                    </p>
+                  </div>
+                )}
+
+                {isLogin ? (
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium oscars-dark mb-2">
+                        Email
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium oscars-dark mb-2">
+                        Password
+                      </label>
+                      <input
+                        id="password"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isJoining}
+                      className="w-full flex justify-center py-2.5 px-4 min-h-[44px] border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white oscars-gold-bg hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-opacity touch-manipulation disabled:opacity-50"
+                    >
+                      {isJoining ? 'Joining...' : 'Sign In & Join Pool'}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div>
+                      <label htmlFor="reg-email" className="block text-sm font-medium oscars-dark mb-2">
+                        Email
+                      </label>
+                      <input
+                        id="reg-email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="reg-password"
+                        className="block text-sm font-medium oscars-dark mb-2"
+                      >
+                        Password
+                      </label>
+                      <input
+                        id="reg-password"
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="confirm-password"
+                        className="block text-sm font-medium oscars-dark mb-2"
+                      >
+                        Confirm Password
+                      </label>
+                      <input
+                        id="confirm-password"
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isJoining}
+                      className="w-full flex justify-center py-2.5 px-4 min-h-[44px] border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white oscars-gold-bg hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-opacity touch-manipulation disabled:opacity-50"
+                    >
+                      {isJoining ? 'Joining...' : 'Create Account & Join Pool'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </main>
