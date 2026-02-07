@@ -1,10 +1,14 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { OddsService } from './odds.service';
-import { PoolService } from './pool.service';
 
 const prisma = new PrismaClient();
 const oddsService = new OddsService();
-const poolService = new PoolService();
+type PredictionUpdateData = Prisma.PredictionUncheckedUpdateInput & {
+  originalOddsPercentage?: number | null;
+};
+type PredictionCreateData = Prisma.PredictionUncheckedCreateInput & {
+  originalOddsPercentage?: number | null;
+};
 
 export class PredictionService {
   async createOrUpdatePrediction(
@@ -86,13 +90,13 @@ export class PredictionService {
     // Try to use Prisma normally first, but handle the case where Prisma Client hasn't been regenerated
     let prediction;
     try {
-      const updateData: any = {
+      const updateData: PredictionUpdateData = {
         nomineeId,
         oddsPercentage: currentOdds,
         updatedAt: new Date(),
       };
 
-      const createData: any = {
+      const createData: PredictionCreateData = {
         poolId,
         userId,
         categoryId,
@@ -130,7 +134,7 @@ export class PredictionService {
         : await prisma.prediction.create({
             data: createData,
           });
-    } catch (error: any) {
+    } catch (error) {
       // If error is about unknown field, use raw SQL as fallback
       if (
         error.message?.includes('originalOddsPercentage') ||

@@ -80,7 +80,7 @@ app.use('/api/email', emailRoutes);
 app.use('/api/seen-movies', seenMoviesRoutes);
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error', message: err.message });
 });

@@ -22,7 +22,7 @@ router.get('/pool/:poolId', authenticate, async (req: AuthRequest, res: Response
 
     const scores = await scoringService.calculateScores(poolId);
     res.json(scores);
-  } catch (error: any) {
+  } catch (error) {
     res.status(403).json({ error: error.message });
   }
 });
@@ -47,7 +47,7 @@ router.get('/pool/:poolId/user/:userId', authenticate, async (req: AuthRequest, 
 
     const score = await scoringService.getUserScore(poolId, userId);
     res.json(score);
-  } catch (error: any) {
+  } catch (error) {
     res.status(404).json({ error: error.message });
   }
 });
@@ -228,7 +228,7 @@ router.get('/global/standings', async (req: AuthRequest, res: Response) => {
       totalMembers: memberCount,
       totalCategories: allCategories.length,
     });
-  } catch (error: any) {
+  } catch (error) {
     // Return empty response instead of error for public endpoint
     res.json({
       pool: null,

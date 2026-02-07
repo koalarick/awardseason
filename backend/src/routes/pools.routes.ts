@@ -79,7 +79,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     );
 
     res.status(201).json(pool);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -90,7 +90,7 @@ router.get('/my-pools', authenticate, async (req: AuthRequest, res: Response) =>
     const userId = req.user!.id;
     const pools = await poolService.getUserPools(userId);
     res.json(pools);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -101,7 +101,7 @@ router.get('/stats', authenticate, requireSuperuser, async (_req: AuthRequest, r
     const [totalUsers, totalPools] = await Promise.all([prisma.user.count(), prisma.pool.count()]);
 
     res.json({ totalUsers, totalPools });
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -130,7 +130,7 @@ router.get('/all', authenticate, requireSuperuser, async (req: AuthRequest, res:
       },
     });
     res.json(pools);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -140,7 +140,7 @@ router.get('/public', async (req: AuthRequest, res: Response) => {
   try {
     const pools = await poolService.getPublicPools();
     res.json(pools);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -154,7 +154,7 @@ router.get('/global', async (req: AuthRequest, res: Response) => {
       return;
     }
     res.json(pool);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -172,7 +172,7 @@ router.get('/search', authenticate, async (req: AuthRequest, res: Response) => {
 
     const pools = await poolService.searchPools(userId, q);
     res.json(pools);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -183,7 +183,7 @@ router.get('/:poolId/info', async (req: AuthRequest, res: Response) => {
     const { poolId } = req.params;
     const pool = await poolService.getPoolInfoPublic(poolId);
     res.json(pool);
-  } catch (error: any) {
+  } catch (error) {
     res.status(404).json({ error: error.message });
   }
 });
@@ -197,7 +197,7 @@ router.get('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
 
     const pool = await poolService.getPoolById(poolId, userId, userRole);
     res.json(pool);
-  } catch (error: any) {
+  } catch (error) {
     res.status(404).json({ error: error.message });
   }
 });
@@ -211,7 +211,7 @@ router.post('/:poolId/join', authenticate, async (req: AuthRequest, res: Respons
 
     const member = await poolService.joinPool(userId, poolId, password);
     res.status(201).json(member);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -225,7 +225,7 @@ router.get('/:poolId/members', authenticate, async (req: AuthRequest, res: Respo
 
     const members = await poolService.getPoolMembers(poolId, userId, userRole);
     res.json(members);
-  } catch (error: any) {
+  } catch (error) {
     res.status(403).json({ error: error.message });
   }
 });
@@ -244,7 +244,7 @@ router.patch('/:poolId/submission-name', authenticate, async (req: AuthRequest, 
 
     const updated = await poolService.updateSubmissionName(userId, poolId, submissionName || '');
     res.json(updated);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -287,7 +287,7 @@ router.get('/:poolId/submissions', authenticate, async (req: AuthRequest, res: R
 
     // Return empty array if no submissions, not an error
     res.json(submissions || []);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching submissions:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
@@ -354,7 +354,7 @@ router.get('/:poolId/seen-movies/:year/counts', authenticate, async (req: AuthRe
     }, {});
 
     res.json({ counts: countMap });
-  } catch (error: any) {
+  } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load seen counts';
     res.status(500).json({ error: message });
   }
@@ -439,7 +439,7 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     });
 
     res.json(updatedPool);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -471,7 +471,7 @@ router.patch(
       const member = await poolService.markMemberAsPaid(poolId, memberUserId, ownerUserId, hasPaid);
 
       res.json(member);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message });
     }
   },
@@ -494,7 +494,7 @@ router.delete('/:poolId', authenticate, async (req: AuthRequest, res: Response) 
 
     await poolService.deletePool(poolId, userId, userRole);
     res.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -511,7 +511,7 @@ router.delete(
 
       await poolService.removeSubmission(poolId, targetUserId, requesterUserId, requesterRole);
       res.json({ success: true });
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message });
     }
   },

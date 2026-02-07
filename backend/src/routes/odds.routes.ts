@@ -27,7 +27,7 @@ router.get('/category/:categoryId', async (req, res: Response) => {
 
     // Get odds for each nominee
     const nomineesWithOdds = await Promise.all(
-      category.nominees.map(async (nominee: any) => {
+      category.nominees.map(async (nominee) => {
         const odds = await oddsService.getCurrentOdds(categoryId, nominee.id);
         return {
           nomineeId: nominee.id,
@@ -37,7 +37,7 @@ router.get('/category/:categoryId', async (req, res: Response) => {
     );
 
     res.json({ nominees: nomineesWithOdds });
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -48,7 +48,7 @@ router.get('/:categoryId/:nomineeId', authenticate, async (req: AuthRequest, res
     const { categoryId, nomineeId } = req.params;
     const odds = await oddsService.getCurrentOdds(categoryId, nomineeId);
     res.json({ odds });
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -69,7 +69,7 @@ router.post(
 
       const odds = await oddsService.getOddsAtTime(categoryId, nomineeId, new Date(timestamp));
       res.json({ odds });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
@@ -96,7 +96,7 @@ router.get('/:categoryId/:nomineeId/history', async (req, res: Response) => {
     });
 
     res.json({ history: snapshots });
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

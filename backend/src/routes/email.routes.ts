@@ -31,7 +31,7 @@ router.post('/test', authenticate, requireSuperuser, async (req: AuthRequest, re
     });
 
     res.json({ status: 'sent' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Email test failed:', error);
     res.status(500).json({ error: error.message || 'Failed to send test email' });
   }

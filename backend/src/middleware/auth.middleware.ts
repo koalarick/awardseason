@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { AuthRequest, JwtPayload } from '../types';
+import { AuthRequest } from '../types';
 import { AuthService } from '../auth/auth.service';
 import { PrismaClient } from '@prisma/client';
 import { SafeUser } from '../types/express';

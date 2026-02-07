@@ -1,44 +1,18 @@
 import cron from 'node-cron';
 import { PrismaClient } from '@prisma/client';
 import { KalshiService } from '../services/kalshi.service';
-import { ScoringService } from '../services/scoring.service';
 
 const prisma = new PrismaClient();
 const kalshiService = new KalshiService();
-const scoringService = new ScoringService();
-
-// Category to Kalshi event mapping (same as in kalshi.service.ts)
-const categoryToKalshiEvent: Record<string, string> = {
-  'best-picture': 'KXOSCARPIC-26',
-  directing: 'KXOSCARDIR-26',
-  'actor-leading': 'KXOSCARACTO-26',
-  'actress-leading': 'KXOSCARACTR-26',
-  'actor-supporting': 'KXOSCARSUPACTO-26',
-  'actress-supporting': 'KXOSCARSUPACTR-26',
-  'writing-original': 'KXOSCARSPLAY-26',
-  'writing-adapted': 'KXOSCARASPLAY-26',
-  cinematography: 'KXOSCARCINE-26',
-  'film-editing': 'KXOSCAREDIT-26',
-  'music-score': 'KXOSCARSCORE-26',
-  'music-song': 'KXOSCARSONG-26',
-  sound: 'KXOSCARSOUND-26',
-  'production-design': 'KXOSCARPROD-26',
-  'visual-effects': 'KXOSCARVIS-26',
-  'costume-design': 'KXOSCARCOSTUME-26',
-  'makeup-hairstyling': 'KXOSCARMAH-26',
-  'international-feature': 'KXOSCARINTLFILM-26',
-  'animated-feature': 'KXOSCARANIMATED-26b',
-  'documentary-feature': 'KXOSCARDOCU-26',
-  'documentary-short': 'KXOSCARDSFILM-26',
-  'animated-short': 'KXOSCARAS-26b',
-  'live-action-short': 'KXOSCARLASF-26',
-  casting: 'KXOSCARCasting-26',
+type NomineeMatchCandidate = {
+  id: string;
+  name?: string | null;
+  film?: string | null;
 };
 
 async function matchWinnerToNominee(
   winnerName: string,
-  categoryId: string,
-  nominees: any[],
+  nominees: NomineeMatchCandidate[],
 ): Promise<string | null> {
   const searchName = winnerName.toLowerCase().trim();
 
@@ -123,7 +97,6 @@ export function startMarketResolutionJob() {
               // Match winner to nominee
               const nomineeId = await matchWinnerToNominee(
                 winnerName,
-                category.id, // Use full category ID with year for database
                 category.nominees.map((n) => ({
                   id: n.id,
                   name: n.name,

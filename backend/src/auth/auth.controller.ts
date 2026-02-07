@@ -36,7 +36,7 @@ export class AuthController {
         },
         token,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
       // Handle Prisma unique constraint violation
       if (error.code === 'P2002') {
@@ -66,7 +66,7 @@ export class AuthController {
         },
         token,
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(401).json({ error: error.message });
     }
   }
@@ -74,7 +74,11 @@ export class AuthController {
   async getMe(req: Request, res: Response): Promise<void> {
     try {
       // This endpoint requires authentication middleware
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
       res.json({
         user: {
           id: user.id,
@@ -82,7 +86,7 @@ export class AuthController {
           role: user.role,
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
@@ -105,7 +109,7 @@ export class AuthController {
       await authService.requestPasswordReset(email);
 
       res.json({ message: 'If an account exists, a reset link has been sent.' });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Forgot password error:', error);
       res.status(500).json({ error: 'Failed to send reset email' });
     }
@@ -127,7 +131,7 @@ export class AuthController {
 
       await authService.resetPassword(token, password);
       res.json({ message: 'Password updated successfully' });
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message || 'Password reset failed' });
     }
   }

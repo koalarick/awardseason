@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { calculateOddsMultiplier } from './scoring.service';
 import { buildFallbackNameMap, resolveSubmissionName } from '../utils/submission-name';
@@ -566,7 +566,7 @@ export class PoolService {
       throw new Error('Only pool owner can update pool settings');
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.PoolUpdateInput = {};
     if (updates.name !== undefined) {
       updateData.name = updates.name;
     }

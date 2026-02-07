@@ -112,7 +112,7 @@ async function updateNomineeInfo() {
           },
         });
         updated++;
-      } catch (error: any) {
+      } catch (error) {
         console.log(`Failed to update ${categoryId}/${nomineeData.id}: ${error.message}`);
         skipped++;
       }

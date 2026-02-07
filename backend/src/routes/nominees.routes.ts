@@ -47,17 +47,17 @@ router.get('/:year', async (req, res: Response) => {
           film: nominee.film || undefined,
           song: nominee.song || undefined,
           producers: nominee.producers || undefined,
-          blurb_sentence_1: (nominee as any).blurb_sentence_1 || undefined,
-          blurb_sentence_2: (nominee as any).blurb_sentence_2 || undefined,
-          imdb_url: (nominee as any).imdb_url || undefined,
-          letterboxd_url: (nominee as any).letterboxd_url || undefined,
+          blurb_sentence_1: nominee.blurb_sentence_1 || undefined,
+          blurb_sentence_2: nominee.blurb_sentence_2 || undefined,
+          imdb_url: nominee.imdb_url || undefined,
+          letterboxd_url: nominee.letterboxd_url || undefined,
         })),
       };
     });
 
     console.log(`Returning ${formattedCategories.length} formatted categories for year ${year}`);
     res.json(formattedCategories);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching nominees:', error);
     console.error('Error stack:', error.stack);
     console.error('Error details:', {
@@ -163,7 +163,7 @@ router.patch(
         imdb_url: updatedNominee.imdb_url || undefined,
         letterboxd_url: updatedNominee.letterboxd_url || undefined,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating nominee metadata:', error);
       res.status(500).json({ error: error.message });
     }

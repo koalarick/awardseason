@@ -7,6 +7,15 @@ module.exports = [
   { ignores: ['dist', 'node_modules'] },
   js.configs.recommended,
   {
+    files: ['eslint.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,

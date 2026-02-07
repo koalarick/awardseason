@@ -41,6 +41,27 @@ const categoryGroups = {
   ],
 };
 
+type NomineeSeed = {
+  id: string;
+  name: string;
+  film?: string;
+  song?: string;
+  producers?: string;
+  blurb_sentence_1?: string;
+  blurb_sentence_2?: string;
+  imdb_url?: string;
+  letterboxd_url?: string;
+};
+
+type CategorySeed = {
+  id: string;
+  name: string;
+  defaultPoints?: number;
+  nominees?: NomineeSeed[];
+};
+
+type NomineesByYear = Record<string, CategorySeed[]>;
+
 function getDefaultPointsForCategory(categoryId: string): number {
   if (categoryGroups.major.includes(categoryId)) {
     return 10;
@@ -57,7 +78,7 @@ async function main() {
   console.log('Seeding database...');
 
   // Load nominees data from JSON file
-  let nomineesByYear: any = {};
+  let nomineesByYear: NomineesByYear = {};
   const possiblePaths = [
     '/app/nominees.json', // Absolute path in container (mounted from root or backend/)
     path.join(process.cwd(), 'nominees.json'), // From current working directory (/app)
@@ -70,7 +91,6 @@ async function main() {
   console.log('__dirname:', __dirname);
   console.log('Possible paths:', possiblePaths);
 
-  let loadedPath = '';
   for (const jsonPath of possiblePaths) {
     try {
       const exists = fs.existsSync(jsonPath);
@@ -78,12 +98,11 @@ async function main() {
       if (exists) {
         const fileContent = fs.readFileSync(jsonPath, 'utf8');
         console.log(`File size: ${fileContent.length} bytes`);
-        nomineesByYear = JSON.parse(fileContent);
-        loadedPath = jsonPath;
+        nomineesByYear = JSON.parse(fileContent) as NomineesByYear;
         console.log(`Successfully loaded nominees.json from: ${jsonPath}`);
         break;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error loading ${jsonPath}:`, error.message);
       continue;
     }
@@ -188,16 +207,18 @@ async function main() {
 
   // Seed categories and nominees for 2026
   const year = '2026';
+  const yearKey = year;
+  const yearNumberKey = String(parseInt(year, 10));
   console.log('nomineesByYear object:', {
     keys: Object.keys(nomineesByYear),
-    has2026: !!nomineesByYear[year],
-    has2026Number: !!nomineesByYear[parseInt(year)],
-    type2026: typeof nomineesByYear[year],
-    isArray2026: Array.isArray(nomineesByYear[year]),
-    length2026: nomineesByYear[year]?.length,
+    has2026: !!nomineesByYear[yearKey],
+    has2026Number: !!nomineesByYear[yearNumberKey],
+    type2026: typeof nomineesByYear[yearKey],
+    isArray2026: Array.isArray(nomineesByYear[yearKey]),
+    length2026: nomineesByYear[yearKey]?.length,
   });
 
-  const yearData = nomineesByYear[year] || nomineesByYear[parseInt(year)];
+  const yearData = nomineesByYear[yearKey] || nomineesByYear[yearNumberKey];
 
   if (yearData && Array.isArray(yearData)) {
     console.log(`Seeding ${yearData.length} categories for year ${year}...`);
@@ -313,7 +334,7 @@ async function main() {
 
       await oddsService.createSnapshotForYear(year, formattedCategories);
       console.log('Odds snapshots created successfully');
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         'Error creating odds snapshots (this is okay if Kalshi API is not configured):',
         error.message,

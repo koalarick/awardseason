@@ -54,7 +54,7 @@ async function main() {
           AND (original_odds_percentage IS NULL OR original_odds_percentage != ${prediction.oddsPercentage})
       `;
       updatedCount++;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error updating prediction ${prediction.id}:`, error.message);
     }
   }

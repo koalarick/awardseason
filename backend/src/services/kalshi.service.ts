@@ -37,6 +37,32 @@ const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 500;
 const BACKOFF_CAP_MS = 5_000;
 
+type KalshiMarket = {
+  yes_price?: number | null;
+  last_price?: number | null;
+  yes_bid?: number | null;
+  yes_ask?: number | null;
+  no_price?: number | null;
+  title?: string | null;
+  ticker?: string | null;
+  subtitle?: string | null;
+  yes_sub_title?: string | null;
+  status?: string | null;
+};
+
+type KalshiMarketsResponse = {
+  error?: { code?: string | null } | null;
+  markets?: KalshiMarket[] | null;
+  event?: { markets?: KalshiMarket[] | null } | null;
+};
+
+type NomineeSnapshotCandidate = {
+  id: string;
+  name?: string | null;
+  film?: string | null;
+  castingDirector?: string | null;
+};
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -62,26 +88,31 @@ function getBackoffDelayMs(attempt: number): number {
 }
 
 async function fetchWithRetry(url: string): Promise<Response> {
-  let attempt = 0;
-  while (true) {
-    attempt += 1;
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
     try {
       const response = await fetchWithTimeout(url);
-      if (!shouldRetryStatus(response.status) || attempt > MAX_RETRIES) {
+      if (!shouldRetryStatus(response.status) || attempt === MAX_RETRIES) {
         return response;
       }
     } catch (error) {
-      if (attempt > MAX_RETRIES) {
+      lastError = error;
+      if (attempt === MAX_RETRIES) {
         throw error;
       }
     }
 
     await sleep(getBackoffDelayMs(attempt));
   }
+
+  if (lastError) {
+    throw lastError;
+  }
+  throw new Error(`Failed to fetch ${url}`);
 }
 
 export class KalshiService {
-  async fetchKalshiMarkets(eventTicker: string): Promise<any> {
+  async fetchKalshiMarkets(eventTicker: string): Promise<KalshiMarketsResponse | null> {
     const seriesTicker = eventTicker.split('-')[0];
     const apiUrls = [
       `${KALSHI_API_BASE}/markets?series_ticker=${seriesTicker}&status=open`,
@@ -90,7 +121,7 @@ export class KalshiService {
       `${KALSHI_API_BASE}/markets?event_ticker=${eventTicker}`,
     ];
 
-    let lastError: any = null;
+    let lastError: unknown = null;
     for (let i = 0; i < apiUrls.length; i += 1) {
       if (i > 0) {
         await sleep(REQUEST_SPACING_MS);
@@ -101,7 +132,7 @@ export class KalshiService {
         const response = await fetchWithRetry(apiUrl);
 
         if (response.ok) {
-          const data = (await response.json()) as any;
+          const data = (await response.json()) as KalshiMarketsResponse;
 
           if (data.error) {
             if (data.error.code === 'not_found' || response.status === 404) {
@@ -141,14 +172,14 @@ export class KalshiService {
     return null;
   }
 
-  getMarketPrice(market: any): number | null {
+  getMarketPrice(market: KalshiMarket): number | null {
     if (market.yes_price !== undefined && market.yes_price !== null) {
       return market.yes_price;
     }
     if (market.last_price !== undefined && market.last_price !== null) {
       return market.last_price;
     }
-    if (market.yes_bid !== undefined && market.yes_ask !== undefined) {
+    if (typeof market.yes_bid === 'number' && typeof market.yes_ask === 'number') {
       return Math.round((market.yes_bid + market.yes_ask) / 2);
     }
     return null;
@@ -176,8 +207,8 @@ export class KalshiService {
   matchNomineeToMarket(
     nomineeName: string,
     nomineeFilm: string | null,
-    markets: any,
-  ): { market: any; price: number } | null {
+    markets: KalshiMarketsResponse,
+  ): { market: KalshiMarket; price: number } | null {
     if (!markets || !markets.markets || markets.markets.length === 0) {
       return null;
     }
@@ -244,7 +275,7 @@ export class KalshiService {
     return null;
   }
 
-  async getCategoryMarkets(categoryId: string): Promise<any> {
+  async getCategoryMarkets(categoryId: string): Promise<KalshiMarketsResponse | null> {
     const eventTicker = categoryToKalshiEvent[categoryId];
     if (!eventTicker) {
       console.log(`No Kalshi event ticker found for category: ${categoryId}`);
@@ -259,7 +290,10 @@ export class KalshiService {
     return markets;
   }
 
-  async createOddsSnapshot(categoryId: string, nominees: any[]): Promise<void> {
+  async createOddsSnapshot(
+    categoryId: string,
+    nominees: NomineeSnapshotCandidate[],
+  ): Promise<void> {
     // Extract base category ID (remove year suffix if present)
     // categoryId might be "best-picture-2026", but we need "best-picture" for the lookup
     const baseCategoryId = categoryId.includes('-2026')
@@ -279,11 +313,11 @@ export class KalshiService {
       // For international feature films, nominees have 'name' (country - film) and 'film' (film name)
       // For other categories, nominees have 'name' and 'film'
       const nomineeName = nominee.name || nominee.film || '';
-      const nomineeFilm = nominee.film || nominee.name || null;
+      const nomineeFilm = nominee.film ?? nominee.name ?? null;
       const castingDirector = nominee.castingDirector || null;
 
       // For international feature films, prioritize film name over country-name format
-      let match: { market: any; price: number } | null = null;
+      let match: { market: KalshiMarket; price: number } | null = null;
       if (baseCategoryId === 'international-feature' && nomineeFilm) {
         // Try matching with just the film name first (e.g., "Sirāt" instead of "Spain - Sirāt")
         match = this.matchNomineeToMarket(nomineeFilm, null, markets);
@@ -346,7 +380,7 @@ export class KalshiService {
         // Check if YES outcome won (price = 100)
         if (market.yes_price === 100 || market.last_price === 100) {
           // Extract winner from market title/subtitle
-          const winnerName = market.yes_sub_title || market.subtitle || market.title;
+          const winnerName = market.yes_sub_title ?? market.subtitle ?? market.title ?? null;
           return { nomineeId: winnerName, resolved: true };
         }
         // Check if NO outcome won

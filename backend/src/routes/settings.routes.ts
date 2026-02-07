@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { PoolService } from '../services/pool.service';
 
@@ -67,7 +67,7 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
       return;
     }
 
-    const updateData: any = {
+    const updateData: Prisma.PoolSettingsUpdateInput = {
       categoryPoints: categoryPoints || undefined,
       oddsMultiplierEnabled:
         oddsMultiplierEnabled !== undefined ? oddsMultiplierEnabled : undefined,
@@ -84,7 +84,7 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     });
 
     res.json(settings);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -109,7 +109,7 @@ router.get('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     }
 
     res.json(settings);
-  } catch (error: any) {
+  } catch (error) {
     res.status(403).json({ error: error.message });
   }
 });

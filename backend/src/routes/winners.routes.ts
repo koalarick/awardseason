@@ -51,7 +51,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     });
 
     res.json(winner);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -86,7 +86,7 @@ router.get('/pool/:poolId', authenticate, async (req: AuthRequest, res: Response
     }));
 
     res.json(normalizedWinners);
-  } catch (error: any) {
+  } catch (error) {
     res.status(403).json({ error: error.message });
   }
 });
@@ -130,7 +130,7 @@ router.get('/global/:year', authenticate, async (req: AuthRequest, res: Response
     }));
 
     res.json(normalizedWinners);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -209,7 +209,7 @@ router.post('/global', authenticate, async (req: AuthRequest, res: Response) => 
     });
 
     res.json(winner);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -258,7 +258,7 @@ router.delete(
       });
 
       res.json({ success: true });
-    } catch (error: any) {
+    } catch (error) {
       if (error.code === 'P2025') {
         // Record not found
         res.status(404).json({ error: 'Winner not found' });

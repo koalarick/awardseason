@@ -30,7 +30,7 @@ router.get('/', authenticate, requireSuperuser, async (_req: AuthRequest, res: R
     });
 
     res.json(users);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -66,7 +66,7 @@ router.patch('/:userId/role', authenticate, requireSuperuser, async (req: AuthRe
     });
 
     res.json(updated);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -104,7 +104,7 @@ router.patch('/:userId/password', authenticate, requireSuperuser, async (req: Au
     });
 
     res.json({ message: 'Password updated' });
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

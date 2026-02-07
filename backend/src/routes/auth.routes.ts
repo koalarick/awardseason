@@ -3,9 +3,11 @@ import passport from 'passport';
 import { AuthController } from '../auth/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { getFrontendUrl } from '../utils/frontend-url';
+import type { SafeUser } from '../types/express';
 
 const router = Router();
 const authController = new AuthController();
+type OAuthSessionUser = SafeUser & { token: string };
 
 // Email/password routes
 router.post('/register', authController.register.bind(authController));
@@ -31,7 +33,12 @@ router.get(
   '/oauth/google/callback',
   passport.authenticate('google', { session: false }),
   (req, res) => {
-    const { user, token } = req.user as any;
+    const sessionUser = req.user as OAuthSessionUser | undefined;
+    const token = sessionUser?.token;
+    if (!token) {
+      res.status(401).json({ error: 'No token found in OAuth session' });
+      return;
+    }
     const frontendUrl = getFrontendUrl();
 
     // Set token in httpOnly cookie instead of URL

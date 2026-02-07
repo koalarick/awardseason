@@ -24,7 +24,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     );
 
     res.json(prediction);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -37,7 +37,7 @@ router.get('/pool/:poolId', authenticate, async (req: AuthRequest, res: Response
 
     const predictions = await predictionService.getUserPredictions(userId, poolId);
     res.json(predictions);
-  } catch (error: any) {
+  } catch (error) {
     res.status(403).json({ error: error.message });
   }
 });
@@ -50,7 +50,7 @@ router.get('/pool/:poolId/all', authenticate, async (req: AuthRequest, res: Resp
 
     const predictions = await predictionService.getAllPoolPredictions(poolId, userId);
     res.json(predictions);
-  } catch (error: any) {
+  } catch (error) {
     res.status(403).json({ error: error.message });
   }
 });
@@ -68,7 +68,7 @@ router.delete('/', authenticate, async (req: AuthRequest, res: Response) => {
 
     await predictionService.deletePrediction(userId, poolId, categoryId);
     res.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -86,7 +86,7 @@ router.delete('/all', authenticate, async (req: AuthRequest, res: Response) => {
 
     await predictionService.deleteAllPredictions(userId, poolId);
     res.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -104,7 +104,7 @@ router.patch('/upgrade-odds', authenticate, async (req: AuthRequest, res: Respon
 
     const result = await predictionService.updateOddsIfBetter(userId, poolId, categoryId);
     res.json(result);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -117,7 +117,7 @@ router.get('/other-pools/:poolId', authenticate, async (req: AuthRequest, res: R
 
     const submissions = await predictionService.getUserOtherPoolSubmissions(userId, poolId);
     res.json(submissions);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
@@ -139,7 +139,7 @@ router.post('/copy-from-pool', authenticate, async (req: AuthRequest, res: Respo
       sourcePoolId,
     );
     res.json(result);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });

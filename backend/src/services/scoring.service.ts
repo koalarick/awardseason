@@ -1,9 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { OddsService } from './odds.service';
 import { buildFallbackNameMap, resolveSubmissionName } from '../utils/submission-name';
 
 const prisma = new PrismaClient();
-const oddsService = new OddsService();
 
 export function calculateOddsMultiplier(oddsPercentage: number, formula: string): number {
   if (!oddsPercentage || oddsPercentage <= 0 || oddsPercentage > 100) {

@@ -3,11 +3,26 @@ import { KalshiService } from './kalshi.service';
 
 const prisma = new PrismaClient();
 const kalshiService = new KalshiService();
+type NomineeSnapshotCandidate = {
+  id: string;
+  name?: string | null;
+  film?: string | null;
+  song?: string | null;
+  producers?: string | null;
+  castingDirector?: string | null;
+};
+type CategoryWithNominees = {
+  id: string;
+  nominees: NomineeSnapshotCandidate[];
+};
 
 // Import nominees data - we'll need to copy this structure
 // For now, we'll create a function that accepts nominees
 export class OddsService {
-  async createSnapshotForYear(year: string, nomineesByCategory: any[]): Promise<void> {
+  async createSnapshotForYear(
+    year: string,
+    nomineesByCategory: CategoryWithNominees[],
+  ): Promise<void> {
     console.log(`Creating odds snapshot for year ${year} at ${new Date().toISOString()}`);
 
     for (const category of nomineesByCategory) {
