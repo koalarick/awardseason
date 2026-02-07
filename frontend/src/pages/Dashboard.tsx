@@ -26,6 +26,13 @@ type PoolRankSummary = {
   totalPossiblePoints: number;
 };
 
+type DashboardPool = Pool & {
+  submissionStatus?: 'Complete' | 'In Progress' | string;
+  hasSubmitted?: boolean;
+  totalCategories?: number;
+  correctCount?: number;
+};
+
 // Countdown component
 function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
   const [timeLeft, setTimeLeft] = useState({
@@ -327,11 +334,11 @@ export default function Dashboard() {
   const watchedCarouselRef = useRef<HTMLDivElement | null>(null);
   const recommendedCarouselRef = useRef<HTMLDivElement | null>(null);
 
-  const { data: pools, isLoading } = useQuery<Pool[]>({
+  const { data: pools, isLoading } = useQuery<DashboardPool[]>({
     queryKey: ['pools'],
     queryFn: async () => {
       const response = await api.get('/pools/my-pools');
-      return response.data as Pool[];
+      return response.data as DashboardPool[];
     },
   });
 
