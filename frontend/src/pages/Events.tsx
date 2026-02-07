@@ -540,12 +540,17 @@ export default function Events() {
                 <input
                   type="checkbox"
                   checked={draftFilters.excludeSuperuser}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const nextValue = e.target.checked;
                     setDraftFilters((prev) => ({
                       ...prev,
-                      excludeSuperuser: e.target.checked,
-                    }))
-                  }
+                      excludeSuperuser: nextValue,
+                    }));
+                    setFilters((prev) => ({
+                      ...prev,
+                      excludeSuperuser: nextValue,
+                    }));
+                  }}
                   className="h-4 w-4"
                 />
                 Exclude Superusers
@@ -683,6 +688,12 @@ export default function Events() {
                   </p>
                 </div>
               </div>
+              {selectedEvent.metadata?.poolName && (
+                <div className="mb-3 text-xs text-gray-700">
+                  <span className="text-gray-500">Pool</span>
+                  <p className="font-semibold">{String(selectedEvent.metadata.poolName)}</p>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Metadata</span>
                 <pre className="mt-2 bg-gray-50 border border-gray-200 rounded p-2 text-[11px] whitespace-pre-wrap break-words max-h-[50vh] overflow-auto">

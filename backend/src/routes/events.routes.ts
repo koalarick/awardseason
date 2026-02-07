@@ -190,6 +190,7 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
         user_id: string | null;
         user_email: string | null;
         pool_id: string | null;
+        pool_name: string | null;
         request_id: string | null;
         ip: string | null;
         user_agent: string | null;
@@ -204,6 +205,7 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
         e.user_id,
         u.email AS user_email,
         e.pool_id,
+        p.name AS pool_name,
         e.request_id,
         e.ip,
         e.user_agent,
@@ -211,6 +213,7 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
         e.metadata
       FROM events e
       LEFT JOIN users u ON u.id = e.user_id
+      LEFT JOIN pools p ON p.id = e.pool_id
       ${whereClause}
       ORDER BY e.created_at DESC
       LIMIT ${limit + 1}
@@ -227,6 +230,7 @@ router.get('/', authenticate, requireSuperuser, async (req: AuthRequest, res: Re
         ...(row.metadata ?? {}),
         userId: row.user_id ?? null,
         poolId: row.pool_id ?? null,
+        poolName: row.pool_name ?? null,
         requestId: row.request_id ?? null,
         ip: row.ip ?? null,
         userAgent: row.user_agent ?? null,
@@ -291,6 +295,8 @@ router.post('/page-view', authenticateOptional, async (req: AuthRequest, res: Re
         ? viewScopeParam.trim()
         : undefined;
 
+    const poolMatch = normalizedPath.match(/^\/pool\/([^/]+)(?:\/|$)/);
+    const poolIdFromPath = poolMatch?.[1];
     const isBallotView = /^\/pool\/[^/]+\/edit$/.test(normalizedPath);
     const isChecklistView = normalizedPath === '/movies/seen';
     if (!viewScope && (isBallotView || isChecklistView)) {
@@ -308,6 +314,7 @@ router.post('/page-view', authenticateOptional, async (req: AuthRequest, res: Re
     void logEvent({
       eventName: 'page.view',
       userId: req.user?.id,
+      poolId: poolIdFromPath,
       requestId: req.requestId,
       ip: req.clientIp,
       userAgent,
