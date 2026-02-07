@@ -363,6 +363,11 @@ export default function Events() {
     return null;
   }
 
+  const poolName =
+    selectedEvent && typeof selectedEvent.metadata?.poolName === 'string'
+      ? selectedEvent.metadata.poolName
+      : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
@@ -688,10 +693,10 @@ export default function Events() {
                   </p>
                 </div>
               </div>
-              {selectedEvent.metadata?.poolName && (
+              {poolName && (
                 <div className="mb-3 text-xs text-gray-700">
                   <span className="text-gray-500">Pool</span>
-                  <p className="font-semibold">{String(selectedEvent.metadata.poolName)}</p>
+                  <p className="font-semibold">{poolName}</p>
                 </div>
               )}
               <div>
