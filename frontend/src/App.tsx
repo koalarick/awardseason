@@ -13,12 +13,15 @@ import GlobalWinners from './pages/GlobalWinners';
 import NomineeMetadata from './pages/NomineeMetadata';
 import Users from './pages/Users';
 import MoviesSeen from './pages/MoviesSeen';
+import Events from './pages/Events';
 import ProtectedRoute from './components/ProtectedRoute';
+import PageViewTracker from './components/PageViewTracker';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <PageViewTracker />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -79,6 +82,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MoviesSeen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute>
+                <Events />
               </ProtectedRoute>
             }
           />

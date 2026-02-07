@@ -611,6 +611,12 @@ export default function Dashboard() {
           View Users
         </button>
         <button
+          onClick={() => navigate('/events')}
+          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium touch-manipulation"
+        >
+          View Events
+        </button>
+        <button
           onClick={handleSendTestEmail}
           disabled={sendTestEmail.isPending}
           className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium touch-manipulation"
