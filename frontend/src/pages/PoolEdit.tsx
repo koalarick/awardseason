@@ -915,14 +915,29 @@ export default function PoolEdit() {
     setPendingSelection(null);
   };
 
-  const handleNomineeImageClick = (e: MouseEvent, nominee: Nominee, category: Category) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent triggering nominee selection
+  const openNomineeModal = (nominee: Nominee, category: Category) => {
     const info = getNomineeInfoFromData(nominee, category);
     if (info) {
       setImageError(false);
       setSelectedNomineeInfo({ nominee, category, info });
     }
+  };
+
+  const handleNomineeModalClick = (e: MouseEvent, nominee: Nominee, category: Category) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent triggering nominee selection
+    openNomineeModal(nominee, category);
+  };
+
+  const handleNomineeImageClick = (e: MouseEvent, nominee: Nominee, category: Category) => {
+    const isDesktop =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(min-width: 768px)').matches;
+    if (isDesktop) {
+      return;
+    }
+    handleNomineeModalClick(e, nominee, category);
   };
 
   const closeNomineeModal = () => {
@@ -1559,40 +1574,57 @@ export default function PoolEdit() {
                                 className={`relative w-12 h-12 flex-shrink-0 rounded overflow-hidden flex items-center justify-center cursor-zoom-in border border-gray-300/50 active:scale-95 transition-transform ${
                                   hasWinner && !isCorrect ? 'opacity-50' : ''
                                 }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleNomineeImageClick(e, selectedNominee, category);
-                                }}
+                                onClick={(e) =>
+                                  handleNomineeModalClick(e, selectedNominee, category)
+                                }
                               >
-                                <img
-                                  src={getNomineeImage(selectedNominee, category.id, pool.year)}
-                                  alt={selectedNominee.name}
-                                  className="w-full h-full object-contain"
-                                  onClick={(e) =>
-                                    handleNomineeImageClick(e, selectedNominee, category)
-                                  }
-                                  onLoad={(e) => {
-                                    const imgSrc = e.currentTarget.src;
+                                <div className="group relative h-full w-full">
+                                  <img
+                                    src={getNomineeImage(selectedNominee, category.id, pool.year)}
+                                    alt={selectedNominee.name}
+                                    className="w-full h-full object-contain"
+                                    onLoad={(e) => {
+                                      const imgSrc = e.currentTarget.src;
+                                      const colorKey = `${category.id}-${selectedNominee.id}`;
+                                      if (!nomineeImageColors.has(colorKey)) {
+                                        extractImageColors(imgSrc)
+                                          .then((colors) => {
+                                            setNomineeImageColors((prev) =>
+                                              new Map(prev).set(colorKey, colors),
+                                            );
+                                          })
+                                          .catch(() => {
+                                            // Silently fail - overlay will use default color
+                                          });
+                                      }
+                                    }}
+                                    onError={(e) => {
+                                      console.error(
+                                        `Failed to load image: ${getNomineeImage(selectedNominee, category.id, pool.year)}`,
+                                      );
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                  {/* Hover overlay - desktop only */}
+                                  {(() => {
                                     const colorKey = `${category.id}-${selectedNominee.id}`;
-                                    if (!nomineeImageColors.has(colorKey)) {
-                                      extractImageColors(imgSrc)
-                                        .then((colors) => {
-                                          setNomineeImageColors((prev) =>
-                                            new Map(prev).set(colorKey, colors),
-                                          );
-                                        })
-                                        .catch(() => {
-                                          // Silently fail - overlay will use default color
-                                        });
-                                    }
-                                  }}
-                                  onError={(e) => {
-                                    console.error(
-                                      `Failed to load image: ${getNomineeImage(selectedNominee, category.id, pool.year)}`,
+                                    const colors = nomineeImageColors.get(colorKey);
+                                    return (
+                                      <div
+                                        className="pointer-events-none hidden md:flex absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                                        style={
+                                          colors
+                                            ? {
+                                                background: `linear-gradient(to bottom, ${hexToRgba(colors.primary, 0.6)}, ${hexToRgba(colors.secondary, 0.5)})`,
+                                              }
+                                            : {
+                                                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                              }
+                                        }
+                                      />
                                     );
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
+                                  })()}
+                                </div>
                                 {/* Info icon badge - mobile only, subtle */}
                                 <div className="md:hidden absolute top-0.5 right-0.5 bg-white/50 backdrop-blur-sm rounded-full p-0.5">
                                   <svg
@@ -1609,39 +1641,29 @@ export default function PoolEdit() {
                                     />
                                   </svg>
                                 </div>
-                                {/* Hover overlay with magnifying glass - desktop only */}
-                                {(() => {
-                                  const colorKey = `${category.id}-${selectedNominee.id}`;
-                                  const colors = nomineeImageColors.get(colorKey);
-                                  return (
-                                    <div
-                                      className="hidden md:flex absolute inset-0 opacity-0 hover:opacity-100 transition-opacity items-center justify-center rounded"
-                                      style={
-                                        colors
-                                          ? {
-                                              background: `linear-gradient(to bottom, ${hexToRgba(colors.primary, 0.6)}, ${hexToRgba(colors.secondary, 0.5)})`,
-                                            }
-                                          : {
-                                              backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                                            }
-                                      }
-                                    >
-                                      <svg
-                                        className="w-6 h-6 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                        />
-                                      </svg>
-                                    </div>
-                                  );
-                                })()}
+                                {/* Info trigger - desktop only */}
+                                <button
+                                  type="button"
+                                  className="nominee-modal-trigger hidden md:flex absolute top-0.5 right-0.5 z-10 h-5 w-5 items-center justify-center rounded-full bg-white/80 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:text-gray-900 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                                  onClick={(e) =>
+                                    handleNomineeModalClick(e, selectedNominee, category)
+                                  }
+                                  aria-label={`View ${selectedNominee.name} details`}
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                </button>
                               </div>
                               <div className="flex-1 min-w-0">
                                 {selectedNominee.film &&
@@ -2056,10 +2078,10 @@ export default function PoolEdit() {
                                       <div
                                         key={nominee.id}
                                         onClick={(e) => {
-                                          // Don't trigger selection if clicking on the image container
+                                          // Don't trigger selection if clicking the modal trigger
                                           if (
                                             (e.target as HTMLElement).closest(
-                                              '.nominee-image-container',
+                                              '.nominee-modal-trigger',
                                             )
                                           ) {
                                             return;
@@ -2083,41 +2105,58 @@ export default function PoolEdit() {
                                         }`}
                                       >
                                         <div
-                                          className="nominee-image-container relative w-24 h-24 md:w-full md:aspect-square flex-shrink-0 rounded overflow-hidden flex items-center justify-center bg-gray-100 cursor-zoom-in md:mb-2 border border-gray-300/50 active:scale-95 transition-transform"
+                                          className="nominee-image-container relative w-24 h-24 md:w-full md:aspect-square flex-shrink-0 rounded overflow-hidden flex items-center justify-center bg-gray-100 md:mb-2 border border-gray-300/50 active:scale-95 transition-transform"
                                           onClick={(e) => {
-                                            e.stopPropagation();
                                             handleNomineeImageClick(e, nominee, category);
                                           }}
                                         >
-                                          <img
-                                            src={getNomineeImage(nominee, category.id, pool.year)}
-                                            alt={nominee.name}
-                                            className="w-full h-full object-contain"
-                                            onClick={(e) =>
-                                              handleNomineeImageClick(e, nominee, category)
-                                            }
-                                            onLoad={(e) => {
-                                              const imgSrc = e.currentTarget.src;
+                                          <div className="group relative h-full w-full">
+                                            <img
+                                              src={getNomineeImage(nominee, category.id, pool.year)}
+                                              alt={nominee.name}
+                                              className="w-full h-full object-contain"
+                                              onLoad={(e) => {
+                                                const imgSrc = e.currentTarget.src;
+                                                const colorKey = `${category.id}-${nominee.id}`;
+                                                if (!nomineeImageColors.has(colorKey)) {
+                                                  extractImageColors(imgSrc)
+                                                    .then((colors) => {
+                                                      setNomineeImageColors((prev) =>
+                                                        new Map(prev).set(colorKey, colors),
+                                                      );
+                                                    })
+                                                    .catch(() => {
+                                                      // Silently fail - overlay will use default color
+                                                    });
+                                                }
+                                              }}
+                                              onError={(e) => {
+                                                console.error(
+                                                  `Failed to load image: ${getNomineeImage(nominee, category.id, pool.year)}`,
+                                                );
+                                                e.currentTarget.style.display = 'none';
+                                              }}
+                                            />
+                                            {/* Hover overlay - desktop only */}
+                                            {(() => {
                                               const colorKey = `${category.id}-${nominee.id}`;
-                                              if (!nomineeImageColors.has(colorKey)) {
-                                                extractImageColors(imgSrc)
-                                                  .then((colors) => {
-                                                    setNomineeImageColors((prev) =>
-                                                      new Map(prev).set(colorKey, colors),
-                                                    );
-                                                  })
-                                                  .catch(() => {
-                                                    // Silently fail - overlay will use default color
-                                                  });
-                                              }
-                                            }}
-                                            onError={(e) => {
-                                              console.error(
-                                                `Failed to load image: ${getNomineeImage(nominee, category.id, pool.year)}`,
+                                              const colors = nomineeImageColors.get(colorKey);
+                                              return (
+                                                <div
+                                                  className="pointer-events-none hidden md:flex absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                                                  style={
+                                                    colors
+                                                      ? {
+                                                          background: `linear-gradient(to bottom, ${hexToRgba(colors.primary, 0.6)}, ${hexToRgba(colors.secondary, 0.5)})`,
+                                                        }
+                                                      : {
+                                                          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                                        }
+                                                  }
+                                                />
                                               );
-                                              e.currentTarget.style.display = 'none';
-                                            }}
-                                          />
+                                            })()}
+                                          </div>
                                           {/* Info icon badge - mobile only, subtle */}
                                           <div className="md:hidden absolute top-1 right-1 bg-white/50 backdrop-blur-sm rounded-full p-0.5">
                                             <svg
@@ -2134,39 +2173,29 @@ export default function PoolEdit() {
                                               />
                                             </svg>
                                           </div>
-                                          {/* Hover overlay with magnifying glass - desktop only */}
-                                          {(() => {
-                                            const colorKey = `${category.id}-${nominee.id}`;
-                                            const colors = nomineeImageColors.get(colorKey);
-                                            return (
-                                              <div
-                                                className="hidden md:flex absolute inset-0 opacity-0 hover:opacity-100 transition-opacity items-center justify-center rounded"
-                                                style={
-                                                  colors
-                                                    ? {
-                                                        background: `linear-gradient(to bottom, ${hexToRgba(colors.primary, 0.6)}, ${hexToRgba(colors.secondary, 0.5)})`,
-                                                      }
-                                                    : {
-                                                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                                                      }
-                                                }
-                                              >
-                                                <svg
-                                                  className="w-8 h-8 text-white"
-                                                  fill="none"
-                                                  stroke="currentColor"
-                                                  viewBox="0 0 24 24"
-                                                >
-                                                  <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                                  />
-                                                </svg>
-                                              </div>
-                                            );
-                                          })()}
+                                          {/* Info trigger - desktop only */}
+                                          <button
+                                            type="button"
+                                            className="nominee-modal-trigger hidden md:flex absolute top-1 right-1 z-10 h-7 w-7 items-center justify-center rounded-full bg-white/85 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:text-gray-900 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                                            onClick={(e) =>
+                                              handleNomineeModalClick(e, nominee, category)
+                                            }
+                                            aria-label={`View ${nominee.name} details`}
+                                          >
+                                            <svg
+                                              className="w-4 h-4"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                              />
+                                            </svg>
+                                          </button>
                                         </div>
                                         {/* Mobile content */}
                                         <div className="flex-1 min-w-0 md:hidden">
