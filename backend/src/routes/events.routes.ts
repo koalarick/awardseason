@@ -146,7 +146,7 @@ router.get('/metrics', authenticate, requireSuperuser, async (_req: AuthRequest,
         (SELECT COUNT(*) FROM users) AS total_users,
         (SELECT COUNT(DISTINCT user_id) FROM predictions) AS users_with_predictions,
         (SELECT COUNT(DISTINCT owner_id) FROM pools) AS users_created_pool,
-        (SELECT COUNT(DISTINCT user_id) FROM events WHERE event_name = 'seen_movies.updated') AS users_with_checklist_update,
+        (SELECT COUNT(DISTINCT user_id) FROM seen_movies) AS users_with_checklist_update,
         (SELECT COUNT(DISTINCT user_id) FROM events WHERE event_name = 'pool.invite_sent') AS users_sent_invite,
         (
           SELECT COUNT(DISTINCT COALESCE(e.user_id::text, e.ip::text))
