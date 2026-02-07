@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { PredictionService } from '../services/prediction.service';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
+import { logEvent } from '../services/event.service';
 
 const router = Router();
 const predictionService = new PredictionService();
@@ -16,14 +17,34 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const prediction = await predictionService.createOrUpdatePrediction(
+    const { prediction, currentOdds, wasCreated, changedNominee } =
+      await predictionService.createOrUpdatePrediction(
       userId,
       poolId,
       categoryId,
       nomineeId,
     );
 
-    res.json(prediction);
+    void logEvent({
+      eventName: 'prediction.submitted',
+      userId,
+      poolId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        categoryId,
+        nomineeId,
+        action: wasCreated ? 'created' : 'updated',
+        changedNominee,
+      },
+    });
+
+    res.json({
+      ...prediction,
+      currentOdds,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

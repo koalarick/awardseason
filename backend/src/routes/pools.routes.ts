@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PoolService } from '../services/pool.service';
 import { authenticate, requireSuperuser, AuthRequest } from '../middleware/auth.middleware';
 import { PrismaClient } from '@prisma/client';
+import { logEvent } from '../services/event.service';
 
 const prisma = new PrismaClient();
 
@@ -77,6 +78,21 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       oddsMultiplierFormula,
       categoryPoints,
     );
+
+    void logEvent({
+      eventName: 'pool.created',
+      userId,
+      poolId: pool.id,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        year: pool.year,
+        isPublic: pool.isPublic,
+        isPaidPool: pool.isPaidPool,
+      },
+    });
 
     res.status(201).json(pool);
   } catch (error) {
@@ -210,6 +226,21 @@ router.post('/:poolId/join', authenticate, async (req: AuthRequest, res: Respons
     const userId = req.user!.id;
 
     const member = await poolService.joinPool(userId, poolId, password);
+
+    void logEvent({
+      eventName: 'pool.joined',
+      userId,
+      poolId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        year: member.pool.year,
+        isPublic: member.pool.isPublic,
+      },
+    });
+
     res.status(201).json(member);
   } catch (error) {
     res.status(400).json({ error: error.message });

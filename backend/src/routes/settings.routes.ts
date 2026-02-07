@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { PoolService } from '../services/pool.service';
+import { logEvent } from '../services/event.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -81,6 +82,23 @@ router.put('/:poolId', authenticate, async (req: AuthRequest, res: Response) => 
     const settings = await prisma.poolSettings.update({
       where: { poolId },
       data: updateData,
+    });
+
+    void logEvent({
+      eventName: 'pool.settings_updated',
+      userId,
+      poolId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        oddsMultiplierEnabled:
+          oddsMultiplierEnabled !== undefined ? oddsMultiplierEnabled : undefined,
+        oddsMultiplierFormula: oddsMultiplierFormula || undefined,
+        payoutStructureUpdated: payoutStructure !== undefined,
+        categoryPointsUpdated: categoryPoints !== undefined,
+      },
     });
 
     res.json(settings);

@@ -87,6 +87,9 @@ export class PredictionService {
       },
     });
 
+    const wasCreated = !existingPrediction;
+    const changedNominee = existingPrediction ? existingPrediction.nomineeId !== nomineeId : false;
+
     // Try to use Prisma normally first, but handle the case where Prisma Client hasn't been regenerated
     let prediction;
     try {
@@ -204,8 +207,10 @@ export class PredictionService {
     }
 
     return {
-      ...prediction,
+      prediction,
       currentOdds,
+      wasCreated,
+      changedNominee,
     };
   }
 

@@ -4,10 +4,11 @@ import { AuthController } from '../auth/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { getFrontendUrl } from '../utils/frontend-url';
 import type { SafeUser } from '../types/express';
+import { logEvent } from '../services/event.service';
 
 const router = Router();
 const authController = new AuthController();
-type OAuthSessionUser = SafeUser & { token: string };
+type OAuthSessionUser = SafeUser & { token: string; isNewUser?: boolean; oauthProvider?: string };
 
 // Email/password routes
 router.post('/register', authController.register.bind(authController));
@@ -48,6 +49,22 @@ router.get(
       sameSite: 'lax', // Protection against CSRF
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+
+    if (sessionUser?.id) {
+      const eventName = sessionUser.isNewUser ? 'user.registered' : 'user.logged_in';
+      void logEvent({
+        eventName,
+        userId: sessionUser.id,
+        requestId: req.requestId,
+        ip: req.clientIp,
+        userAgent: req.userAgent,
+        deviceType: req.deviceType,
+        metadata: {
+          method: 'oauth',
+          provider: sessionUser.oauthProvider || 'google',
+        },
+      });
+    }
 
     // Redirect to frontend without token in URL
     res.redirect(`${frontendUrl}/auth/callback`);

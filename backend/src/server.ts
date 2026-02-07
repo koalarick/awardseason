@@ -5,6 +5,7 @@ import passport from 'passport';
 import cookieParser from 'cookie-parser';
 import { PrismaClient } from '@prisma/client';
 import './auth/oauth.strategy'; // Initialize OAuth strategies
+import { eventLogger } from './middleware/event-logger.middleware';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
+app.use(eventLogger);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -73,11 +75,13 @@ import settingsRoutes from './routes/settings.routes';
 import scoresRoutes from './routes/scores.routes';
 import emailRoutes from './routes/email.routes';
 import seenMoviesRoutes from './routes/seen-movies.routes';
+import eventsRoutes from './routes/events.routes';
 app.use('/api/winners', winnersRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/scores', scoresRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/seen-movies', seenMoviesRoutes);
+app.use('/api/events', eventsRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {

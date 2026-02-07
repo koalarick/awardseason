@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
+import { logEvent } from '../services/event.service';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -60,6 +61,21 @@ router.put('/:year', authenticate, async (req: AuthRequest, res: Response) => {
 
     if (sanitized.length === 0) {
       await prisma.seenMovie.deleteMany({ where: { userId, year } });
+
+      void logEvent({
+        eventName: 'seen_movies.updated',
+        userId,
+        requestId: req.requestId,
+        ip: req.clientIp,
+        userAgent: req.userAgent,
+        deviceType: req.deviceType,
+        metadata: {
+          year,
+          count: 0,
+          action: 'set',
+        },
+      });
+
       res.json({ movieIds: [] });
       return;
     }
@@ -77,6 +93,20 @@ router.put('/:year', authenticate, async (req: AuthRequest, res: Response) => {
         skipDuplicates: true,
       }),
     ]);
+
+    void logEvent({
+      eventName: 'seen_movies.updated',
+      userId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        year,
+        count: sanitized.length,
+        action: 'set',
+      },
+    });
 
     res.json({ movieIds: sanitized });
   } catch (error) {
@@ -129,6 +159,21 @@ router.post('/:year', authenticate, async (req: AuthRequest, res: Response) => {
         where: { userId, year, movieId },
       });
     }
+
+    void logEvent({
+      eventName: 'seen_movies.updated',
+      userId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        year,
+        movieId,
+        seen: shouldMarkSeen,
+        action: 'toggle',
+      },
+    });
 
     res.json({ movieId, seen: shouldMarkSeen });
   } catch (error) {

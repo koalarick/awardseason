@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { PoolService } from '../services/pool.service';
+import { logEvent } from '../services/event.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -47,6 +48,21 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
         nomineeId,
         enteredBy: userId,
         isAutoDetected: false,
+      },
+    });
+
+    void logEvent({
+      eventName: 'winner.entered',
+      userId,
+      poolId,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        categoryId,
+        nomineeId,
+        scope: 'pool',
       },
     });
 
@@ -205,6 +221,22 @@ router.post('/global', authenticate, async (req: AuthRequest, res: Response) => 
         nomineeId,
         enteredBy: userId,
         isAutoDetected: false,
+      },
+    });
+
+    void logEvent({
+      eventName: 'winner.entered',
+      userId,
+      poolId: globalPool.id,
+      requestId: req.requestId,
+      ip: req.clientIp,
+      userAgent: req.userAgent,
+      deviceType: req.deviceType,
+      metadata: {
+        categoryId,
+        nomineeId,
+        scope: 'global',
+        year,
       },
     });
 

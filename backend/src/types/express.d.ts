@@ -12,6 +12,10 @@ declare global {
 
     interface Request {
       user?: SafeUser;
+      requestId?: string;
+      clientIp?: string;
+      userAgent?: string;
+      deviceType?: string;
     }
   }
 }

@@ -59,3 +59,41 @@ export const requireSuperuser = (req: AuthRequest, res: Response, next: NextFunc
   }
   next();
 };
+
+export const authenticateOptional = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      next();
+      return;
+    }
+
+    const token = authHeader.substring(7);
+    const payload = authService.verifyToken(token);
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        oauthProvider: true,
+        oauthId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (user) {
+      req.user = user as SafeUser;
+    }
+  } catch (error) {
+    // Ignore invalid tokens for optional auth.
+  }
+
+  next();
+};

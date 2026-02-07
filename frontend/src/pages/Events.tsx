@@ -82,44 +82,6 @@ const toIsoString = (value?: string) => {
   return date.toISOString();
 };
 
-type EventGroup = {
-  label: string;
-  match: (name: string) => boolean;
-};
-
-const EVENT_GROUPS: EventGroup[] = [
-  { label: 'Page Views', match: (name) => name === 'page.view' || name.startsWith('page.') },
-  { label: 'Users', match: (name) => name.startsWith('user.') },
-  { label: 'Pools', match: (name) => name.startsWith('pool.') },
-  { label: 'Predictions', match: (name) => name.startsWith('prediction.') },
-  { label: 'Winners', match: (name) => name.startsWith('winner.') },
-  { label: 'Seen Movies', match: (name) => name.startsWith('seen_movies.') },
-  { label: 'Settings', match: (name) => name.includes('settings') },
-  { label: 'API', match: (name) => name === 'api.request' || name.startsWith('api.') },
-];
-
-const _groupEventNames = (names: string[]) => {
-  const remaining = [...names];
-  const grouped: Array<{ label: string; names: string[] }> = [];
-
-  EVENT_GROUPS.forEach((group) => {
-    const matched = remaining.filter((name) => group.match(name));
-    if (matched.length > 0) {
-      grouped.push({ label: group.label, names: matched });
-      matched.forEach((name) => {
-        const index = remaining.indexOf(name);
-        if (index >= 0) remaining.splice(index, 1);
-      });
-    }
-  });
-
-  if (remaining.length > 0) {
-    grouped.push({ label: 'Other', names: remaining });
-  }
-
-  return grouped;
-};
-
 const normalizePath = (raw?: unknown) => {
   if (typeof raw !== 'string') return '';
   const path = raw.split('?')[0]?.trim();

@@ -6,8 +6,8 @@ import type { SafeUser } from '../types/express';
 
 const prisma = new PrismaClient();
 const authService = new AuthService();
-type OAuthSessionUser = SafeUser & { token?: string };
-type OAuthSessionEnvelope = { user: SafeUser; token?: string };
+type OAuthSessionUser = SafeUser & { token?: string; isNewUser?: boolean; oauthProvider?: string };
+type OAuthSessionEnvelope = { user: SafeUser; token?: string; isNewUser?: boolean; oauthProvider?: string };
 type SerializedOAuthUser = OAuthSessionUser | OAuthSessionEnvelope;
 
 // Google OAuth Strategy
@@ -26,7 +26,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             return done(new Error('No email found in Google profile'), undefined);
           }
 
-          const { user, token } = await authService.findOrCreateOAuthUser(
+          const { user, token, isNewUser } = await authService.findOrCreateOAuthUser(
             email,
             'google',
             profile.id,
@@ -36,7 +36,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           // Store it on the user object temporarily for the route handler
           const { passwordHash: _passwordHash, ...safeUser } = user;
           void _passwordHash;
-          const sessionUser: OAuthSessionUser = { ...safeUser, token };
+          const sessionUser: OAuthSessionUser = {
+            ...safeUser,
+            token,
+            isNewUser,
+            oauthProvider: 'google',
+          };
           return done(null, sessionUser);
         } catch (error) {
           return done(error, undefined);

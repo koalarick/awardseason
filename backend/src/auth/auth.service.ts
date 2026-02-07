@@ -147,11 +147,12 @@ export class AuthService {
     email: string,
     oauthProvider: string,
     oauthId: string,
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{ user: User; token: string; isNewUser: boolean }> {
     // Try to find existing user by email
     let user = await prisma.user.findUnique({
       where: { email },
     });
+    let isNewUser = false;
 
     if (user) {
       // Update OAuth info if not set
@@ -173,6 +174,7 @@ export class AuthService {
           oauthId,
         },
       });
+      isNewUser = true;
 
       // Auto-join global pool
       try {
@@ -227,7 +229,7 @@ export class AuthService {
     }
 
     const token = this.generateToken(user);
-    return { user, token };
+    return { user, token, isNewUser };
   }
 
   private hashResetToken(token: string): string {

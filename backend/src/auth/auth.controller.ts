@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { logEvent } from '../services/event.service';
 
 const authService = new AuthService();
 
@@ -27,6 +28,16 @@ export class AuthController {
       }
 
       const { user, token } = await authService.register(email, password);
+
+      void logEvent({
+        eventName: 'user.registered',
+        userId: user.id,
+        requestId: req.requestId,
+        ip: req.clientIp,
+        userAgent: req.userAgent,
+        deviceType: req.deviceType,
+        metadata: { method: 'password' },
+      });
 
       res.status(201).json({
         user: {
@@ -57,6 +68,16 @@ export class AuthController {
       }
 
       const { user, token } = await authService.login(email, password);
+
+      void logEvent({
+        eventName: 'user.logged_in',
+        userId: user.id,
+        requestId: req.requestId,
+        ip: req.clientIp,
+        userAgent: req.userAgent,
+        deviceType: req.deviceType,
+        metadata: { method: 'password' },
+      });
 
       res.json({
         user: {
