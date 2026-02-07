@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import UnauthMarketing from '../components/UnauthMarketing';
+import { UnauthHero, UnauthHowItWorks } from '../components/UnauthMarketing';
 import { getApiErrorMessage } from '../utils/apiErrors';
 
 export default function Login() {
@@ -40,12 +40,12 @@ export default function Login() {
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         <div className="mx-auto w-full max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr] items-start">
           {/* Value Proposition */}
-          <div className="space-y-6 order-2 lg:order-1">
-            <UnauthMarketing />
+          <div className="space-y-6 order-1 lg:order-1">
+            <UnauthHero />
           </div>
 
           {/* Login and Registration */}
-          <div className="space-y-6 order-1 lg:order-2">
+          <div className="space-y-6 order-2 lg:order-2">
             {/* Login Section */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
@@ -111,6 +111,10 @@ export default function Login() {
                 </form>
               </div>
             </div>
+          </div>
+
+          <div className="space-y-6 order-3 lg:order-3 lg:col-span-2">
+            <UnauthHowItWorks />
           </div>
         </div>
       </main>

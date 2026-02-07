@@ -9,11 +9,6 @@ import { getMovieEntries, type MovieEntry } from '../utils/movieNominees';
 import { useSeenMovies } from '../hooks/useSeenMovies';
 import { getApiErrorMessage } from '../utils/apiErrors';
 
-type PoolStats = {
-  totalUsers?: number;
-  totalPools?: number;
-};
-
 type PoolScoreEntry = {
   userId: string;
   totalScore?: number;
@@ -328,7 +323,6 @@ function PoolSearch({ onJoinSuccess }: { onJoinSuccess: () => void }) {
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [testEmailStatus, setTestEmailStatus] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear().toString();
   const watchedCarouselRef = useRef<HTMLDivElement | null>(null);
@@ -343,30 +337,6 @@ export default function Dashboard() {
   });
 
   const isSuperuser = user?.role === 'SUPERUSER';
-
-  const { data: allPools, isLoading: isLoadingAllPools } = useQuery<Pool[]>({
-    queryKey: ['pools-all'],
-    queryFn: async () => {
-      const response = await api.get('/pools/all');
-      return response.data as Pool[];
-    },
-    enabled: isSuperuser,
-  });
-
-  const { data: globalStats, isLoading: isLoadingStats } = useQuery<PoolStats>({
-    queryKey: ['global-stats'],
-    queryFn: async () => {
-      const response = await api.get('/pools/stats');
-      return response.data as PoolStats;
-    },
-    enabled: isSuperuser,
-  });
-
-  const otherPoolsForSuperuser = useMemo(() => {
-    if (!allPools) return [];
-    const userPoolIds = new Set((pools ?? []).map((pool) => pool.id));
-    return allPools.filter((pool) => !userPoolIds.has(pool.id));
-  }, [allPools, pools]);
 
   // Fetch ranks, scores, and submission data for all pools
   const { data: poolRanks } = useQuery<Map<string, PoolRankSummary>>({
@@ -536,26 +506,6 @@ export default function Dashboard() {
     });
   };
 
-  const sendTestEmail = useMutation({
-    mutationFn: async (to: string) => {
-      const response = await api.post('/email/test', { to });
-      return response.data;
-    },
-    onSuccess: () => {
-      setTestEmailStatus('Test email sent');
-    },
-    onError: (error: unknown) => {
-      setTestEmailStatus(getApiErrorMessage(error) ?? 'Failed to send test email');
-    },
-  });
-
-  const handleSendTestEmail = () => {
-    const to = window.prompt('Send test email to:');
-    if (!to) return;
-    setTestEmailStatus(null);
-    sendTestEmail.mutate(to.trim());
-  };
-
   const handleJoinSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['pools'] });
   };
@@ -573,124 +523,6 @@ export default function Dashboard() {
           return earliest;
         }, null)?.ceremonyDate
       : null);
-
-  const renderSuperuserTools = () => (
-    <div className="px-4 sm:px-6 py-4">
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">Total Users</p>
-          <p className="font-bold text-sm sm:text-base oscars-dark">
-            {isLoadingStats ? '...' : (globalStats?.totalUsers ?? '-')}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">Total Pools</p>
-          <p className="font-bold text-sm sm:text-base oscars-dark">
-            {isLoadingStats ? '...' : (globalStats?.totalPools ?? '-')}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <button
-          onClick={() => navigate('/winners/global')}
-          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium touch-manipulation"
-        >
-          Mark Global Winners
-        </button>
-        <button
-          onClick={() => navigate('/nominees/metadata')}
-          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium touch-manipulation"
-        >
-          Edit Nominee Metadata
-        </button>
-        <button
-          onClick={() => navigate('/users')}
-          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium touch-manipulation"
-        >
-          View Users
-        </button>
-        <button
-          onClick={() => navigate('/events')}
-          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium touch-manipulation"
-        >
-          View Events
-        </button>
-        <button
-          onClick={() => navigate('/metrics')}
-          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium touch-manipulation"
-        >
-          View Metrics
-        </button>
-        <button
-          onClick={handleSendTestEmail}
-          disabled={sendTestEmail.isPending}
-          className="w-full px-4 py-2 min-h-[36px] bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm font-medium touch-manipulation"
-        >
-          {sendTestEmail.isPending ? 'Sending Test Email...' : 'Send Test Email'}
-        </button>
-        {testEmailStatus && <p className="text-xs text-gray-600">{testEmailStatus}</p>}
-      </div>
-
-      <div className="mt-4 border-t border-gray-200 pt-4">
-        <h3 className="text-xs font-semibold oscars-dark uppercase tracking-wide mb-3">
-          Pools You Aren't In
-        </h3>
-        {isLoadingAllPools ? (
-          <p className="text-sm text-gray-600">Loading pools...</p>
-        ) : otherPoolsForSuperuser.length > 0 ? (
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {otherPoolsForSuperuser.map((pool) => (
-              <div key={pool.id} className="border border-gray-200 rounded-lg p-3 bg-white">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm oscars-dark whitespace-normal break-words">
-                      {pool.name}
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">
-                      <span>ID: {pool.id}</span>
-                      <span>•</span>
-                      <span>{pool._count?.members || 0} members</span>
-                      {pool.owner?.email && (
-                        <>
-                          <span>•</span>
-                          <span>Owner: {pool.owner.email}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {pool.isPaidPool && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/30 text-yellow-700 rounded uppercase tracking-wide border border-yellow-400/30">
-                        $
-                      </span>
-                    )}
-                    {pool.isPublic ? (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/30 text-green-700 rounded uppercase tracking-wide border border-green-400/30">
-                        Public
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-200 text-gray-700 rounded uppercase tracking-wide border border-gray-300">
-                        Private
-                      </span>
-                    )}
-                    <button
-                      onClick={() => navigate(`/pool/${pool.id}`)}
-                      className="px-2.5 py-1.5 min-h-[32px] text-[11px] font-semibold bg-slate-800 text-white rounded hover:bg-slate-700 active:bg-slate-900 transition-colors whitespace-nowrap"
-                    >
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-600">You're already in every pool.</p>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1134,28 +966,52 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Global Winners Management Link (Superuser only) - Desktop only, below Find/Create */}
+            {/* Superuser Dashboard Link (Superuser only) - Desktop only, below Find/Create */}
             {isSuperuser && (
               <div className="mt-6 hidden md:block">
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                   <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-                    <h2 className="oscars-font text-base sm:text-lg font-bold">Superuser Tools</h2>
+                    <h2 className="oscars-font text-base sm:text-lg font-bold">
+                      Superuser Dashboard
+                    </h2>
                   </div>
-                  {renderSuperuserTools()}
+                  <div className="px-4 sm:px-6 py-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Manage global winners, metadata, users, events, metrics, and operational tools.
+                    </p>
+                    <button
+                      onClick={() => navigate('/superuser')}
+                      className="w-full px-4 py-2.5 min-h-[44px] bg-slate-800 text-white rounded hover:bg-slate-700 active:bg-slate-900 transition-colors text-sm font-semibold touch-manipulation"
+                    >
+                      Open Superuser Dashboard
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Global Winners Management Link (Superuser only) - Mobile only, at bottom */}
+        {/* Superuser Dashboard Link (Superuser only) - Mobile only, at bottom */}
         {isSuperuser && (
           <div className="mb-6 md:hidden">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
               <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-                <h2 className="oscars-font text-base sm:text-lg font-bold">Superuser Tools</h2>
+                <h2 className="oscars-font text-base sm:text-lg font-bold">
+                  Superuser Dashboard
+                </h2>
               </div>
-              {renderSuperuserTools()}
+              <div className="px-4 sm:px-6 py-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Manage global winners, metadata, users, events, metrics, and operational tools.
+                </p>
+                <button
+                  onClick={() => navigate('/superuser')}
+                  className="w-full px-4 py-2.5 min-h-[44px] bg-slate-800 text-white rounded hover:bg-slate-700 active:bg-slate-900 transition-colors text-sm font-semibold touch-manipulation"
+                >
+                  Open Superuser Dashboard
+                </button>
+              </div>
             </div>
           </div>
         )}

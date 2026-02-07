@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import UnauthMarketing from '../components/UnauthMarketing';
+import { UnauthHero, UnauthHowItWorks } from '../components/UnauthMarketing';
 import type { Pool } from '../types/pool';
 import { getApiErrorMessage } from '../utils/apiErrors';
 
@@ -188,11 +188,11 @@ export default function PoolInvite() {
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         <div className="mx-auto w-full max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr] items-start">
-          <div className="space-y-6 order-2 lg:order-1">
-            <UnauthMarketing />
+          <div className="space-y-6 order-1 lg:order-1">
+            <UnauthHero />
           </div>
 
-          <div className="space-y-6 order-1 lg:order-2">
+          <div className="space-y-6 order-2 lg:order-2">
             {/* Pool Info Card */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-4 sm:px-6 py-3 sm:py-4">
@@ -390,6 +390,10 @@ export default function PoolInvite() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="space-y-6 order-3 lg:order-3 lg:col-span-2">
+            <UnauthHowItWorks />
           </div>
         </div>
       </main>

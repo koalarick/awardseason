@@ -14,7 +14,9 @@ import NomineeMetadata from './pages/NomineeMetadata';
 import Users from './pages/Users';
 import MoviesSeen from './pages/MoviesSeen';
 import Events from './pages/Events';
-import Metrics from './pages/Metrics';
+import SuperuserDashboard from './pages/SuperuserDashboard';
+import SuperuserTestEmail from './pages/SuperuserTestEmail';
+import SuperuserPools from './pages/SuperuserPools';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageViewTracker from './components/PageViewTracker';
 
@@ -95,10 +97,26 @@ function App() {
             }
           />
           <Route
-            path="/metrics"
+            path="/superuser"
             element={
               <ProtectedRoute>
-                <Metrics />
+                <SuperuserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/superuser/tools/test-email"
+            element={
+              <ProtectedRoute>
+                <SuperuserTestEmail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/superuser/tools/pools-not-in"
+            element={
+              <ProtectedRoute>
+                <SuperuserPools />
               </ProtectedRoute>
             }
           />
