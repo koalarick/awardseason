@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getApiErrorMessage } from '../utils/apiErrors';
 import { EVENT_LABEL_MAP, getEventBadgeClass, getEventLabel } from '../utils/eventLabels';
+import BackButton from '../components/BackButton';
 import { useSmartBack } from '../hooks/useSmartBack';
 
 type EventRecord = {
@@ -293,26 +294,7 @@ export default function Events() {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <button
-            onClick={goBack}
-            className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900"
-            aria-label="Go back"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+          <BackButton onClick={goBack} />
 
           <button
             onClick={() => navigate('/')}

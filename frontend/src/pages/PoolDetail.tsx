@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import BackButton from '../components/BackButton';
 import { useAuth } from '../context/AuthContext';
 import { useSmartBack } from '../hooks/useSmartBack';
 import type { AuthUser } from '../context/AuthContext';
@@ -296,7 +297,13 @@ type PoolUpdatePayload = {
 type RankedSubmission = PoolSubmission & { originalRank: number };
 
 // Pool Creation Form Component
-function PoolCreationForm({ navigate }: { navigate: (path: string) => void }) {
+function PoolCreationForm({
+  navigate,
+  goBack,
+}: {
+  navigate: (path: string) => void;
+  goBack: () => void;
+}) {
   const [name, setName] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [password, setPassword] = useState('');
@@ -402,12 +409,7 @@ function PoolCreationForm({ navigate }: { navigate: (path: string) => void }) {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
-          <button
-            onClick={() => navigate('/')}
-            className="text-white hover:text-yellow-300 text-sm py-2 px-2 -mx-2 min-h-[44px] flex items-center"
-          >
-            ← Back
-          </button>
+          <BackButton onClick={goBack} />
           <h1 className="oscars-font text-lg font-bold">Create New Pool</h1>
         </div>
       </header>
@@ -3134,7 +3136,7 @@ export default function PoolDetail() {
 
   // Handle "new" pool creation - must be after all hooks
   if (poolId === 'new') {
-    return <PoolCreationForm navigate={navigate} />;
+    return <PoolCreationForm navigate={navigate} goBack={goBack} />;
   }
 
   if (poolLoading) {
@@ -3158,26 +3160,7 @@ export default function PoolDetail() {
       <header className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Back Button - Left side */}
-          <button
-            onClick={goBack}
-            className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900"
-            aria-label="Go back"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+          <BackButton onClick={goBack} />
 
           {/* Logo - Right of back button */}
           <button
