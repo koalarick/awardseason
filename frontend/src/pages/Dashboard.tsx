@@ -344,29 +344,23 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!pools || !user?.id || pools.length === 0) return new Map<string, PoolRankSummary>();
       const rankPromises = pools.map(async (pool) => {
-        try {
-          // Get scores for ranking
-          const scoresResponse = await api.get(`/scores/pool/${pool.id}`);
-          const scores = (scoresResponse.data?.scores ?? []) as PoolScoreEntry[];
-          const userIndex = scores.findIndex((score) => score.userId === user.id);
-          const rank = userIndex >= 0 ? userIndex + 1 : null;
-          const totalMembers = scores.length;
+        let rank: number | null = null;
+        let totalMembers = 0;
+        let totalEarnedPoints = 0;
+        let totalPossiblePoints = 0;
 
-          // Get submission data for points
-          let totalEarnedPoints = 0;
-          let totalPossiblePoints = 0;
-          try {
-            const submissionsResponse = await api.get(`/pools/${pool.id}/submissions`);
-            const submissions = (submissionsResponse.data ?? []) as PoolSubmission[];
-            const userSubmission = submissions.find((submission) => submission.userId === user.id);
-            if (userSubmission) {
-              totalEarnedPoints = userSubmission.totalEarnedPoints || 0;
-              totalPossiblePoints = userSubmission.totalPossiblePoints || 0;
-            }
-          } catch {
-            // If submissions endpoint fails, use score data
-            const userScore = userIndex >= 0 ? scores[userIndex] : null;
-            totalEarnedPoints = userScore?.totalScore || 0;
+        try {
+          // Submissions are already sorted by earned points, then possible points.
+          const submissionsResponse = await api.get(`/pools/${pool.id}/submissions`);
+          const submissions = (submissionsResponse.data ?? []) as PoolSubmission[];
+          totalMembers = submissions.length;
+          const userIndex = submissions.findIndex((submission) => submission.userId === user.id);
+          rank = userIndex >= 0 ? userIndex + 1 : null;
+
+          if (userIndex >= 0) {
+            const userSubmission = submissions[userIndex];
+            totalEarnedPoints = userSubmission.totalEarnedPoints || 0;
+            totalPossiblePoints = userSubmission.totalPossiblePoints || 0;
           }
 
           return {
@@ -377,12 +371,25 @@ export default function Dashboard() {
             totalPossiblePoints,
           };
         } catch {
+          // Fallback to scores endpoint if submissions fail
+          try {
+            const scoresResponse = await api.get(`/scores/pool/${pool.id}`);
+            const scores = (scoresResponse.data?.scores ?? []) as PoolScoreEntry[];
+            const userIndex = scores.findIndex((score) => score.userId === user.id);
+            rank = userIndex >= 0 ? userIndex + 1 : null;
+            totalMembers = scores.length;
+            const userScore = userIndex >= 0 ? scores[userIndex] : null;
+            totalEarnedPoints = userScore?.totalScore || 0;
+          } catch {
+            // Keep defaults
+          }
+
           return {
             poolId: pool.id,
-            rank: null,
-            totalMembers: 0,
-            totalEarnedPoints: 0,
-            totalPossiblePoints: 0,
+            rank,
+            totalMembers,
+            totalEarnedPoints,
+            totalPossiblePoints,
           };
         }
       });
