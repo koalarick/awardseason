@@ -52,7 +52,7 @@ const createEmptyFilters = () => ({
   email: '',
   start: '',
   end: '',
-  excludeSuperuser: false,
+  excludeSuperuser: true,
 });
 
 const formatDateTime = (value?: string) => {
