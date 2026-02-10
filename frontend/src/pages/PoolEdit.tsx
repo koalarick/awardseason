@@ -604,9 +604,8 @@ export default function PoolEdit() {
       return;
     }
     setShowRenamePrompt(true);
-    setRenameValue((current) =>
-      current ? current : (userMembership.submissionName ?? '').trim(),
-    );
+    const nextRenameValue = (userMembership.submissionName ?? '').trim() || defaultName;
+    setRenameValue((current) => (current ? current : nextRenameValue));
   }, [userMembership, hasDismissedRenamePrompt, isViewingOtherSubmission, defaultName]);
 
   const handleRenameSubmit = () => {
@@ -1033,7 +1032,10 @@ export default function PoolEdit() {
       {showRenamePrompt && !isViewingOtherSubmission && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold oscars-dark mb-4">Name your ballot</h3>
+            <h3 className="text-lg font-bold oscars-dark mb-2">Name your ballot</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Give it personality so the leaderboard shows who you are.
+            </p>
             {renameError && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded mb-4">
                 {renameError}
@@ -3923,6 +3925,10 @@ function SubmissionNameEditor({
   const trimmedCurrentName = (currentName ?? '').trim();
   const trimmedDefaultName = defaultName.trim();
   const isDefaultName = trimmedCurrentName.length === 0 || trimmedCurrentName === trimmedDefaultName;
+  const startEditing = () => {
+    setName(displayName);
+    setIsEditing(true);
+  };
   const renameButtonClasses = isDefaultName
     ? 'flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-full border-2 border-yellow-200 text-yellow-100 bg-yellow-100/10 shadow-md hover:bg-yellow-100/20 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900'
     : 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors';
@@ -3963,7 +3969,7 @@ function SubmissionNameEditor({
     <div className="flex items-start gap-3 w-full">
       <button
         type="button"
-        onClick={() => setIsEditing(true)}
+        onClick={startEditing}
         className="flex-1 text-left"
         aria-label="Edit ballot name"
       >
@@ -3977,7 +3983,7 @@ function SubmissionNameEditor({
       {!isDefaultName && (
         <button
           type="button"
-          onClick={() => setIsEditing(true)}
+          onClick={startEditing}
           className={renameButtonClasses}
           title="Rename ballot"
           aria-label="Rename ballot"
