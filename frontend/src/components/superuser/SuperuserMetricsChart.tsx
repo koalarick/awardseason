@@ -109,11 +109,14 @@ export default function SuperuserMetricsChart() {
                       aria-label={`${entry.label}: ${entry.value}`}
                     />
                   </div>
+                  <div className="mt-1 h-8 text-[10px] text-center text-slate-600 leading-tight flex items-start justify-center sm:hidden">
+                    {entry.label}
+                  </div>
                 </div>
               );
             })}
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="hidden sm:grid grid-cols-6 gap-2">
             {metricsBars.map((entry) => (
               <div
                 key={`${entry.key}-label`}

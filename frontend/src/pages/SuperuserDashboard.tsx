@@ -116,133 +116,129 @@ export default function SuperuserDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-                <h2 className="oscars-font text-base sm:text-lg font-bold">
-                  Superuser Toolbox
-                </h2>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {toolCards.map((tool) => (
-                    <ToolCard key={tool.title} {...tool} />
-                  ))}
-                </div>
-              </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-2 lg:row-start-1">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
+              <h2 className="oscars-font text-base sm:text-lg font-bold">Overview</h2>
             </div>
-
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="oscars-font text-base sm:text-lg font-bold">Users Snapshot</h2>
-                  <p className="text-xs sm:text-sm text-white/70">
-                    10 most recent signups and role mix.
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="border border-gray-200 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                    Total Users
+                  </p>
+                  <p className="text-lg font-bold oscars-dark">
+                    {isLoadingStats ? '...' : (globalStats?.totalUsers ?? '-')}
                   </p>
                 </div>
-                <button
-                  onClick={() => navigate('/users')}
-                  className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
-                >
-                  View All
-                </button>
-              </div>
-              <div className="p-4 sm:p-6">
-                <SuperuserUsersPreview />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="oscars-font text-base sm:text-lg font-bold">Events Snapshot</h2>
-                  <p className="text-xs sm:text-sm text-white/70">
-                    10 most recent events (excluding superusers).
+                <div className="border border-gray-200 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                    Total Pools
+                  </p>
+                  <p className="text-lg font-bold oscars-dark">
+                    {isLoadingStats ? '...' : (globalStats?.totalPools ?? '-')}
                   </p>
                 </div>
-                <button
-                  onClick={() => navigate('/events')}
-                  className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
-                >
-                  View All
-                </button>
-              </div>
-              <div className="p-4 sm:p-6">
-                <SuperuserEventsPreview />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="oscars-font text-base sm:text-lg font-bold">All Pools</h2>
-                  <p className="text-xs sm:text-sm text-white/70">
-                    10 most recently created pools.
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate('/superuser/tools/pools-not-in')}
-                  className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
-                >
-                  View All
-                </button>
-              </div>
-              <div className="p-4 sm:p-6">
-                <SuperuserOtherPoolsList limit={10} scrollable={false} />
               </div>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-                <h2 className="oscars-font text-base sm:text-lg font-bold">Overview</h2>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">
-                      Total Users
-                    </p>
-                    <p className="font-bold text-sm sm:text-base oscars-dark">
-                      {isLoadingStats ? '...' : (globalStats?.totalUsers ?? '-')}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">
-                      Total Pools
-                    </p>
-                    <p className="font-bold text-sm sm:text-base oscars-dark">
-                      {isLoadingStats ? '...' : (globalStats?.totalPools ?? '-')}
-                    </p>
-                  </div>
-                </div>
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-1 lg:row-start-1">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
+              <h2 className="oscars-font text-base sm:text-lg font-bold">
+                Superuser Toolbox
+              </h2>
+            </div>
+            <div className="p-4 sm:p-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                {toolCards.map((tool) => (
+                  <ToolCard key={tool.title} {...tool} />
+                ))}
               </div>
             </div>
+          </div>
 
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
-                <h2 className="oscars-font text-base sm:text-lg font-bold">Metrics</h2>
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-1 lg:row-start-2">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="oscars-font text-base sm:text-lg font-bold">Users Snapshot</h2>
+                <p className="text-xs sm:text-sm text-white/70">
+                  10 most recent signups and role mix.
+                </p>
               </div>
-              <div className="p-4 sm:p-6">
-                <SuperuserMetricsChart />
-              </div>
+              <button
+                onClick={() => navigate('/users')}
+                className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
+              >
+                View All
+              </button>
             </div>
+            <div className="p-4 sm:p-6">
+              <SuperuserUsersPreview />
+            </div>
+          </div>
 
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-                <h2 className="oscars-font text-base sm:text-lg font-bold">Test Email</h2>
-                <button
-                  onClick={() => navigate('/superuser/tools/test-email')}
-                  className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
-                >
-                  Open Full Page
-                </button>
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-1 lg:row-start-3">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="oscars-font text-base sm:text-lg font-bold">Events Snapshot</h2>
+                <p className="text-xs sm:text-sm text-white/70">
+                  10 most recent events (excluding superusers).
+                </p>
               </div>
-              <div className="p-4 sm:p-6">
-                <SuperuserTestEmailForm />
+              <button
+                onClick={() => navigate('/events')}
+                className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
+              >
+                View All
+              </button>
+            </div>
+            <div className="p-4 sm:p-6">
+              <SuperuserEventsPreview />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-1 lg:row-start-4">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="oscars-font text-base sm:text-lg font-bold">All Pools</h2>
+                <p className="text-xs sm:text-sm text-white/70">
+                  10 most recently created pools.
+                </p>
               </div>
+              <button
+                onClick={() => navigate('/superuser/tools/pools-not-in')}
+                className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
+              >
+                View All
+              </button>
+            </div>
+            <div className="p-4 sm:p-6">
+              <SuperuserOtherPoolsList limit={10} scrollable={false} />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-2 lg:row-start-2">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
+              <h2 className="oscars-font text-base sm:text-lg font-bold">Metrics</h2>
+            </div>
+            <div className="p-4 sm:p-6">
+              <SuperuserMetricsChart />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-start-2 lg:row-start-3">
+            <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+              <h2 className="oscars-font text-base sm:text-lg font-bold">Test Email</h2>
+              <button
+                onClick={() => navigate('/superuser/tools/test-email')}
+                className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
+              >
+                Open Full Page
+              </button>
+            </div>
+            <div className="p-4 sm:p-6">
+              <SuperuserTestEmailForm />
             </div>
           </div>
         </div>
