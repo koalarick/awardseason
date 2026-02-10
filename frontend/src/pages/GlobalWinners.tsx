@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import type { ActualWinner, Category } from '../types/pool';
 import { getNomineeImage } from '../utils/nomineeImages';
+import { useSmartBack } from '../hooks/useSmartBack';
 
 // Category grouping configuration (same as PoolEdit)
 const categoryGroups = [
@@ -52,6 +53,7 @@ const categoryGroups = [
 export default function GlobalWinners() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const goBack = useSmartBack({ fallback: '/' });
   const queryClient = useQueryClient();
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [selectedCategoryType, setSelectedCategoryType] = useState<string | null>(
@@ -227,7 +229,7 @@ export default function GlobalWinners() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Back Button - Left side */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900"
             aria-label="Go back"
           >

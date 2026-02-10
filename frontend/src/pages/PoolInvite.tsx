@@ -6,10 +6,12 @@ import api from '../services/api';
 import { UnauthHero, UnauthHowItWorks } from '../components/UnauthMarketing';
 import type { Pool } from '../types/pool';
 import { getApiErrorMessage } from '../utils/apiErrors';
+import { useSmartBack } from '../hooks/useSmartBack';
 
 export default function PoolInvite() {
   const { poolId } = useParams<{ poolId: string }>();
   const navigate = useNavigate();
+  const goBack = useSmartBack({ fallback: '/' });
   const { user, login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
@@ -149,7 +151,7 @@ export default function PoolInvite() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Back Button - Left side */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white hover:text-yellow-300 hover:bg-white/10 active:bg-white/20 rounded-full transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900"
             aria-label="Go back"
           >

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import api from '../../services/api';
 import { getApiErrorMessage } from '../../utils/apiErrors';
@@ -29,7 +29,7 @@ export default function SuperuserTestEmailForm() {
     },
   });
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = email.trim();
     if (!trimmed) return;
