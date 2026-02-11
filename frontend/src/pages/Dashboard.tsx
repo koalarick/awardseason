@@ -797,6 +797,8 @@ export default function Dashboard() {
                                 );
                                 const [primarySource, ...fallbackSources] = posterSources;
                                 const letterboxdUrl = movie.letterboxdUrl ?? null;
+                                const nominationCount = movie.categories.length;
+                                const nominationLabel = nominationCount === 1 ? 'NOM' : 'NOMS';
                                 return (
                                   <a
                                     key={movie.id}
@@ -810,19 +812,42 @@ export default function Dashboard() {
                                         : undefined
                                     }
                                   >
-                                    <MoviePoster
-                                      title={movie.title}
-                                      src={primarySource}
-                                      fallbackSrcs={fallbackSources}
-                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-yellow-400 snap-start hover:border-yellow-300 hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
-                                      imageClassName="w-full h-full object-cover"
-                                      fallbackVariant="compact"
-                                      badge={
-                                        <div className="absolute top-1.5 right-1.5 bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
-                                          ✓
+                                    <div className="relative transition-transform duration-200 hover:-translate-y-1">
+                                      <MoviePoster
+                                        title={movie.title}
+                                        src={primarySource}
+                                        fallbackSrcs={fallbackSources}
+                                        containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-yellow-400 snap-start hover:border-yellow-300 hover:shadow-lg transition-all duration-200"
+                                        imageClassName="w-full h-full object-cover"
+                                        fallbackVariant="compact"
+                                        badge={
+                                          <div className="absolute inset-0 pointer-events-none">
+                                            <div
+                                              className="absolute top-0 right-0 flex h-10 w-10 items-start justify-end bg-yellow-500 text-white text-sm font-bold shadow"
+                                              style={{
+                                                clipPath: 'polygon(0 0, 100% 0, 100% 100%)',
+                                              }}
+                                            >
+                                              <span className="pr-2 pt-1">✓</span>
+                                            </div>
+                                          </div>
+                                        }
+                                      />
+                                      {nominationCount > 0 && (
+                                        <div className="absolute left-1/2 bottom-1.5 -translate-x-1/2 translate-y-1/2 pointer-events-none">
+                                          <div className="relative inline-flex items-center gap-1 px-3 py-1.5 rounded-b-lg rounded-t-sm border border-slate-200/80 bg-white text-[10px] uppercase tracking-[0.2em] text-slate-600 shadow-sm">
+                                            <span className="text-[11px] font-semibold leading-none">
+                                              {nominationCount}
+                                            </span>
+                                            <span className="font-semibold leading-none">
+                                              {nominationLabel}
+                                            </span>
+                                            <span className="absolute -left-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white" />
+                                            <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white" />
+                                          </div>
                                         </div>
-                                      }
-                                    />
+                                      )}
+                                    </div>
                                   </a>
                                 );
                               })}
@@ -896,6 +921,8 @@ export default function Dashboard() {
                                 );
                                 const [primarySource, ...fallbackSources] = posterSources;
                                 const letterboxdUrl = movie.letterboxdUrl ?? null;
+                                const nominationCount = movie.categories.length;
+                                const nominationLabel = nominationCount === 1 ? 'NOM' : 'NOMS';
                                 return (
                                   <a
                                     key={movie.id}
@@ -909,19 +936,30 @@ export default function Dashboard() {
                                         : undefined
                                     }
                                   >
-                                    <MoviePoster
-                                      title={movie.title}
-                                      src={primarySource}
-                                      fallbackSrcs={fallbackSources}
-                                      containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-gray-200 snap-start hover:border-yellow-300 hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
-                                      imageClassName="w-full h-full object-cover"
-                                      fallbackVariant="compact"
-                                      badge={
-                                        <div className="absolute bottom-1.5 left-1.5 bg-white/90 text-gray-700 text-[10px] font-semibold rounded px-1.5 py-0.5 shadow">
-                                          {movie.categories.length} noms
+                                    <div className="relative transition-transform duration-200 hover:-translate-y-1">
+                                      <MoviePoster
+                                        title={movie.title}
+                                        src={primarySource}
+                                        fallbackSrcs={fallbackSources}
+                                        containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-gray-200 snap-start hover:border-yellow-300 hover:shadow-lg transition-all duration-200"
+                                        imageClassName="w-full h-full object-cover"
+                                        fallbackVariant="compact"
+                                      />
+                                      {nominationCount > 0 && (
+                                        <div className="absolute left-1/2 bottom-1.5 -translate-x-1/2 translate-y-1/2 pointer-events-none">
+                                          <div className="relative inline-flex items-center gap-1 px-3 py-1.5 rounded-b-lg rounded-t-sm border border-slate-200/80 bg-white text-[10px] uppercase tracking-[0.2em] text-slate-600 shadow-sm">
+                                            <span className="text-[11px] font-semibold leading-none">
+                                              {nominationCount}
+                                            </span>
+                                            <span className="font-semibold leading-none">
+                                              {nominationLabel}
+                                            </span>
+                                            <span className="absolute -left-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white" />
+                                            <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white" />
+                                          </div>
                                         </div>
-                                      }
-                                    />
+                                      )}
+                                    </div>
                                   </a>
                                 );
                               })}
