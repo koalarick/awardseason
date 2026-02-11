@@ -7,7 +7,11 @@ import api from '../services/api';
 import type { Category } from '../types/pool';
 import BackButton from '../components/BackButton';
 import MoviePoster from '../components/MoviePoster';
-import { getMovieEntries } from '../utils/movieNominees';
+import {
+  getMovieEntries,
+  getNomineeEntries,
+  type NomineeEntry,
+} from '../utils/movieNominees';
 import { useSeenMovies } from '../hooks/useSeenMovies';
 import { useSmartBack } from '../hooks/useSmartBack';
 
@@ -55,6 +59,10 @@ export default function MoviesSeen() {
   });
 
   const movies = useMemo(() => (categories ? getMovieEntries(categories) : []), [categories]);
+  const nomineeEntries = useMemo<NomineeEntry[]>(
+    () => (categories ? getNomineeEntries(categories) : []),
+    [categories],
+  );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -98,7 +106,18 @@ export default function MoviesSeen() {
     return movies.reduce((count, movie) => (seenSet.has(movie.id) ? count + 1 : count), 0);
   }, [movies, seenSet]);
 
+  const seenNomineeCount = useMemo(() => {
+    if (!nomineeEntries.length) return 0;
+    return nomineeEntries.reduce((count, nominee) => {
+      if (!nominee.filmId) return count;
+      return seenSet.has(nominee.filmId) ? count + 1 : count;
+    }, 0);
+  }, [nomineeEntries, seenSet]);
+
   const progress = movies.length ? Math.round((seenCount / movies.length) * 100) : 0;
+  const nomineeProgress = nomineeEntries.length
+    ? Math.round((seenNomineeCount / nomineeEntries.length) * 100)
+    : 0;
   const watchLevel = useMemo(() => {
     if (seenCount === 0) return 'Newb';
     if (seenCount <= 5) return 'Casual Fan';
@@ -333,38 +352,46 @@ export default function MoviesSeen() {
             </div>
           </div>
           <div className="p-4 sm:p-6 space-y-4">
-              <div className="flex flex-col gap-2">
-                <p className="text-sm sm:text-base text-gray-700">
-                  {viewUserId ? (
-                    <>
-                      Seen <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
-                      <span className="font-semibold text-gray-900">{movies.length}</span> nominated
-                      films.
-                    </>
-                  ) : (
-                    <>
-                      You&apos;ve seen{' '}
-                      <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
-                      <span className="font-semibold text-gray-900">{movies.length}</span> nominated
-                      films.
-                    </>
-                  )}
-                </p>
-                {isReadOnly && (
-                  <p className="text-xs text-gray-500">
-                    View-only mode (superuser).
-                  </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm sm:text-base text-gray-700">
+                {viewUserId ? (
+                  <>
+                    <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
+                    <span className="font-semibold text-gray-900">{movies.length}</span> nominated
+                    films
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-gray-900">{seenCount}</span> of{' '}
+                    <span className="font-semibold text-gray-900">{movies.length}</span> nominated
+                    films
+                  </>
                 )}
-                <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-                  <div
-                    className="h-full bg-yellow-500 transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  Tap a poster to mark a movie as seen or to undo it.
+              </p>
+              {isReadOnly && <p className="text-xs text-gray-500">View-only mode (superuser).</p>}
+              <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div
+                  className="h-full bg-yellow-500 transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-sm sm:text-base text-gray-700">
+                  <span className="font-semibold text-gray-900">{seenNomineeCount}</span> of{' '}
+                  <span className="font-semibold text-gray-900">{nomineeEntries.length}</span>{' '}
+                  nominated entries
                 </p>
               </div>
+              <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 transition-all"
+                  style={{ width: `${nomineeProgress}%` }}
+                />
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="flex-1">

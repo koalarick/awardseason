@@ -9,6 +9,15 @@ export type MovieEntry = {
   letterboxdUrl?: string;
 };
 
+export type NomineeEntry = {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName: string;
+  film: string | null;
+  filmId: string | null;
+};
+
 const personCategoryPattern = /(actor|actress|directing)/i;
 
 export function isPersonCategory(categoryId: string): boolean {
@@ -75,4 +84,24 @@ export function getMovieEntries(categories: Category[]): MovieEntry[] {
   });
 
   return Array.from(movieMap.values()).sort((a, b) => a.title.localeCompare(b.title));
+}
+
+export function getNomineeEntries(categories: Category[]): NomineeEntry[] {
+  const entries: NomineeEntry[] = [];
+
+  categories.forEach((category) => {
+    category.nominees.forEach((nominee) => {
+      const film = getMovieTitleFromNominee(nominee, category.id);
+      entries.push({
+        id: `${category.id}:${nominee.id}`,
+        name: nominee.name,
+        categoryId: category.id,
+        categoryName: category.name,
+        film,
+        filmId: film ? filmNameToSlug(film) : null,
+      });
+    });
+  });
+
+  return entries;
 }

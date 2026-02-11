@@ -5,7 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import type { Category, Pool, PoolSubmission } from '../types/pool';
 import MoviePoster from '../components/MoviePoster';
-import { getMovieEntries, type MovieEntry } from '../utils/movieNominees';
+import {
+  getMovieEntries,
+  getNomineeEntries,
+  type MovieEntry,
+  type NomineeEntry,
+} from '../utils/movieNominees';
 import { useSeenMovies } from '../hooks/useSeenMovies';
 import { getApiErrorMessage } from '../utils/apiErrors';
 
@@ -436,6 +441,11 @@ export default function Dashboard() {
     [nomineeCategories],
   );
 
+  const nomineeEntries = useMemo<NomineeEntry[]>(
+    () => (nomineeCategories ? getNomineeEntries(nomineeCategories) : []),
+    [nomineeCategories],
+  );
+
   const { seenSet } = useSeenMovies({ userId: user?.id, year: currentYear });
 
   const seenMovieCount = useMemo(() => {
@@ -443,8 +453,20 @@ export default function Dashboard() {
     return movieEntries.reduce((count, movie) => (seenSet.has(movie.id) ? count + 1 : count), 0);
   }, [movieEntries, seenSet]);
 
+  const seenNomineeCount = useMemo(() => {
+    if (!nomineeEntries.length) return 0;
+    return nomineeEntries.reduce((count, nominee) => {
+      if (!nominee.filmId) return count;
+      return seenSet.has(nominee.filmId) ? count + 1 : count;
+    }, 0);
+  }, [nomineeEntries, seenSet]);
+
   const totalMovies = movieEntries.length;
   const movieProgress = totalMovies ? Math.round((seenMovieCount / totalMovies) * 100) : 0;
+  const totalNominees = nomineeEntries.length;
+  const nomineeProgress = totalNominees
+    ? Math.round((seenNomineeCount / totalNominees) * 100)
+    : 0;
   const watchLevel = useMemo(() => {
     if (seenMovieCount === 0) return 'Newb';
     if (seenMovieCount <= 5) return 'Casual Fan';
@@ -456,31 +478,31 @@ export default function Dashboard() {
   const watchLevelStyle = useMemo(() => {
     if (seenMovieCount === 0) {
       return {
-        badge: 'bg-slate-100 border-slate-200',
-        text: 'text-slate-700',
+        badge: 'from-slate-700/70 to-slate-900/80 border-white/20',
+        text: 'text-white',
       };
     }
     if (seenMovieCount <= 5) {
       return {
-        badge: 'bg-amber-50 border-amber-200',
-        text: 'text-amber-800',
+        badge: 'from-amber-500/30 to-amber-800/60 border-amber-200/40',
+        text: 'text-amber-100',
       };
     }
     if (seenMovieCount <= 10) {
       return {
-        badge: 'bg-emerald-50 border-emerald-200',
-        text: 'text-emerald-800',
+        badge: 'from-emerald-500/30 to-emerald-800/60 border-emerald-200/40',
+        text: 'text-emerald-100',
       };
     }
     if (seenMovieCount <= 30) {
       return {
-        badge: 'bg-blue-50 border-blue-200',
-        text: 'text-blue-800',
+        badge: 'from-blue-500/30 to-blue-800/60 border-blue-200/40',
+        text: 'text-blue-100',
       };
     }
     return {
-      badge: 'bg-yellow-50 border-yellow-200',
-      text: 'text-yellow-900',
+      badge: 'from-yellow-500/40 to-yellow-900/70 border-yellow-200/50',
+      text: 'text-yellow-100',
     };
   }, [seenMovieCount]);
 
@@ -684,12 +706,21 @@ export default function Dashboard() {
             <div className="mt-6">
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-                  <h2 className="oscars-font text-base sm:text-lg font-bold">Movie Checklist</h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="oscars-font text-base sm:text-lg font-bold">Movie Checklist</h2>
+                    <div
+                      className={`inline-flex items-center rounded-full bg-gradient-to-r px-3 py-1 shadow-sm border ${watchLevelStyle.badge}`}
+                    >
+                      <span className={`oscars-font text-xs font-bold ${watchLevelStyle.text}`}>
+                        {watchLevel}
+                      </span>
+                    </div>
+                  </div>
                   <button
                     onClick={() => navigate('/movies/seen')}
                     className="px-3 py-2 text-xs sm:text-sm font-semibold bg-white/10 border border-white/20 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
                   >
-                    Update List
+                    Update
                   </button>
                 </div>
                 <div className="p-4 sm:p-6 space-y-4">
@@ -706,26 +737,35 @@ export default function Dashboard() {
                   ) : (
                     <>
                       <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <p className="text-sm sm:text-base text-gray-700">
-                            <span className="font-semibold text-gray-900">{seenMovieCount}</span> /{' '}
+                            <span className="font-semibold text-gray-900">{seenMovieCount}</span>{' '}
+                            of{' '}
                             <span className="font-semibold text-gray-900">{totalMovies}</span>{' '}
                             nominated movies
                           </p>
-                          <div
-                            className={`inline-flex items-center rounded-full px-3 py-1 shadow-sm border ${watchLevelStyle.badge}`}
-                          >
-                            <span
-                              className={`oscars-font text-xs font-bold ${watchLevelStyle.text}`}
-                            >
-                              {watchLevel}
-                            </span>
-                          </div>
                         </div>
                         <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
                           <div
                             className="h-full bg-yellow-500 transition-all"
                             style={{ width: `${movieProgress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <p className="text-sm sm:text-base text-gray-700">
+                            <span className="font-semibold text-gray-900">{seenNomineeCount}</span>{' '}
+                            of{' '}
+                            <span className="font-semibold text-gray-900">{totalNominees}</span>{' '}
+                            nominated entries
+                          </p>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 transition-all"
+                            style={{ width: `${nomineeProgress}%` }}
                           />
                         </div>
                       </div>
