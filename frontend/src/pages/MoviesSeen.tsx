@@ -22,6 +22,7 @@ export default function MoviesSeen() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterOption>('all');
+  const [openNominationMovieId, setOpenNominationMovieId] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const summaryRef = useRef<HTMLDivElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -225,6 +226,24 @@ export default function MoviesSeen() {
     });
   }, [movies, filter, searchQuery, seenSet]);
 
+  const openNominationMovie = useMemo(
+    () => movies.find((movie) => movie.id === openNominationMovieId) ?? null,
+    [movies, openNominationMovieId],
+  );
+
+  useEffect(() => {
+    if (!openNominationMovieId) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenNominationMovieId(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openNominationMovieId]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header ref={headerRef} className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
@@ -398,84 +417,233 @@ export default function MoviesSeen() {
             <p className="text-gray-600">No films match your filters right now.</p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             {filteredMovies.map((movie) => {
               const isSeen = seenSet.has(movie.id);
-              const visibleCategories = movie.categories.slice(0, 3);
-              const remainingCount = movie.categories.length - visibleCategories.length;
+              const nominationCount = movie.categories.length;
+              const nominationLabel = nominationCount === 1 ? 'NOM' : 'NOMS';
               return (
-                <button
+                <div
                   key={movie.id}
-                  type="button"
+                  role="button"
+                  tabIndex={isReadOnly ? -1 : 0}
                   aria-pressed={isSeen}
+                  aria-disabled={isReadOnly}
                   onClick={() => {
                     if (!isReadOnly) {
                       toggleSeen(movie.id);
                     }
                   }}
-                  aria-disabled={isReadOnly}
-                  className={`border-2 rounded-lg p-4 md:p-3 transition-all flex md:flex-col gap-4 md:gap-0 text-left ${
-                    isReadOnly
-                      ? 'border-gray-200 bg-white cursor-default'
-                      : 'cursor-pointer active:scale-[0.99]'
-                  } ${
+                  onKeyDown={(event) => {
+                    if (isReadOnly) return;
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      toggleSeen(movie.id);
+                    }
+                  }}
+                  className={`group relative h-full rounded-xl border p-3 md:p-4 text-left transition-all flex items-center gap-3 md:flex-col md:items-stretch md:gap-3 ${
                     isSeen
-                      ? 'border-yellow-400 bg-yellow-50'
-                      : 'border-gray-200 hover:border-yellow-300 hover:bg-yellow-50/30 bg-white'
+                      ? 'border-yellow-400 bg-yellow-50/90 ring-2 ring-yellow-300/70 shadow-lg'
+                      : 'border-slate-200/70 bg-white'
+                  } ${
+                    isReadOnly
+                      ? 'cursor-default'
+                      : 'cursor-pointer hover:border-yellow-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 active:translate-y-0 active:scale-[0.99]'
                   }`}
                 >
+                  {isSeen && (
+                    <span className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-yellow-400" />
+                  )}
+                  {isSeen && (
+                    <div
+                      className="pointer-events-none absolute top-0 right-0 flex h-11 w-11 items-start justify-end bg-yellow-500 text-white text-[14px] font-bold shadow md:hidden"
+                      style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%)' }}
+                    >
+                      <span className="pr-2.5 pt-1.5">✓</span>
+                    </div>
+                  )}
                   {(() => {
                     const posterSources = movie.posterIds.map(
                       (posterId) => `/images/${year}_movie_${posterId}.jpg`,
                     );
                     const [primarySource, ...fallbackSources] = posterSources;
                     return (
+                      <div className="relative w-20 sm:w-24 md:w-full flex-shrink-0 md:mb-2">
+                        <MoviePoster
+                          title={movie.title}
+                          src={primarySource}
+                          fallbackSrcs={fallbackSources}
+                          containerClassName="nominee-image-container w-full aspect-[2/3] rounded-lg bg-slate-100 overflow-hidden shadow-sm"
+                          imageClassName="w-full h-full object-contain"
+                          fallbackVariant="full"
+                          badge={
+                            isSeen ? (
+                              <div className="absolute inset-0 pointer-events-none">
+                                <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/20 via-transparent to-transparent" />
+                                <div
+                                  className="absolute top-0 right-0 hidden md:flex h-10 w-10 items-start justify-end bg-yellow-500 text-white text-sm font-bold shadow"
+                                  style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%)' }}
+                                >
+                                  <span className="pr-2 pt-1">✓</span>
+                                </div>
+                              </div>
+                            ) : undefined
+                          }
+                        />
+                        {nominationCount > 0 && (
+                          <div className="absolute left-1/2 bottom-2 -translate-x-1/2 translate-y-1/2">
+                            <button
+                              type="button"
+                              className="relative inline-flex items-center gap-1 px-3 py-1.5 md:px-3.5 md:py-1.5 rounded-b-lg rounded-t-sm border border-slate-200/80 bg-white text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98]"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setOpenNominationMovieId((current) =>
+                                  current === movie.id ? null : movie.id,
+                                );
+                              }}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setOpenNominationMovieId((current) =>
+                                    current === movie.id ? null : movie.id,
+                                  );
+                                }
+                              }}
+                              aria-label={`View nominations for ${movie.title}`}
+                              aria-expanded={openNominationMovieId === movie.id}
+                            >
+                              <span className="text-[11px] md:text-[12px] font-semibold leading-none">
+                                {nominationCount}
+                              </span>
+                              <span className="font-semibold leading-none">{nominationLabel}</span>
+                              <span className="absolute -left-1 top-1/2 h-2.5 w-2.5 md:h-2.5 md:w-2.5 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white" />
+                              <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 md:h-2.5 md:w-2.5 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  <div className="flex-1 min-w-0 md:flex md:flex-col md:h-full">
+                    <div className="flex items-start gap-2">
+                      <h3 className="flex-1 font-bold text-sm sm:text-base md:text-sm oscars-dark leading-snug line-clamp-1">
+                        {movie.title}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {openNominationMovie && (
+          <>
+            <button
+              type="button"
+              aria-label="Close nominations"
+              className="hidden md:block fixed inset-0 z-40 cursor-default bg-slate-900/20"
+              onClick={() => setOpenNominationMovieId(null)}
+            />
+            <button
+              type="button"
+              aria-label="Close nominations"
+              className="md:hidden fixed inset-0 z-40 bg-slate-900/40"
+              onClick={() => setOpenNominationMovieId(null)}
+            />
+            <aside className="hidden md:flex fixed top-0 right-0 z-50 h-full w-[360px] lg:w-[420px] flex-col bg-white shadow-2xl border-l border-slate-200">
+              <div className="border-b border-slate-200 px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                      Nominations
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-slate-900 line-clamp-2">
+                      {openNominationMovie.title}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+                      {openNominationMovie.categories.length} nominations
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenNominationMovieId(null)}
+                    className="text-xs uppercase tracking-[0.2em] text-slate-500 hover:text-slate-700"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div className="flex items-start gap-4">
+                  {(() => {
+                    const posterSources = openNominationMovie.posterIds.map(
+                      (posterId) => `/images/${year}_movie_${posterId}.jpg`,
+                    );
+                    const [primarySource, ...fallbackSources] = posterSources;
+                    return (
                       <MoviePoster
-                        title={movie.title}
+                        title={openNominationMovie.title}
                         src={primarySource}
                         fallbackSrcs={fallbackSources}
-                        containerClassName="nominee-image-container relative w-24 h-24 md:w-full md:aspect-square flex-shrink-0 rounded bg-gray-100 md:mb-2 border border-gray-300/50 cursor-pointer active:scale-95 transition-transform"
+                        containerClassName="w-24 aspect-[2/3] rounded-lg bg-slate-100 border border-slate-200/70 overflow-hidden"
                         imageClassName="w-full h-full object-contain"
-                        fallbackVariant="full"
-                        badge={
-                          isSeen ? (
-                            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow">
-                              ✓
-                            </div>
-                          ) : undefined
-                        }
+                        fallbackVariant="compact"
                       />
                     );
                   })()}
                   <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-bold text-sm sm:text-base md:text-xs oscars-dark leading-tight md:whitespace-normal md:break-words">
-                        {movie.title}
-                      </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {visibleCategories.map((category) => (
-                        <span
-                          key={category}
-                          className="px-2 py-0.5 text-[10px] uppercase tracking-wide bg-gray-100 text-gray-600 rounded-full"
-                        >
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                      Full list
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      {openNominationMovie.categories.map((category) => (
+                        <li key={category} className="text-sm text-slate-700">
                           {category}
-                        </span>
+                        </li>
                       ))}
-                      {remainingCount > 0 && (
-                        <span
-                          className="px-2 py-0.5 text-[10px] uppercase tracking-wide bg-gray-200 text-gray-600 rounded-full transition-colors hover:bg-gray-300 hover:text-gray-700"
-                          title={movie.categories.slice(3).join(', ')}
-                        >
-                          +{remainingCount} more
-                        </span>
-                      )}
-                    </div>
+                    </ul>
                   </div>
+                </div>
+              </div>
+            </aside>
+            <div className="md:hidden fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                    Nominations
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900 line-clamp-1">
+                    {openNominationMovie.title}
+                  </p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                    {openNominationMovie.categories.length} nominations
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpenNominationMovieId(null)}
+                  className="text-xs uppercase tracking-[0.2em] text-slate-500 hover:text-slate-700"
+                >
+                  Close
                 </button>
-              );
-            })}
-          </div>
+              </div>
+              <div className="max-h-[45vh] overflow-y-auto px-4 py-4">
+                <ul className="space-y-2">
+                  {openNominationMovie.categories.map((category) => (
+                    <li
+                      key={category}
+                      className="text-[11px] uppercase tracking-[0.18em] text-slate-600"
+                    >
+                      {category}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </>
         )}
       </main>
     </div>
