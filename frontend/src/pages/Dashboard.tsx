@@ -707,7 +707,7 @@ export default function Dashboard() {
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div className="bg-slate-800 text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <h2 className="oscars-font text-base sm:text-lg font-bold">Movie Checklist</h2>
+                    <h2 className="oscars-font text-base sm:text-lg font-bold">My Checklist</h2>
                     <div
                       className={`inline-flex items-center rounded-full bg-gradient-to-r px-3 py-1 shadow-sm border ${watchLevelStyle.badge}`}
                     >
