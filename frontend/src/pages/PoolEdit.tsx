@@ -258,10 +258,7 @@ function getTextColorForMode(hex: string, isDarkMode: boolean): string {
   }
 }
 
-const isDefaultBallotName = (
-  submissionName: string | null | undefined,
-  fallbackName: string,
-) => {
+const isDefaultBallotName = (submissionName: string | null | undefined, fallbackName: string) => {
   const trimmed = (submissionName ?? '').trim();
   if (!trimmed) return true;
   if (trimmed === fallbackName.trim()) return true;
@@ -629,7 +626,7 @@ export default function PoolEdit() {
   };
 
   // Fetch odds history for the selected nominee (from Jan 25 onwards)
-  const { data: oddsHistory } = useQuery<OddsHistoryEntry[] | null>({
+  const { data: oddsHistory, isLoading: oddsHistoryLoading } = useQuery<OddsHistoryEntry[] | null>({
     queryKey: [
       'oddsHistory',
       selectedNomineeInfo?.category.id,
@@ -867,8 +864,9 @@ export default function PoolEdit() {
         const categoryOddsForThis = getCategoryOdds(categoryId);
         // Get current odds for the currently selected nominee (the one being changed from)
         const currentOddsForOldNominee =
-          categoryOddsForThis.find((oddsEntry) => oddsEntry.nomineeId === existingPrediction.nomineeId)
-            ?.odds || null;
+          categoryOddsForThis.find(
+            (oddsEntry) => oddsEntry.nomineeId === existingPrediction.nomineeId,
+          )?.odds || null;
 
         // Only show warning if odds have changed for the current selection
         if (
@@ -994,7 +992,11 @@ export default function PoolEdit() {
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
             aria-label="Go to home"
           >
-            <img src="/images/awardseason_logo_assets/awardseason_topnav_256.png" alt="Award Season" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
+            <img
+              src="/images/awardseason_logo_assets/awardseason_topnav_256.png"
+              alt="Award Season"
+              className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+            />
             <span className="oscars-font text-[0.9rem] sm:text-xl font-medium sm:font-bold text-white/80 sm:text-white whitespace-nowrap">
               AWARD SEASON
             </span>
@@ -1381,9 +1383,9 @@ export default function PoolEdit() {
 
                         // Check if this prediction is correct (matches actual winner)
                         if (actualWinners) {
-                        const winner = actualWinners.find(
-                          (result) => result.categoryId === prediction.categoryId,
-                        );
+                          const winner = actualWinners.find(
+                            (result) => result.categoryId === prediction.categoryId,
+                          );
                           if (winner) {
                             if (winner.nomineeId === prediction.nomineeId) {
                               totalEarnedPoints += scoring.totalPoints;
@@ -2177,7 +2179,9 @@ export default function PoolEdit() {
                                         <button
                                           type="button"
                                           className="nominee-modal-trigger md:hidden absolute bottom-2 right-2 z-0 flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-500 border border-slate-200/80 backdrop-blur-sm transition-all hover:bg-white/85 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-                                          onClick={(e) => handleNomineeModalClick(e, nominee, category)}
+                                          onClick={(e) =>
+                                            handleNomineeModalClick(e, nominee, category)
+                                          }
                                           aria-label={`View ${nominee.name} details`}
                                         >
                                           <svg
@@ -2212,8 +2216,8 @@ export default function PoolEdit() {
                                             </h4>
                                           )}
                                           {!oddsLoading && (
-                                          <div className="text-sm text-gray-600 mt-0.5">
-                                            {isSelected ? (
+                                            <div className="text-sm text-gray-600 mt-0.5">
+                                              {isSelected ? (
                                                 <>
                                                   {prediction?.originalOddsPercentage !== null &&
                                                   prediction?.originalOddsPercentage !==
@@ -2871,7 +2875,51 @@ export default function PoolEdit() {
                   </div>
 
                   {/* Odds Trend - Mobile first, Desktop in right column */}
-                  {oddsHistory && oddsHistory.length > 0 ? (
+                  {oddsHistoryLoading ? (
+                    <div className="p-6">
+                      <div
+                        className="flex min-h-[120px] items-center justify-center gap-3 rounded-lg border border-dashed border-gray-200 bg-white/70 text-base text-gray-500 shadow-sm"
+                        style={
+                          imageColors
+                            ? (() => {
+                                const isDarkMode = imageColors.averageBrightness < 140;
+                                if (isDarkMode) {
+                                  return {
+                                    background: `linear-gradient(to bottom, ${hexToRgba(imageColors.primary, 0.12)}, ${hexToRgba(imageColors.secondary, 0.1)})`,
+                                    borderColor: hexToRgba(imageColors.primary, 0.2),
+                                    color: getTextColorForMode(imageColors.primary, true),
+                                  };
+                                }
+                                return {
+                                  background:
+                                    'linear-gradient(to bottom, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.3))',
+                                  borderColor: 'rgba(255, 255, 255, 0.4)',
+                                  color: '#64748b',
+                                };
+                              })()
+                            : undefined
+                        }
+                      >
+                        <span
+                          className={`h-4 w-4 animate-spin rounded-full border-2 ${
+                            imageColors ? '' : 'border-gray-300 border-t-gray-600'
+                          }`}
+                          style={
+                            imageColors
+                              ? {
+                                  borderColor: hexToRgba(imageColors.primary, 0.35),
+                                  borderTopColor: getTextColorForMode(
+                                    imageColors.primary,
+                                    imageColors.averageBrightness < 140,
+                                  ),
+                                }
+                              : undefined
+                          }
+                        />
+                        <span>Loading odds history...</span>
+                      </div>
+                    </div>
+                  ) : oddsHistory && oddsHistory.length > 0 ? (
                     <div className="flex flex-col flex-1 min-h-0 -mx-4 md:-mx-6">
                       <div className="p-2 sm:p-3 flex flex-col flex-1 min-h-0">
                         {(() => {
@@ -3213,7 +3261,54 @@ export default function PoolEdit() {
                   {/* Right Column - Awards Info and Actions */}
                   <div className="flex-1 min-w-0 lg:w-3/5 flex flex-col min-h-0">
                     {/* Odds Trend - Desktop only */}
-                    {oddsHistory && oddsHistory.length > 0 ? (
+                    {oddsHistoryLoading ? (
+                      <div className="hidden lg:flex flex-col mb-3 lg:mb-4 flex-1 min-h-0 overflow-hidden">
+                        <div className="p-3 lg:p-5 flex flex-col lg:h-auto lg:max-h-[300px] min-h-0">
+                          <div
+                            className="relative rounded-lg p-5 flex items-center justify-center gap-3 text-sm text-gray-500 border border-dashed border-gray-200 bg-white/70"
+                            style={{
+                              height: '200px',
+                              ...(imageColors
+                                ? (() => {
+                                    const isDarkMode = imageColors.averageBrightness < 140;
+                                    if (isDarkMode) {
+                                      return {
+                                        background: `linear-gradient(to bottom, ${hexToRgba(imageColors.primary, 0.12)}, ${hexToRgba(imageColors.secondary, 0.1)})`,
+                                        borderColor: hexToRgba(imageColors.primary, 0.2),
+                                        color: getTextColorForMode(imageColors.primary, true),
+                                      };
+                                    }
+                                    return {
+                                      background:
+                                        'linear-gradient(to bottom, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.3))',
+                                      borderColor: 'rgba(255, 255, 255, 0.4)',
+                                      color: '#64748b',
+                                    };
+                                  })()
+                                : {}),
+                            }}
+                          >
+                            <span
+                              className={`h-4 w-4 animate-spin rounded-full border-2 ${
+                                imageColors ? '' : 'border-gray-300 border-t-gray-600'
+                              }`}
+                              style={
+                                imageColors
+                                  ? {
+                                      borderColor: hexToRgba(imageColors.primary, 0.35),
+                                      borderTopColor: getTextColorForMode(
+                                        imageColors.primary,
+                                        imageColors.averageBrightness < 140,
+                                      ),
+                                    }
+                                  : undefined
+                              }
+                            />
+                            <span>Loading odds history...</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : oddsHistory && oddsHistory.length > 0 ? (
                       <div className="hidden lg:flex flex-col mb-3 lg:mb-4 flex-1 min-h-0 overflow-hidden">
                         <div className="p-3 lg:p-5 flex flex-col lg:h-auto lg:max-h-[300px] min-h-0">
                           {(() => {
@@ -3908,7 +4003,8 @@ function SubmissionNameEditor({
   const displayName = currentName || defaultName;
   const trimmedCurrentName = (currentName ?? '').trim();
   const trimmedDefaultName = defaultName.trim();
-  const isDefaultName = trimmedCurrentName.length === 0 || trimmedCurrentName === trimmedDefaultName;
+  const isDefaultName =
+    trimmedCurrentName.length === 0 || trimmedCurrentName === trimmedDefaultName;
   const startEditing = () => {
     setName(displayName);
     setIsEditing(true);
