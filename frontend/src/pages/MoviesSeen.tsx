@@ -22,6 +22,7 @@ export default function MoviesSeen() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterOption>('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [openNominationMovieId, setOpenNominationMovieId] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const summaryRef = useRef<HTMLDivElement | null>(null);
@@ -54,6 +55,36 @@ export default function MoviesSeen() {
   });
 
   const movies = useMemo(() => (categories ? getMovieEntries(categories) : []), [categories]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    movies.forEach((movie) => {
+      movie.categories.forEach((category) => {
+        counts[category] = (counts[category] ?? 0) + 1;
+      });
+    });
+    return counts;
+  }, [movies]);
+
+  const categoryOptions = useMemo(() => {
+    if (!categories) return [];
+    const seenNames = new Set<string>();
+    const ordered: string[] = [];
+    categories.forEach((category) => {
+      if (!seenNames.has(category.name) && categoryCounts[category.name]) {
+        seenNames.add(category.name);
+        ordered.push(category.name);
+      }
+    });
+    return ordered;
+  }, [categories, categoryCounts]);
+
+  useEffect(() => {
+    if (categoryFilter === 'all') return;
+    if (!categoryOptions.includes(categoryFilter)) {
+      setCategoryFilter('all');
+    }
+  }, [categoryFilter, categoryOptions]);
 
   const { seenSet, toggleSeen, isReadOnly } = useSeenMovies({
     userId: user?.id,
@@ -216,15 +247,27 @@ export default function MoviesSeen() {
     };
   }, [headerHeight]);
 
-  const filteredMovies = useMemo(() => {
+  const baseFilteredMovies = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
     return movies.filter((movie) => {
-      if (filter === 'seen' && !seenSet.has(movie.id)) return false;
-      if (filter === 'unseen' && seenSet.has(movie.id)) return false;
+      if (categoryFilter !== 'all' && !movie.categories.includes(categoryFilter)) return false;
       if (term && !movie.title.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [movies, filter, searchQuery, seenSet]);
+  }, [movies, categoryFilter, searchQuery]);
+
+  const filteredSeenCount = useMemo(
+    () => baseFilteredMovies.reduce((count, movie) => (seenSet.has(movie.id) ? count + 1 : count), 0),
+    [baseFilteredMovies, seenSet],
+  );
+
+  const filteredMovies = useMemo(() => {
+    return baseFilteredMovies.filter((movie) => {
+      if (filter === 'seen' && !seenSet.has(movie.id)) return false;
+      if (filter === 'unseen' && seenSet.has(movie.id)) return false;
+      return true;
+    });
+  }, [baseFilteredMovies, filter, seenSet]);
 
   const openNominationMovie = useMemo(
     () => movies.find((movie) => movie.id === openNominationMovieId) ?? null,
@@ -333,16 +376,35 @@ export default function MoviesSeen() {
                   className="w-full px-3 py-2.5 min-h-[44px] text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
+              <div className="sm:w-64">
+                <label htmlFor="category-filter" className="sr-only">
+                  Filter by category
+                </label>
+                <select
+                  id="category-filter"
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                  className="w-full px-3 py-2.5 min-h-[44px] text-base border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  disabled={categoryOptions.length === 0}
+                >
+                  <option value="all">All categories</option>
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex gap-2 flex-wrap">
                 {filterOptions.map((option) => {
                   const isActive = filter === option;
                   const label = option === 'all' ? 'All' : option === 'seen' ? 'Seen' : 'Unseen';
                   const count =
                     option === 'all'
-                      ? movies.length
+                      ? baseFilteredMovies.length
                       : option === 'seen'
-                        ? seenCount
-                        : Math.max(movies.length - seenCount, 0);
+                        ? filteredSeenCount
+                        : Math.max(baseFilteredMovies.length - filteredSeenCount, 0);
                   return (
                     <button
                       key={option}
