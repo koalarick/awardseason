@@ -2077,22 +2077,25 @@ export default function PoolEdit() {
                                             handleNomineeSelect(category.id, nominee.id);
                                           }
                                         }}
-                                        className={`border-2 rounded-lg p-4 md:p-3 transition-all flex md:flex-col gap-4 md:gap-0 ${
+                                        className={`relative border-2 rounded-lg p-3 transition-all flex md:flex-col gap-3 md:gap-0 ${
                                           hasWinner && isCorrect
                                             ? 'border-green-500 bg-green-50 cursor-not-allowed'
                                             : hasWinner && isIncorrect
                                               ? 'border-red-400 bg-red-50 cursor-not-allowed opacity-75'
                                               : isSelected
                                                 ? canSelect
-                                                  ? 'border-yellow-400 bg-yellow-50 cursor-pointer'
-                                                  : 'border-yellow-400 bg-yellow-50 cursor-not-allowed'
+                                                  ? 'border-[#D6A23C] bg-gradient-to-b from-[#FFF0D6] via-[#FFF7E5] to-[#FFFCF6] ring-2 ring-[#F0D19B] shadow-[0_12px_30px_rgba(176,124,35,0.25)] cursor-pointer'
+                                                  : 'border-[#D6A23C] bg-gradient-to-b from-[#FFF0D6] via-[#FFF7E5] to-[#FFFCF6] ring-2 ring-[#F0D19B] shadow-[0_12px_30px_rgba(176,124,35,0.25)] cursor-not-allowed'
                                                 : canSelect
-                                                  ? 'border-gray-200 hover:border-yellow-300 cursor-pointer bg-white'
+                                                  ? 'border-gray-200 hover:border-[#D6A23C] cursor-pointer bg-white'
                                                   : 'border-gray-200 cursor-not-allowed bg-gray-50 opacity-60'
                                         }`}
                                       >
+                                        {isSelected && (
+                                          <span className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-[#D6A23C]" />
+                                        )}
                                         <div
-                                          className="nominee-image-container relative w-24 h-24 md:w-full md:aspect-square flex-shrink-0 rounded overflow-hidden flex items-center justify-center bg-gray-100 md:mb-2 border border-gray-300/50 active:scale-95 transition-transform"
+                                          className="nominee-image-container relative w-24 aspect-[2/3] md:w-full flex-shrink-0 rounded overflow-hidden flex items-center justify-center bg-gray-100 p-1 md:mb-1 border border-gray-300/50 active:scale-95 transition-transform"
                                           onClick={(e) => {
                                             handleNomineeImageClick(e, nominee, category);
                                           }}
@@ -2101,7 +2104,9 @@ export default function PoolEdit() {
                                             <img
                                               src={getNomineeImage(nominee, category.id, pool.year)}
                                               alt={nominee.name}
-                                              className="w-full h-full object-contain"
+                                              className={`w-full h-full object-contain ${
+                                                isSelected ? '' : 'grayscale'
+                                              }`}
                                               onLoad={(e) => {
                                                 const imgSrc = e.currentTarget.src;
                                                 const colorKey = `${category.id}-${nominee.id}`;
@@ -2144,26 +2149,10 @@ export default function PoolEdit() {
                                               );
                                             })()}
                                           </div>
-                                          {/* Info icon badge - mobile only, subtle */}
-                                          <div className="md:hidden absolute top-1 right-1 bg-white/50 backdrop-blur-sm rounded-full p-0.5">
-                                            <svg
-                                              className="w-2.5 h-2.5 text-gray-500"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                              />
-                                            </svg>
-                                          </div>
                                           {/* Info trigger - desktop only */}
                                           <button
                                             type="button"
-                                            className="nominee-modal-trigger hidden md:flex absolute top-1 right-1 z-10 h-7 w-7 items-center justify-center rounded-full bg-white/85 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:text-gray-900 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                                            className="nominee-modal-trigger hidden md:flex absolute top-1.5 left-1.5 z-20 h-7 w-7 items-center justify-center rounded-full bg-white/60 text-slate-500 shadow-sm backdrop-blur-sm border border-slate-200/60 transition-all hover:bg-white/80 hover:text-slate-700 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-white"
                                             onClick={(e) =>
                                               handleNomineeModalClick(e, nominee, category)
                                             }
@@ -2178,12 +2167,33 @@ export default function PoolEdit() {
                                               <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
-                                                strokeWidth={2}
+                                                strokeWidth={1.75}
                                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                               />
                                             </svg>
                                           </button>
                                         </div>
+                                        {/* Info trigger - mobile only */}
+                                        <button
+                                          type="button"
+                                          className="nominee-modal-trigger md:hidden absolute bottom-2 right-2 z-0 flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-500 border border-slate-200/80 backdrop-blur-sm transition-all hover:bg-white/85 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                                          onClick={(e) => handleNomineeModalClick(e, nominee, category)}
+                                          aria-label={`View ${nominee.name} details`}
+                                        >
+                                          <svg
+                                            className="w-5 h-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
+                                          </svg>
+                                        </button>
                                         {/* Mobile content */}
                                         <div className="flex-1 min-w-0 md:hidden">
                                           {nominee.film && nominee.name !== nominee.film && (
@@ -2202,8 +2212,8 @@ export default function PoolEdit() {
                                             </h4>
                                           )}
                                           {!oddsLoading && (
-                                            <div className="text-sm text-gray-600 mt-1">
-                                              {isSelected ? (
+                                          <div className="text-sm text-gray-600 mt-0.5">
+                                            {isSelected ? (
                                                 <>
                                                   {prediction?.originalOddsPercentage !== null &&
                                                   prediction?.originalOddsPercentage !==
@@ -2230,7 +2240,7 @@ export default function PoolEdit() {
                                                               %)
                                                             </span>
                                                             <span
-                                                              className={`${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-600' : 'text-green-600'}`}
+                                                              className={`${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-500' : 'text-green-500'}`}
                                                             >
                                                               {currentOdds <
                                                               prediction.originalOddsPercentage
@@ -2284,7 +2294,7 @@ export default function PoolEdit() {
                                             </div>
                                           )}
                                           {multiplierEnabled && (
-                                            <div className="mt-3 pt-3 border-t border-gray-200">
+                                            <div className="mt-2 pt-2 border-t border-gray-200">
                                               <div className="flex items-center justify-between">
                                                 <span className="text-xs text-gray-500">
                                                   Points
@@ -2359,11 +2369,13 @@ export default function PoolEdit() {
                                                       currentOdds !==
                                                         prediction.originalOddsPercentage ? (
                                                         <div className="text-gray-700">
-                                                          <span className="inline-block w-full">
-                                                            Chance to win:{' '}
-                                                            <span className="font-semibold">
-                                                              {currentOdds.toFixed(0)}%
-                                                            </span>{' '}
+                                                          <div className="flex flex-wrap items-baseline gap-1">
+                                                            <span>
+                                                              Win:{' '}
+                                                              <span className="font-semibold">
+                                                                {currentOdds.toFixed(0)}%
+                                                              </span>
+                                                            </span>
                                                             <span className="text-gray-500">
                                                               (was{' '}
                                                               {prediction.originalOddsPercentage.toFixed(
@@ -2371,12 +2383,20 @@ export default function PoolEdit() {
                                                               )}
                                                               %)
                                                             </span>
-                                                          </span>
+                                                            <span
+                                                              className={`${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-600' : 'text-green-600'}`}
+                                                            >
+                                                              {currentOdds <
+                                                              prediction.originalOddsPercentage
+                                                                ? 'Odds updated'
+                                                                : 'Odds locked'}
+                                                            </span>
+                                                          </div>
                                                         </div>
                                                       ) : (
                                                         <div className="text-gray-700">
                                                           <span className="inline-block w-full">
-                                                            Chance to win:{' '}
+                                                            Win:{' '}
                                                             <span className="font-semibold text-yellow-700">
                                                               {prediction.originalOddsPercentage.toFixed(
                                                                 0,
@@ -2393,7 +2413,7 @@ export default function PoolEdit() {
                                                     </>
                                                   ) : currentOdds !== null && currentOdds > 0 ? (
                                                     <span>
-                                                      Scoring at:{' '}
+                                                      Scoring:{' '}
                                                       <span className="font-semibold text-yellow-700">
                                                         {currentOdds.toFixed(0)}%
                                                       </span>
@@ -2402,7 +2422,7 @@ export default function PoolEdit() {
                                                     prediction?.oddsPercentage !== null &&
                                                     prediction?.oddsPercentage !== undefined && (
                                                       <span>
-                                                        Scoring at:{' '}
+                                                        Scoring:{' '}
                                                         <span className="font-semibold text-yellow-700">
                                                           {prediction.oddsPercentage.toFixed(0)}%
                                                         </span>
@@ -2415,7 +2435,7 @@ export default function PoolEdit() {
                                                 currentOdds > 0 && (
                                                   <div className="text-gray-700">
                                                     <span className="inline-block w-full">
-                                                      Chance to win:{' '}
+                                                      Win:{' '}
                                                       <span className="font-semibold">
                                                         {currentOdds.toFixed(0)}%
                                                       </span>
@@ -2467,27 +2487,6 @@ export default function PoolEdit() {
                                                   )}
                                                 </div>
                                               </div>
-                                              {isSelected &&
-                                                prediction?.originalOddsPercentage !== null &&
-                                                prediction?.originalOddsPercentage !== undefined &&
-                                                prediction?.nomineeId === nominee.id &&
-                                                currentOdds !== null &&
-                                                currentOdds > 0 &&
-                                                currentOdds !==
-                                                  prediction.originalOddsPercentage && (
-                                                  <div
-                                                    className={`text-[10px] text-center mt-1 ${
-                                                      currentOdds <
-                                                      prediction.originalOddsPercentage
-                                                        ? 'text-yellow-600'
-                                                        : 'text-green-600'
-                                                    }`}
-                                                  >
-                                                    {currentOdds < prediction.originalOddsPercentage
-                                                      ? 'Updated to current odds'
-                                                      : 'Locked in original odds'}
-                                                  </div>
-                                                )}
                                             </div>
                                           )}
                                         </div>

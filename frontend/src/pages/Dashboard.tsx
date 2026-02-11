@@ -860,18 +860,6 @@ export default function Dashboard() {
                                         containerClassName="rounded-lg border aspect-[2/3] w-24 sm:w-28 bg-gray-100 flex-shrink-0 border-yellow-400 snap-start hover:border-yellow-300 hover:shadow-lg transition-all duration-200"
                                         imageClassName="w-full h-full object-cover"
                                         fallbackVariant="compact"
-                                        badge={
-                                          <div className="absolute inset-0 pointer-events-none">
-                                            <div
-                                              className="absolute top-0 right-0 flex h-10 w-10 items-start justify-end bg-yellow-500 text-white text-sm font-bold shadow"
-                                              style={{
-                                                clipPath: 'polygon(0 0, 100% 0, 100% 100%)',
-                                              }}
-                                            >
-                                              <span className="pr-2 pt-1">✓</span>
-                                            </div>
-                                          </div>
-                                        }
                                       />
                                       {nominationCount > 0 && (
                                         <div className="absolute left-1/2 bottom-1.5 -translate-x-1/2 translate-y-1/2 pointer-events-none">

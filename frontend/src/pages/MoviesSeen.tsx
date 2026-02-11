@@ -532,24 +532,16 @@ export default function MoviesSeen() {
                   }}
                   className={`group relative h-full rounded-xl border p-3 md:p-4 text-left transition-all flex items-center gap-3 md:flex-col md:items-stretch md:gap-3 ${
                     isSeen
-                      ? 'border-yellow-400 bg-yellow-50/90 ring-2 ring-yellow-300/70 shadow-lg'
+                      ? 'border-[#D6A23C] bg-gradient-to-b from-[#FFF0D6] via-[#FFF7E5] to-[#FFFCF6] ring-2 ring-[#F0D19B] shadow-[0_12px_30px_rgba(176,124,35,0.25)]'
                       : 'border-slate-200/70 bg-white'
                   } ${
                     isReadOnly
                       ? 'cursor-default'
-                      : 'cursor-pointer hover:border-yellow-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 active:translate-y-0 active:scale-[0.99]'
+                      : 'cursor-pointer hover:border-[#D6A23C] hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 active:translate-y-0 active:scale-[0.99]'
                   }`}
                 >
                   {isSeen && (
-                    <span className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-yellow-400" />
-                  )}
-                  {isSeen && (
-                    <div
-                      className="pointer-events-none absolute top-0 right-0 flex h-11 w-11 items-start justify-end bg-yellow-500 text-white text-[14px] font-bold shadow md:hidden"
-                      style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%)' }}
-                    >
-                      <span className="pr-2.5 pt-1.5">✓</span>
-                    </div>
+                    <span className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-[#D6A23C]" />
                   )}
                   {(() => {
                     const posterSources = movie.posterIds.map(
@@ -563,18 +555,14 @@ export default function MoviesSeen() {
                           src={primarySource}
                           fallbackSrcs={fallbackSources}
                           containerClassName="nominee-image-container w-full aspect-[2/3] rounded-lg bg-slate-100 overflow-hidden shadow-sm"
-                          imageClassName="w-full h-full object-contain"
+                          imageClassName={`w-full h-full object-contain ${
+                            isSeen ? '' : 'grayscale'
+                          }`}
                           fallbackVariant="full"
                           badge={
                             isSeen ? (
                               <div className="absolute inset-0 pointer-events-none">
                                 <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/20 via-transparent to-transparent" />
-                                <div
-                                  className="absolute top-0 right-0 hidden md:flex h-10 w-10 items-start justify-end bg-yellow-500 text-white text-sm font-bold shadow"
-                                  style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%)' }}
-                                >
-                                  <span className="pr-2 pt-1">✓</span>
-                                </div>
                               </div>
                             ) : undefined
                           }
