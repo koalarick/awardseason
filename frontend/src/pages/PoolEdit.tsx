@@ -466,6 +466,9 @@ export default function PoolEdit() {
 
   const submissionHeaderRef = useRef<HTMLDivElement | null>(null);
   const stickySummaryRef = useRef<HTMLDivElement | null>(null);
+  const tabNavAnchorRef = useRef<HTMLDivElement | null>(null);
+  const tabNavRef = useRef<HTMLDivElement | null>(null);
+  const prevCategoryTypeRef = useRef<string | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [stickySummaryHeight, setStickySummaryHeight] = useState(52);
   const [headerHeight, setHeaderHeight] = useState(44);
@@ -751,8 +754,9 @@ export default function PoolEdit() {
       if (!submissionHeaderRef.current) return;
 
       const headerRect = submissionHeaderRef.current.getBoundingClientRect();
-      // Show sticky summary when the full header is scrolled past
-      setShowStickySummary(headerRect.bottom < 0);
+      // Show sticky summary when the submission header is out of the visible viewport
+      // (below the sticky top header).
+      setShowStickySummary(headerRect.bottom <= headerHeight);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -761,7 +765,7 @@ export default function PoolEdit() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [headerHeight]);
 
   // Measure sticky summary height whenever it becomes visible or content changes
   useEffect(() => {
@@ -799,12 +803,20 @@ export default function PoolEdit() {
     };
   }, [showStickySummary]);
 
-  // Scroll to top when tab changes
+  // Scroll to the tab nav so sticky menus are in view when tab changes
   useEffect(() => {
-    if (selectedCategoryType) {
-      window.scrollTo({ top: 0, behavior: 'instant' });
+    if (!selectedCategoryType || !tabNavAnchorRef.current) return;
+    if (prevCategoryTypeRef.current === null) {
+      prevCategoryTypeRef.current = selectedCategoryType;
+      return;
     }
-  }, [selectedCategoryType]);
+    if (prevCategoryTypeRef.current === selectedCategoryType) return;
+    prevCategoryTypeRef.current = selectedCategoryType;
+    const topOffset = headerHeight + (showStickySummary ? stickySummaryHeight : 0);
+    const navTop = tabNavAnchorRef.current.getBoundingClientRect().top + window.scrollY;
+    const targetTop = Math.max(navTop - topOffset, 0);
+    window.scrollTo({ top: targetTop, behavior: 'instant' });
+  }, [selectedCategoryType, headerHeight, showStickySummary, stickySummaryHeight]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -1340,12 +1352,6 @@ export default function PoolEdit() {
                   />
                 )}
               </div>
-              <button
-                onClick={() => navigate(`/pool/${poolId}`)}
-                className="px-6 py-2.5 min-h-[44px] oscars-gold-bg text-white rounded hover:opacity-90 active:opacity-80 transition-opacity text-sm font-medium touch-manipulation w-full sm:w-auto"
-              >
-                {isViewingOtherSubmission ? 'Back to Pool' : 'Update'}
-              </button>
             </div>
           </div>
         </div>
@@ -1361,115 +1367,108 @@ export default function PoolEdit() {
               <span className="oscars-font font-bold oscars-dark text-sm md:text-base whitespace-normal break-words flex-1 min-w-0">
                 {submissionName}
               </span>
-              <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-                {/* Desktop: Show full stats */}
-                <div className="hidden md:flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Categories:</span>
-                    <span
-                      className={`font-semibold ${
-                        predictions.length === categories.length
-                          ? 'text-green-600'
-                          : 'text-yellow-600'
-                      }`}
-                    >
-                      {predictions.length}/{categories.length}
-                    </span>
-                  </div>
-                  {(() => {
-                    const categoryPoints =
-                      (poolSettings?.categoryPoints as Record<string, number>) || {};
-                    const multiplierEnabled = poolSettings?.oddsMultiplierEnabled ?? true;
-                    const multiplierFormula = poolSettings?.oddsMultiplierFormula || 'log';
-                    let totalPossiblePoints = 0;
-                    let totalEarnedPoints = 0;
-                    let correctCount = 0;
-                    let incorrectCount = 0;
+              {(() => {
+                const categoryPoints =
+                  (poolSettings?.categoryPoints as Record<string, number>) || {};
+                const multiplierEnabled = poolSettings?.oddsMultiplierEnabled ?? true;
+                const multiplierFormula = poolSettings?.oddsMultiplierFormula || 'log';
+                let totalPossiblePoints = 0;
+                let totalEarnedPoints = 0;
+                let correctCount = 0;
+                let incorrectCount = 0;
 
-                    predictions.forEach((prediction) => {
-                      const category = categories.find(
-                        (c: Category) => c.id === prediction.categoryId,
+                predictions.forEach((prediction) => {
+                  const category = categories.find(
+                    (c: Category) => c.id === prediction.categoryId,
+                  );
+                  if (category) {
+                    const basePoints =
+                      categoryPoints[prediction.categoryId] || category.defaultPoints;
+                    const nomineeOdds = prediction.oddsPercentage || null;
+                    const scoring = calculateScoringPreview(
+                      nomineeOdds,
+                      basePoints,
+                      multiplierEnabled,
+                      multiplierFormula,
+                    );
+                    totalPossiblePoints += scoring.totalPoints;
+
+                    // Check if this prediction is correct (matches actual winner)
+                    if (actualWinners) {
+                      const winner = actualWinners.find(
+                        (result) => result.categoryId === prediction.categoryId,
                       );
-                      if (category) {
-                        const basePoints =
-                          categoryPoints[prediction.categoryId] || category.defaultPoints;
-                        const nomineeOdds = prediction.oddsPercentage || null;
-                        const scoring = calculateScoringPreview(
-                          nomineeOdds,
-                          basePoints,
-                          multiplierEnabled,
-                          multiplierFormula,
-                        );
-                        totalPossiblePoints += scoring.totalPoints;
-
-                        // Check if this prediction is correct (matches actual winner)
-                        if (actualWinners) {
-                          const winner = actualWinners.find(
-                            (result) => result.categoryId === prediction.categoryId,
-                          );
-                          if (winner) {
-                            if (winner.nomineeId === prediction.nomineeId) {
-                              totalEarnedPoints += scoring.totalPoints;
-                              correctCount++;
-                            } else {
-                              incorrectCount++;
-                            }
-                          }
+                      if (winner) {
+                        if (winner.nomineeId === prediction.nomineeId) {
+                          totalEarnedPoints += scoring.totalPoints;
+                          correctCount++;
+                        } else {
+                          incorrectCount++;
                         }
                       }
-                    });
+                    }
+                  }
+                });
 
-                    const hasWinners = actualWinners && actualWinners.length > 0;
-                    const totalWithWinners = correctCount + incorrectCount;
-                    const percentCorrect =
-                      totalWithWinners > 0
-                        ? Math.round((correctCount / totalWithWinners) * 100)
-                        : 0;
+                const hasWinners = actualWinners && actualWinners.length > 0;
+                const totalWithWinners = correctCount + incorrectCount;
+                const percentCorrect =
+                  totalWithWinners > 0
+                    ? Math.round((correctCount / totalWithWinners) * 100)
+                    : 0;
 
-                    return (
-                      <div className="flex items-center gap-4">
-                        {hasWinners && totalWithWinners > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`font-semibold ${
-                                percentCorrect >= 70
-                                  ? 'text-green-700'
-                                  : percentCorrect >= 50
-                                    ? 'text-yellow-700'
-                                    : 'text-red-700'
-                              }`}
-                            >
-                              {percentCorrect}% Correct
-                            </span>
-                          </div>
-                        )}
+                return (
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <div className="flex items-baseline gap-2 text-sm whitespace-nowrap">
+                      <span className="text-gray-600">Possible</span>
+                      <span className="oscars-gold font-bold">
+                        {totalPossiblePoints.toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="hidden md:flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Categories:</span>
+                        <span
+                          className={`font-semibold ${
+                            predictions.length === categories.length
+                              ? 'text-green-600'
+                              : 'text-yellow-600'
+                          }`}
+                        >
+                          {predictions.length}/{categories.length}
+                        </span>
+                      </div>
+                      {hasWinners && totalWithWinners > 0 && (
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-600">Possible:</span>
-                          <span className="oscars-gold font-bold">
-                            {totalPossiblePoints.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600">Earned:</span>
                           <span
-                            className={`font-bold ${
-                              hasWinners && totalEarnedPoints > 0 ? 'text-green-700' : 'oscars-dark'
+                            className={`font-semibold ${
+                              percentCorrect >= 70
+                                ? 'text-green-700'
+                                : percentCorrect >= 50
+                                  ? 'text-yellow-700'
+                                  : 'text-red-700'
                             }`}
                           >
-                            {totalEarnedPoints.toFixed(1)}
+                            {percentCorrect}% Correct
                           </span>
                         </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Earned:</span>
+                        <span
+                          className={`font-bold ${
+                            hasWinners && totalEarnedPoints > 0
+                              ? 'text-green-700'
+                              : 'oscars-dark'
+                          }`}
+                        >
+                          {totalEarnedPoints.toFixed(1)}
+                        </span>
                       </div>
-                    );
-                  })()}
-                </div>
-                <button
-                  onClick={() => navigate(`/pool/${poolId}`)}
-                  className="px-4 py-2.5 oscars-gold-bg text-white rounded hover:opacity-90 text-sm font-semibold min-h-[44px] flex items-center whitespace-nowrap"
-                >
-                  {isViewingOtherSubmission ? 'Back' : 'Update'}
-                </button>
-              </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -1859,7 +1858,9 @@ export default function PoolEdit() {
             ) : (
               <>
                 {/* Tab Navigation - Sticky */}
+                <div ref={tabNavAnchorRef} />
                 <div
+                  ref={tabNavRef}
                   className="sticky bg-white z-20"
                   style={{
                     top:
@@ -1888,7 +1889,6 @@ export default function PoolEdit() {
                             key={group.name}
                             onClick={() => {
                               setSelectedCategoryType(group.name);
-                              window.scrollTo({ top: 0, behavior: 'auto' }); // Jump to top
                             }}
                             className={`px-4 py-4 text-sm font-medium border-b-2 transition-colors min-h-[44px] flex items-center whitespace-nowrap ${
                               isActive
@@ -1905,17 +1905,15 @@ export default function PoolEdit() {
                               ) : (
                                 group.name
                               )}
-                              {selectedCount > 0 && (
-                                <span
-                                  className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
-                                    isComplete
-                                      ? 'bg-green-100 text-green-700'
-                                      : 'bg-yellow-100 text-yellow-700'
-                                  }`}
-                                >
-                                  {selectedCount}/{totalCount}
-                                </span>
-                              )}
+                              <span
+                                className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
+                                  isComplete
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-yellow-100 text-yellow-700'
+                                }`}
+                              >
+                                {selectedCount}/{totalCount}
+                              </span>
                             </span>
                           </button>
                         );
@@ -2004,9 +2002,6 @@ export default function PoolEdit() {
                                       {isCorrect ? '✓ Correct' : prediction ? '✗ Incorrect' : ''}
                                     </span>
                                   )}
-                                  {!hasWinner && prediction && (
-                                    <span className="ml-2 text-green-600">✓</span>
-                                  )}
                                 </h4>
                                 <span className="text-sm font-bold oscars-dark pr-2 md:pr-2.5">
                                   {multiplierEnabled ? 'Base: ' : ''}
@@ -2031,6 +2026,7 @@ export default function PoolEdit() {
                                   })
                                   .map((nominee) => {
                                     const isSelected = prediction?.nomineeId === nominee.id;
+                                    const showFilm = nominee.film && nominee.name !== nominee.film;
                                     const currentOdds =
                                       categoryOddsForThis.find(
                                         (oddsEntry) => oddsEntry.nomineeId === nominee.id,
@@ -2110,7 +2106,7 @@ export default function PoolEdit() {
                                             handleNomineeSelect(category.id, nominee.id);
                                           }
                                         }}
-                                        className={`relative border-2 rounded-lg p-3 transition-all flex md:flex-col gap-3 md:gap-0 ${
+                                        className={`relative border-2 rounded-lg p-3 transition-all flex md:flex-col md:h-full gap-3 md:gap-0 ${
                                           hasWinner && isCorrect
                                             ? 'border-green-500 bg-green-50 cursor-not-allowed'
                                             : hasWinner && isIncorrect
@@ -2185,7 +2181,7 @@ export default function PoolEdit() {
                                           {/* Info trigger - desktop only */}
                                           <button
                                             type="button"
-                                            className="nominee-modal-trigger hidden md:flex absolute top-1.5 left-1.5 z-20 h-7 w-7 items-center justify-center rounded-full bg-white/60 text-slate-500 shadow-sm backdrop-blur-sm border border-slate-200/60 transition-all hover:bg-white/80 hover:text-slate-700 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-white"
+                                            className="nominee-modal-trigger hidden md:flex absolute top-1.5 right-1.5 z-20 h-7 w-7 items-center justify-center rounded-full bg-white/60 text-slate-500 shadow-sm backdrop-blur-sm border border-slate-200/60 transition-all hover:bg-white/80 hover:text-slate-700 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-white"
                                             onClick={(e) =>
                                               handleNomineeModalClick(e, nominee, category)
                                             }
@@ -2206,48 +2202,51 @@ export default function PoolEdit() {
                                             </svg>
                                           </button>
                                         </div>
-                                        {/* Info trigger - mobile only */}
-                                        <button
-                                          type="button"
-                                          className="nominee-modal-trigger md:hidden absolute bottom-2 right-2 z-0 flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-500 border border-slate-200/80 backdrop-blur-sm transition-all hover:bg-white/85 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-                                          onClick={(e) =>
-                                            handleNomineeModalClick(e, nominee, category)
-                                          }
-                                          aria-label={`View ${nominee.name} details`}
-                                        >
-                                          <svg
-                                            className="w-5 h-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                          </svg>
-                                        </button>
                                         {/* Mobile content */}
-                                        <div className="flex-1 min-w-0 md:hidden">
+                                        <div className="flex-1 min-w-0 md:hidden flex flex-col min-h-[144px]">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
                                           {nominee.film && nominee.name !== nominee.film && (
-                                            <h4 className="font-bold text-base oscars-dark">
+                                            <h4 className="font-bold text-base oscars-dark line-clamp-2">
                                               {nominee.name}
                                             </h4>
                                           )}
                                           {nominee.film && nominee.name !== nominee.film && (
-                                            <h4 className="font-normal text-xs text-gray-600 italic mt-0.5">
+                                            <h4 className="font-normal text-sm text-gray-600 italic mt-0.5 line-clamp-1">
                                               {nominee.film}
                                             </h4>
                                           )}
                                           {(!nominee.film || nominee.name === nominee.film) && (
-                                            <h4 className="font-bold text-base oscars-dark">
+                                            <h4 className="font-bold text-base oscars-dark line-clamp-2">
                                               {nominee.name}
                                             </h4>
                                           )}
+                                            </div>
+                                            <button
+                                              type="button"
+                                              className="nominee-modal-trigger flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-slate-500 border border-slate-200/80 shadow-sm transition-all hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                                              onClick={(e) =>
+                                                handleNomineeModalClick(e, nominee, category)
+                                              }
+                                              aria-label={`View ${nominee.name} details`}
+                                            >
+                                              <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                              </svg>
+                                            </button>
+                                          </div>
                                           {!oddsLoading && (
-                                            <div className="text-sm text-gray-600 mt-0.5">
+                                            <div className="text-sm text-gray-600 mt-auto">
                                               {isSelected ? (
                                                 <>
                                                   {prediction?.originalOddsPercentage !== null &&
@@ -2260,7 +2259,15 @@ export default function PoolEdit() {
                                                       currentOdds !==
                                                         prediction.originalOddsPercentage ? (
                                                         <div className="text-gray-700">
-                                                          <div className="flex flex-wrap items-baseline gap-1">
+                                                          <div
+                                                            className={`text-xs ${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-500' : 'text-green-500'}`}
+                                                          >
+                                                            {currentOdds <
+                                                            prediction.originalOddsPercentage
+                                                              ? 'Multiplier updated'
+                                                              : 'Multiplier locked'}
+                                                          </div>
+                                                          <div className="flex flex-wrap items-baseline gap-1 mt-0.5">
                                                             <span>
                                                               Win:{' '}
                                                               <span className="font-semibold">
@@ -2273,14 +2280,6 @@ export default function PoolEdit() {
                                                                 0,
                                                               )}
                                                               %)
-                                                            </span>
-                                                            <span
-                                                              className={`${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-500' : 'text-green-500'}`}
-                                                            >
-                                                              {currentOdds <
-                                                              prediction.originalOddsPercentage
-                                                                ? 'Odds updated'
-                                                                : 'Odds locked'}
                                                             </span>
                                                           </div>
                                                         </div>
@@ -2329,9 +2328,19 @@ export default function PoolEdit() {
                                             </div>
                                           )}
                                           {multiplierEnabled && (
-                                            <div className="mt-2 pt-2 border-t border-gray-200">
+                                            <div className="mt-1 pt-2 border-t border-gray-200">
                                               <div className="flex items-center justify-between">
-                                                <span className="text-xs text-gray-500">
+                                                <span
+                                                  className={`${
+                                                    hasWinner
+                                                      ? isCorrect && isSelected
+                                                        ? 'font-bold text-green-700 text-base'
+                                                        : isIncorrect
+                                                          ? 'font-bold text-red-700 text-base'
+                                                          : 'font-semibold text-gray-500 text-base'
+                                                      : 'font-semibold text-yellow-600 text-base'
+                                                  }`}
+                                                >
                                                   Points
                                                 </span>
                                                 <div className="flex items-baseline gap-2">
@@ -2369,29 +2378,25 @@ export default function PoolEdit() {
                                         </div>
 
                                         {/* Desktop content */}
-                                        <div className="hidden md:flex md:flex-col md:w-full md:gap-0">
+                                        <div className="hidden md:flex md:flex-col md:w-full md:gap-0 md:flex-1">
                                           {/* Name section */}
                                           <div className="leading-tight">
-                                            {nominee.film && nominee.name !== nominee.film && (
-                                              <>
-                                                <h4 className="font-bold text-xs oscars-dark leading-tight">
-                                                  {nominee.name}
-                                                </h4>
-                                                <h4 className="font-normal text-[10px] text-gray-600 italic truncate leading-tight">
-                                                  {nominee.film}
-                                                </h4>
-                                              </>
-                                            )}
-                                            {(!nominee.film || nominee.name === nominee.film) && (
-                                              <h4 className="font-bold text-xs oscars-dark leading-tight">
-                                                {nominee.name}
-                                              </h4>
-                                            )}
+                                            <h4 className="font-bold text-xs oscars-dark leading-tight line-clamp-2">
+                                              {nominee.name}
+                                            </h4>
+                                            <h4
+                                              className={`font-normal text-xs text-gray-600 italic truncate leading-tight line-clamp-1 ${
+                                                showFilm ? '' : 'invisible'
+                                              }`}
+                                              aria-hidden={!showFilm}
+                                            >
+                                              {showFilm ? nominee.film : 'Placeholder'}
+                                            </h4>
                                           </div>
 
                                           {/* Odds section - with slight spacing from name */}
                                           {!oddsLoading && (
-                                            <div className="text-xs text-gray-600 leading-tight mt-1">
+                                            <div className="text-xs text-gray-600 leading-tight mt-auto">
                                               {isSelected ? (
                                                 <>
                                                   {prediction?.originalOddsPercentage !== null &&
@@ -2404,6 +2409,9 @@ export default function PoolEdit() {
                                                       currentOdds !==
                                                         prediction.originalOddsPercentage ? (
                                                         <div className="text-gray-700">
+                                                          <div className="text-xs text-gray-500 invisible">
+                                                            Multiplier locked
+                                                          </div>
                                                           <div className="flex flex-wrap items-baseline gap-1">
                                                             <span>
                                                               Win:{' '}
@@ -2419,17 +2427,21 @@ export default function PoolEdit() {
                                                               %)
                                                             </span>
                                                             <span
-                                                              className={`${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-600' : 'text-green-600'}`}
+                                                              className={`text-xs ${currentOdds < prediction.originalOddsPercentage ? 'text-yellow-600' : 'text-green-600'}`}
                                                             >
+                                                              |{' '}
                                                               {currentOdds <
                                                               prediction.originalOddsPercentage
-                                                                ? 'Odds updated'
-                                                                : 'Odds locked'}
+                                                                ? 'Multiplier updated'
+                                                                : 'Multiplier locked'}
                                                             </span>
                                                           </div>
                                                         </div>
                                                       ) : (
                                                         <div className="text-gray-700">
+                                                          <div className="text-xs text-gray-500 invisible">
+                                                            Multiplier locked
+                                                          </div>
                                                           <span className="inline-block w-full">
                                                             Win:{' '}
                                                             <span className="font-semibold text-yellow-700">
@@ -2447,21 +2459,31 @@ export default function PoolEdit() {
                                                       )}
                                                     </>
                                                   ) : currentOdds !== null && currentOdds > 0 ? (
-                                                    <span>
-                                                      Scoring:{' '}
-                                                      <span className="font-semibold text-yellow-700">
-                                                        {currentOdds.toFixed(0)}%
-                                                      </span>
-                                                    </span>
-                                                  ) : (
-                                                    prediction?.oddsPercentage !== null &&
-                                                    prediction?.oddsPercentage !== undefined && (
+                                                    <div className="text-gray-700">
+                                                      <div className="text-xs text-gray-500 invisible">
+                                                        Multiplier locked
+                                                      </div>
                                                       <span>
                                                         Scoring:{' '}
                                                         <span className="font-semibold text-yellow-700">
-                                                          {prediction.oddsPercentage.toFixed(0)}%
+                                                          {currentOdds.toFixed(0)}%
                                                         </span>
                                                       </span>
+                                                    </div>
+                                                  ) : (
+                                                    prediction?.oddsPercentage !== null &&
+                                                    prediction?.oddsPercentage !== undefined && (
+                                                      <div className="text-gray-700">
+                                                        <div className="text-xs text-gray-500 invisible">
+                                                          Multiplier locked
+                                                        </div>
+                                                        <span>
+                                                          Scoring:{' '}
+                                                          <span className="font-semibold text-yellow-700">
+                                                            {prediction.oddsPercentage.toFixed(0)}%
+                                                          </span>
+                                                        </span>
+                                                      </div>
                                                     )
                                                   )}
                                                 </>
@@ -2469,6 +2491,9 @@ export default function PoolEdit() {
                                                 currentOdds !== null &&
                                                 currentOdds > 0 && (
                                                   <div className="text-gray-700">
+                                                    <div className="text-xs text-gray-500 invisible">
+                                                      Multiplier locked
+                                                    </div>
                                                     <span className="inline-block w-full">
                                                       Win:{' '}
                                                       <span className="font-semibold">
@@ -2487,9 +2512,19 @@ export default function PoolEdit() {
 
                                           {/* Points section */}
                                           {multiplierEnabled && (
-                                            <div className="mt-2 pt-2 border-t border-gray-200">
+                                            <div className="mt-1 pt-2 border-t border-gray-200">
                                               <div className="flex items-center justify-between mb-1">
-                                                <span className="text-xs text-gray-500">
+                                                <span
+                                                  className={`${
+                                                    hasWinner
+                                                      ? isCorrect && isSelected
+                                                        ? 'font-bold text-green-700 text-sm'
+                                                        : isIncorrect
+                                                          ? 'font-bold text-red-700 text-sm'
+                                                          : 'font-semibold text-gray-500 text-sm'
+                                                      : 'font-semibold text-yellow-600 text-sm'
+                                                  }`}
+                                                >
                                                   Points
                                                 </span>
                                                 <div className="flex items-baseline gap-1">
@@ -2552,7 +2587,6 @@ export default function PoolEdit() {
                               <button
                                 onClick={() => {
                                   setSelectedCategoryType(nextTab.name);
-                                  window.scrollTo({ top: 0, behavior: 'auto' });
                                 }}
                                 className="px-6 py-3 oscars-gold-bg text-white rounded-lg hover:opacity-90 active:opacity-80 transition-opacity text-sm font-semibold min-h-[44px] flex items-center gap-2 touch-manipulation"
                               >
