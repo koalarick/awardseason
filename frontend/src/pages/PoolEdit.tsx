@@ -2246,7 +2246,10 @@ export default function PoolEdit() {
                                             </button>
                                           </div>
                                           {!oddsLoading && (
-                                            <div className="text-sm text-gray-600 mt-auto">
+                                            <div className="mt-auto">
+                                              <div
+                                                className={`text-sm text-gray-600 ${showFilm ? 'pt-5' : ''}`}
+                                              >
                                               {isSelected ? (
                                                 <>
                                                   {prediction?.originalOddsPercentage !== null &&
@@ -2325,6 +2328,7 @@ export default function PoolEdit() {
                                                   </span>
                                                 )
                                               )}
+                                              </div>
                                             </div>
                                           )}
                                           {multiplierEnabled && (
@@ -2396,7 +2400,10 @@ export default function PoolEdit() {
 
                                           {/* Odds section - with slight spacing from name */}
                                           {!oddsLoading && (
-                                            <div className="text-xs text-gray-600 leading-tight mt-auto">
+                                            <div className="mt-auto">
+                                              <div
+                                                className={`text-xs text-gray-600 leading-tight ${showFilm ? 'pt-4' : ''}`}
+                                              >
                                               {isSelected ? (
                                                 <>
                                                   {prediction?.originalOddsPercentage !== null &&
@@ -2409,9 +2416,6 @@ export default function PoolEdit() {
                                                       currentOdds !==
                                                         prediction.originalOddsPercentage ? (
                                                         <div className="text-gray-700">
-                                                          <div className="text-xs text-gray-500 invisible">
-                                                            Multiplier locked
-                                                          </div>
                                                           <div className="flex flex-wrap items-baseline gap-1">
                                                             <span>
                                                               Win:{' '}
@@ -2439,9 +2443,6 @@ export default function PoolEdit() {
                                                         </div>
                                                       ) : (
                                                         <div className="text-gray-700">
-                                                          <div className="text-xs text-gray-500 invisible">
-                                                            Multiplier locked
-                                                          </div>
                                                           <span className="inline-block w-full">
                                                             Win:{' '}
                                                             <span className="font-semibold text-yellow-700">
@@ -2460,9 +2461,6 @@ export default function PoolEdit() {
                                                     </>
                                                   ) : currentOdds !== null && currentOdds > 0 ? (
                                                     <div className="text-gray-700">
-                                                      <div className="text-xs text-gray-500 invisible">
-                                                        Multiplier locked
-                                                      </div>
                                                       <span>
                                                         Scoring:{' '}
                                                         <span className="font-semibold text-yellow-700">
@@ -2474,9 +2472,6 @@ export default function PoolEdit() {
                                                     prediction?.oddsPercentage !== null &&
                                                     prediction?.oddsPercentage !== undefined && (
                                                       <div className="text-gray-700">
-                                                        <div className="text-xs text-gray-500 invisible">
-                                                          Multiplier locked
-                                                        </div>
                                                         <span>
                                                           Scoring:{' '}
                                                           <span className="font-semibold text-yellow-700">
@@ -2491,9 +2486,6 @@ export default function PoolEdit() {
                                                 currentOdds !== null &&
                                                 currentOdds > 0 && (
                                                   <div className="text-gray-700">
-                                                    <div className="text-xs text-gray-500 invisible">
-                                                      Multiplier locked
-                                                    </div>
                                                     <span className="inline-block w-full">
                                                       Win:{' '}
                                                       <span className="font-semibold">
@@ -2507,6 +2499,7 @@ export default function PoolEdit() {
                                                   </div>
                                                 )
                                               )}
+                                              </div>
                                             </div>
                                           )}
 
