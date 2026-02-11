@@ -86,6 +86,27 @@ const categoryGroups = [
   },
 ];
 
+const mobileCategoryLabels: Record<string, string> = {
+  'Writing (Original Screenplay)': 'Original Screenplay',
+  'Writing (Adapted Screenplay)': 'Adapted Screenplay',
+  'Actor in a Supporting Role': 'Supporting Actor',
+  'Actress in a Supporting Role': 'Supporting Actress',
+  'Actor in a Leading Role': 'Best Actor',
+  'Actress in a Leading Role': 'Best Actress',
+  'Music (Original Score)': 'Original Score',
+  'Music (Original Song)': 'Original Song',
+  'International Feature Film': 'International Feature',
+  'Animated Feature Film': 'Animated Feature',
+  'Documentary Feature Film': 'Documentary Feature',
+  'Animated Short Film': 'Animated Short',
+  'Documentary Short Film': 'Documentary Short',
+  'Live Action Short Film': 'Live Action Short',
+};
+
+function getMobileCategoryLabel(categoryName: string): string {
+  return mobileCategoryLabels[categoryName] || categoryName;
+}
+
 type PredictionWithUser = Prediction & {
   user?: {
     id?: string;
@@ -1546,7 +1567,12 @@ export default function PoolEdit() {
                           >
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="oscars-font text-base font-bold oscars-dark">
-                                {category.name}
+                                <span className="md:hidden oscars-font">
+                                  {getMobileCategoryLabel(category.name)}
+                                </span>
+                                <span className="hidden md:inline oscars-font">
+                                  {category.name}
+                                </span>
                                 {hasWinner && (
                                   <span
                                     className={`ml-2 text-sm font-semibold ${
@@ -1959,7 +1985,12 @@ export default function PoolEdit() {
                                 }}
                               >
                                 <h4 className="oscars-font text-base font-bold oscars-dark">
-                                  {category.name}
+                                  <span className="md:hidden oscars-font">
+                                    {getMobileCategoryLabel(category.name)}
+                                  </span>
+                                  <span className="hidden md:inline oscars-font">
+                                    {category.name}
+                                  </span>
                                   {hasWinner && (
                                     <span
                                       className={`ml-2 text-sm font-semibold ${
