@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import type { Category, Pool, PoolSubmission } from '../types/pool';
 import MoviePoster from '../components/MoviePoster';
+import { BALLOT_LOCK_TIMESTAMP } from '../utils/ballotLock';
 import {
   getMovieEntries,
   getNomineeEntries,
@@ -34,7 +35,7 @@ type DashboardPool = Pool & {
 };
 
 // Countdown component
-function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
+function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -42,17 +43,10 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
     seconds: 0,
   });
 
-  // Calculate lock time: 24 hours (1 day) before ceremony
-  const lockTime = useMemo(() => {
-    const ceremony = new Date(ceremonyDate);
-    return new Date(ceremony.getTime() - 24 * 60 * 60 * 1000);
-  }, [ceremonyDate]);
-
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
-      const lock = lockTime.getTime();
-      const difference = lock - now;
+      const difference = BALLOT_LOCK_TIMESTAMP - now;
 
       if (difference > 0) {
         setTimeLeft({
@@ -70,9 +64,9 @@ function CountdownTimer({ ceremonyDate }: { ceremonyDate: Date | string }) {
     const interval = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(interval);
-  }, [lockTime]);
+  }, [BALLOT_LOCK_TIMESTAMP]);
 
-  const isLocked = new Date().getTime() >= lockTime.getTime();
+  const isLocked = new Date().getTime() >= BALLOT_LOCK_TIMESTAMP;
 
   if (isLocked) {
     return (
@@ -414,15 +408,6 @@ export default function Dashboard() {
     enabled: !!pools && pools.length > 0 && !!user?.id,
   });
 
-  // Get global pool ceremony date (all pools should use the same Oscars date)
-  const { data: globalPool } = useQuery<Pool | null>({
-    queryKey: ['globalPool'],
-    queryFn: async () => {
-      const response = await api.get('/pools/global');
-      return response.data as Pool;
-    },
-  });
-
   const {
     data: nomineeCategories,
     isLoading: isLoadingNominees,
@@ -539,20 +524,6 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ['pools'] });
   };
 
-  // Use global pool ceremony date, or fallback to earliest from user's pools
-  const ceremonyDate =
-    globalPool?.ceremonyDate ||
-    (pools?.length
-      ? pools.reduce<Pool | null>((earliest, pool) => {
-          const poolDate = new Date(pool.ceremonyDate);
-          const earliestDate = earliest ? new Date(earliest.ceremonyDate) : null;
-          if (!earliestDate || poolDate < earliestDate) {
-            return pool;
-          }
-          return earliest;
-        }, null)?.ceremonyDate
-      : null);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 oscars-red text-white py-3 px-4 z-40">
@@ -589,7 +560,7 @@ export default function Dashboard() {
       </header>
 
       {/* Countdown Timer Bar */}
-      {ceremonyDate && <CountdownTimer ceremonyDate={new Date(ceremonyDate)} />}
+      <CountdownTimer />
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Desktop: Two Column Layout */}

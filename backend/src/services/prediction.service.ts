@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { OddsService } from './odds.service';
+import { assertBallotUnlocked } from '../utils/ballot-lock';
 
 const prisma = new PrismaClient();
 const oddsService = new OddsService();
@@ -30,6 +31,8 @@ export class PredictionService {
     if (!membership) {
       throw new Error('Not a member of this pool');
     }
+
+    assertBallotUnlocked();
 
     // Get pool to determine year for full category ID
     const pool = await prisma.pool.findUnique({
@@ -286,6 +289,8 @@ export class PredictionService {
       throw new Error('Not a member of this pool');
     }
 
+    assertBallotUnlocked();
+
     // Delete the prediction
     await prisma.prediction.delete({
       where: {
@@ -314,6 +319,8 @@ export class PredictionService {
     if (!membership) {
       throw new Error('Not a member of this pool');
     }
+
+    assertBallotUnlocked();
 
     // Get pool to find its year
     const pool = await prisma.pool.findUnique({
@@ -655,6 +662,8 @@ export class PredictionService {
     if (!sourceMembership) {
       throw new Error('Not a member of source pool');
     }
+
+    assertBallotUnlocked();
 
     // Get both pools to check years
     const targetPool = await prisma.pool.findUnique({

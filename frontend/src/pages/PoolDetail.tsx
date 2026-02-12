@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import api from '../services/api';
 import BackButton from '../components/BackButton';
 import { useAuth } from '../context/AuthContext';
 import { useSmartBack } from '../hooks/useSmartBack';
+import { useBallotLock } from '../hooks/useBallotLock';
 import type { AuthUser } from '../context/AuthContext';
 import type {
   ActualWinner,
@@ -18,6 +19,7 @@ import type {
   PoolSubmission,
   Prediction,
 } from '../types/pool';
+import { BALLOT_LOCK_DISPLAY, BALLOT_LOCK_TIMESTAMP } from '../utils/ballotLock';
 
 type WatchLevelStyle = {
   badge: string;
@@ -64,7 +66,7 @@ const getWatchLevelStyle = (seenCount: number): WatchLevelStyle => {
 };
 
 // Submissions Lock Countdown Component
-function SubmissionsLockCountdown({ ceremonyDate }: { ceremonyDate: Date | string }) {
+function SubmissionsLockCountdown() {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -72,17 +74,10 @@ function SubmissionsLockCountdown({ ceremonyDate }: { ceremonyDate: Date | strin
     seconds: 0,
   });
 
-  // Calculate lock time: 24 hours (1 day) before ceremony
-  const lockTime = useMemo(() => {
-    const ceremony = new Date(ceremonyDate);
-    return new Date(ceremony.getTime() - 24 * 60 * 60 * 1000);
-  }, [ceremonyDate]);
-
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
-      const lock = lockTime.getTime();
-      const difference = lock - now;
+      const difference = BALLOT_LOCK_TIMESTAMP - now;
 
       if (difference > 0) {
         setTimeLeft({
@@ -100,9 +95,9 @@ function SubmissionsLockCountdown({ ceremonyDate }: { ceremonyDate: Date | strin
     const interval = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(interval);
-  }, [lockTime]);
+  }, [BALLOT_LOCK_TIMESTAMP]);
 
-  const isLocked = new Date().getTime() >= lockTime.getTime();
+  const isLocked = new Date().getTime() >= BALLOT_LOCK_TIMESTAMP;
 
   if (isLocked) {
     return (
@@ -1696,6 +1691,7 @@ function SubmissionsList({
   navigate,
   predictions,
   canEditSettings,
+  ballotLocked,
 }: {
   poolId: string;
   user: AuthUser | null;
@@ -1703,6 +1699,7 @@ function SubmissionsList({
   navigate: (path: string) => void;
   predictions: Prediction[] | undefined;
   canEditSettings: boolean;
+  ballotLocked: boolean;
 }) {
   const queryClient = useQueryClient();
   const [submissionToRemove, setSubmissionToRemove] = useState<{
@@ -1839,10 +1836,19 @@ function SubmissionsList({
         </div>
         {!userHasSubmission && (
           <button
-            onClick={() => navigate(`/pool/${poolId}/edit`)}
-            className="px-4 py-2 min-h-[36px] oscars-gold-bg text-white rounded hover:opacity-90 active:opacity-80 text-sm font-medium transition-opacity touch-manipulation"
+            onClick={() => {
+              if (ballotLocked) return;
+              navigate(`/pool/${poolId}/edit`);
+            }}
+            disabled={ballotLocked}
+            title={ballotLocked ? `Ballot creation locked ${BALLOT_LOCK_DISPLAY}` : 'Create Ballot'}
+            className={`px-4 py-2 min-h-[36px] oscars-gold-bg text-white rounded text-sm font-medium transition-opacity touch-manipulation ${
+              ballotLocked
+                ? 'opacity-60 cursor-not-allowed'
+                : 'hover:opacity-90 active:opacity-80'
+            }`}
           >
-            Create Ballot
+            {ballotLocked ? 'Ballots Locked' : 'Create Ballot'}
           </button>
         )}
       </div>
@@ -2295,10 +2301,21 @@ function SubmissionsList({
             <p className="text-gray-600 mb-4">No ballots yet.</p>
             {!userHasSubmission && (
               <button
-                onClick={() => navigate(`/pool/${poolId}/edit`)}
-                className="px-6 py-3 min-h-[44px] oscars-gold-bg text-white rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
+                onClick={() => {
+                  if (ballotLocked) return;
+                  navigate(`/pool/${poolId}/edit`);
+                }}
+                disabled={ballotLocked}
+                title={
+                  ballotLocked ? `Ballot creation locked ${BALLOT_LOCK_DISPLAY}` : 'Create Ballot'
+                }
+                className={`px-6 py-3 min-h-[44px] oscars-gold-bg text-white rounded transition-opacity touch-manipulation ${
+                  ballotLocked
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'hover:opacity-90 active:opacity-80'
+                }`}
               >
-                Create First Ballot
+                {ballotLocked ? 'Ballots Locked' : 'Create First Ballot'}
               </button>
             )}
           </div>
@@ -3044,15 +3061,6 @@ export default function PoolDetail() {
     enabled: !!poolId && poolId !== 'new',
   });
 
-  // Get global pool ceremony date (all pools should use the same Oscars date)
-  const { data: globalPool } = useQuery<Pool>({
-    queryKey: ['globalPool'],
-    queryFn: async () => {
-      const response = await api.get('/pools/global');
-      return response.data as Pool;
-    },
-  });
-
   // Fetch global winners for the pool's year (used for all pools)
   const { data: actualWinners } = useQuery<ActualWinner[]>({
     queryKey: ['globalWinners', pool?.year],
@@ -3064,13 +3072,11 @@ export default function PoolDetail() {
     enabled: !!poolId && !!pool?.year && poolId !== 'new',
   });
 
-  // Use global pool ceremony date for countdown (all pools use same Oscars date)
-  const ceremonyDateForCountdown = globalPool?.ceremonyDate || pool?.ceremonyDate;
-
   const isPoolOwner = pool?.ownerId === user?.id;
   const isSuperuser = user?.role === 'SUPERUSER';
   const hasWinners = (actualWinners?.length || 0) > 0;
   const canEditSettings = (isPoolOwner || isSuperuser) && !hasWinners;
+  const ballotLocked = useBallotLock();
 
   const deletePool = useMutation({
     mutationFn: async () => {
@@ -3189,15 +3195,7 @@ export default function PoolDetail() {
       </header>
 
       {/* Submissions Lock Countdown */}
-      {ceremonyDateForCountdown && (
-        <SubmissionsLockCountdown
-          ceremonyDate={
-            ceremonyDateForCountdown instanceof Date
-              ? ceremonyDateForCountdown
-              : new Date(ceremonyDateForCountdown)
-          }
-        />
-      )}
+      <SubmissionsLockCountdown />
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Two Column Layout on Desktop */}
@@ -3455,8 +3453,13 @@ export default function PoolDetail() {
                       onClick={() => navigate(`/pool/${poolId}/edit`)}
                       className="w-full px-4 py-2.5 min-h-[44px] oscars-gold-bg text-white rounded-lg hover:opacity-90 active:opacity-80 transition-opacity text-sm font-semibold touch-manipulation shadow-sm"
                     >
-                      Edit My Ballot
+                      {ballotLocked ? 'View My Ballot' : 'Edit My Ballot'}
                     </button>
+                  )}
+                  {userHasSubmission && ballotLocked && (
+                    <p className="text-center text-xs text-gray-500">
+                      Editing closed {BALLOT_LOCK_DISPLAY}.
+                    </p>
                   )}
                   {(isPoolOwner || isSuperuser) && !hasWinners && (
                     <button
@@ -3559,6 +3562,7 @@ export default function PoolDetail() {
               navigate={navigate}
               predictions={predictions}
               canEditSettings={canEditSettings}
+              ballotLocked={ballotLocked}
             />
           </div>
         </div>

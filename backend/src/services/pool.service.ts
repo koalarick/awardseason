@@ -2,6 +2,7 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { calculateOddsMultiplier } from './scoring.service';
 import { buildFallbackNameMap, resolveSubmissionName } from '../utils/submission-name';
+import { assertBallotUnlocked } from '../utils/ballot-lock';
 
 const prisma = new PrismaClient();
 
@@ -306,6 +307,8 @@ export class PoolService {
   async updateSubmissionName(userId: string, poolId: string, submissionName: string) {
     // Verify user is a member
     await requirePoolMember(poolId, userId);
+
+    assertBallotUnlocked();
 
     // Update submission name
     const updated = await prisma.poolMember.update({

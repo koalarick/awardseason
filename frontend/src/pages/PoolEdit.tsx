@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/BackButton';
 import { useSmartBack } from '../hooks/useSmartBack';
+import { useBallotLock } from '../hooks/useBallotLock';
 import type {
   ActualWinner,
   Category,
@@ -17,6 +18,7 @@ import type {
 } from '../types/pool';
 import { getNomineeImage } from '../utils/nomineeImages';
 import { getApiErrorMessage } from '../utils/apiErrors';
+import { BALLOT_LOCK_DISPLAY, isBallotLocked } from '../utils/ballotLock';
 // Helper to get nominee info from nominee object
 function getNomineeInfoFromData(
   nominee: Nominee,
@@ -519,6 +521,8 @@ export default function PoolEdit() {
   // Check if viewing someone else's submission
   const viewUserId = searchParams.get('userId');
   const isViewingOtherSubmission = Boolean(viewUserId && viewUserId !== user?.id);
+  const ballotLocked = useBallotLock();
+  const canEditBallot = !isViewingOtherSubmission && !ballotLocked;
   const targetUserId = isViewingOtherSubmission ? viewUserId : user?.id;
   const defaultName = 'My Ballot';
 
@@ -619,7 +623,7 @@ export default function PoolEdit() {
   });
 
   useEffect(() => {
-    if (isViewingOtherSubmission) {
+    if (!canEditBallot) {
       setShowRenamePrompt(false);
       return;
     }
@@ -631,10 +635,11 @@ export default function PoolEdit() {
     setShowRenamePrompt(true);
     const nextRenameValue = (userMembership.submissionName ?? '').trim() || defaultName;
     setRenameValue((current) => (current ? current : nextRenameValue));
-  }, [userMembership, hasDismissedRenamePrompt, isViewingOtherSubmission, defaultName]);
+  }, [userMembership, hasDismissedRenamePrompt, canEditBallot, defaultName]);
 
   const handleRenameSubmit = () => {
-    if (!userMembership || updateSubmissionName.isPending) return;
+    if (isBallotLocked()) return;
+    if (!canEditBallot || !userMembership || updateSubmissionName.isPending) return;
     setRenameError('');
     const trimmed = renameValue.trim();
     if (!trimmed) {
@@ -865,8 +870,12 @@ export default function PoolEdit() {
   };
 
   const handleNomineeSelect = (categoryId: string, nomineeId: string) => {
-    // Don't allow editing if viewing someone else's submission
-    if (isViewingOtherSubmission) {
+    if (isBallotLocked()) {
+      return;
+    }
+
+    // Don't allow editing if viewing someone else's submission or ballots are locked
+    if (!canEditBallot) {
       return;
     }
 
@@ -937,6 +946,10 @@ export default function PoolEdit() {
 
   const confirmSelectionChange = () => {
     if (pendingSelection) {
+      if (isBallotLocked() || !canEditBallot) {
+        setPendingSelection(null);
+        return;
+      }
       createPrediction.mutate({
         categoryId: pendingSelection.categoryId,
         nomineeId: pendingSelection.nomineeId,
@@ -1049,7 +1062,13 @@ export default function PoolEdit() {
         </div>
       </header>
 
-      {showRenamePrompt && !isViewingOtherSubmission && (
+      {ballotLocked && (
+        <div className="bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-xs sm:text-sm px-4 py-2 text-center">
+          Ballot editing closed {BALLOT_LOCK_DISPLAY}.
+        </div>
+      )}
+
+      {showRenamePrompt && canEditBallot && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold oscars-dark mb-2">Name your ballot</h3>
@@ -1090,7 +1109,7 @@ export default function PoolEdit() {
               <button
                 type="button"
                 onClick={handleRenameSubmit}
-                disabled={updateSubmissionName.isPending}
+                disabled={updateSubmissionName.isPending || ballotLocked}
                 className="px-4 py-2 oscars-gold-bg text-white rounded hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50"
               >
                 {updateSubmissionName.isPending ? 'Saving...' : 'Save'}
@@ -1118,6 +1137,7 @@ export default function PoolEdit() {
                 poolId={poolId!}
                 currentName={userMembership?.submissionName || null}
                 defaultName={defaultName}
+                isLocked={ballotLocked}
                 onUpdate={() => {
                   queryClient.invalidateQueries({ queryKey: ['userMembership', poolId] });
                 }}
@@ -1259,7 +1279,7 @@ export default function PoolEdit() {
                       >
                         <p>
                           Pick who you think is going to win in each category. You can update your
-                          predictions as many times as you want until 24 hours before the ceremony.
+                          predictions as many times as you want until 1 hour before the ceremony.
                         </p>
                         <div>
                           <p className="font-medium text-gray-700 mb-1">Scoring</p>
@@ -1337,6 +1357,7 @@ export default function PoolEdit() {
                   <CopyFromOtherPoolButton
                     poolId={poolId!}
                     poolYear={pool?.year}
+                    isLocked={ballotLocked}
                     onCopy={() => {
                       queryClient.invalidateQueries({ queryKey: ['predictions', poolId] });
                     }}
@@ -1346,6 +1367,7 @@ export default function PoolEdit() {
                   <ClearAllButton
                     poolId={poolId!}
                     actualWinners={actualWinners}
+                    isLocked={ballotLocked}
                     onClear={() => {
                       queryClient.invalidateQueries({ queryKey: ['predictions', poolId] });
                     }}
@@ -2088,7 +2110,7 @@ export default function PoolEdit() {
                                     const isActualWinnerButNotSelected =
                                       hasWinner && isCorrect && !isSelected;
 
-                                    const canSelect = !hasWinner && !isViewingOtherSubmission;
+                                    const canSelect = !hasWinner && canEditBallot;
 
                                     return (
                                       <div
@@ -3789,10 +3811,12 @@ export default function PoolEdit() {
 function CopyFromOtherPoolButton({
   poolId,
   poolYear,
+  isLocked,
   onCopy,
 }: {
   poolId: string;
   poolYear?: string;
+  isLocked: boolean;
   onCopy: () => void;
 }) {
   const [showModal, setShowModal] = useState(false);
@@ -3845,8 +3869,17 @@ function CopyFromOtherPoolButton({
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
-        className="px-3 py-2.5 min-h-[44px] text-xs text-gray-600 hover:text-gray-800 active:text-gray-800 border border-gray-300 rounded hover:border-gray-400 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation whitespace-nowrap flex-1 sm:flex-initial"
+        onClick={() => {
+          if (isLocked || isBallotLocked()) return;
+          setShowModal(true);
+        }}
+        disabled={isLocked}
+        title={isLocked ? `Ballot editing locked ${BALLOT_LOCK_DISPLAY}` : 'Copy selections'}
+        className={`px-3 py-2.5 min-h-[44px] text-xs border border-gray-300 rounded transition-colors touch-manipulation whitespace-nowrap flex-1 sm:flex-initial ${
+          isLocked
+            ? 'opacity-60 cursor-not-allowed text-gray-500 bg-gray-100'
+            : 'text-gray-600 hover:text-gray-800 active:text-gray-800 hover:border-gray-400 hover:bg-gray-50 active:bg-gray-100'
+        }`}
       >
         Copy Selections
       </button>
@@ -3913,19 +3946,20 @@ function CopyFromOtherPoolButton({
               >
                 {copyResult ? 'Close' : 'Cancel'}
               </button>
-              {filteredSubmissions && filteredSubmissions.length > 0 && !copyResult && (
-                <button
-                  onClick={() => {
-                    if (selectedPoolId) {
-                      copyMutation.mutate(selectedPoolId);
-                    }
-                  }}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={copyMutation.isPending || !selectedPoolId}
-                >
-                  {copyMutation.isPending ? 'Copying...' : 'Copy'}
-                </button>
-              )}
+                {filteredSubmissions && filteredSubmissions.length > 0 && !copyResult && (
+                  <button
+                    onClick={() => {
+                      if (isBallotLocked()) return;
+                      if (selectedPoolId) {
+                        copyMutation.mutate(selectedPoolId);
+                      }
+                    }}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={copyMutation.isPending || !selectedPoolId || isLocked}
+                  >
+                    {copyMutation.isPending ? 'Copying...' : 'Copy'}
+                  </button>
+                )}
             </div>
           </div>
         </div>
@@ -3937,10 +3971,12 @@ function CopyFromOtherPoolButton({
 function ClearAllButton({
   poolId,
   actualWinners,
+  isLocked,
   onClear,
 }: {
   poolId: string;
   actualWinners?: ActualWinner[];
+  isLocked: boolean;
   onClear: () => void;
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -3961,6 +3997,9 @@ function ClearAllButton({
         onClear();
       }, 2000);
     },
+    onError: (error: unknown) => {
+      alert(getApiErrorMessage(error) ?? 'Failed to clear picks');
+    },
   });
 
   const announcedCount = actualWinners?.length || 0;
@@ -3968,8 +4007,17 @@ function ClearAllButton({
   return (
     <>
       <button
-        onClick={() => setShowConfirm(true)}
-        className="px-3 py-2.5 min-h-[44px] text-xs text-gray-600 hover:text-gray-800 active:text-gray-800 border border-gray-300 rounded hover:border-red-300 active:border-red-400 hover:bg-red-50 active:bg-red-100 transition-colors touch-manipulation whitespace-nowrap flex-1 sm:flex-initial"
+        onClick={() => {
+          if (isLocked || isBallotLocked()) return;
+          setShowConfirm(true);
+        }}
+        disabled={isLocked}
+        title={isLocked ? `Ballot editing locked ${BALLOT_LOCK_DISPLAY}` : 'Clear all picks'}
+        className={`px-3 py-2.5 min-h-[44px] text-xs border border-gray-300 rounded transition-colors touch-manipulation whitespace-nowrap flex-1 sm:flex-initial ${
+          isLocked
+            ? 'opacity-60 cursor-not-allowed text-gray-500 bg-gray-100'
+            : 'text-gray-600 hover:text-gray-800 active:text-gray-800 hover:border-red-300 active:border-red-400 hover:bg-red-50 active:bg-red-100'
+        }`}
       >
         Clear All
       </button>
@@ -4017,9 +4065,12 @@ function ClearAllButton({
                 Cancel
               </button>
               <button
-                onClick={() => clearAllMutation.mutate()}
+                onClick={() => {
+                  if (isBallotLocked()) return;
+                  clearAllMutation.mutate();
+                }}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                disabled={clearAllMutation.isPending}
+                disabled={clearAllMutation.isPending || isLocked}
               >
                 {clearAllMutation.isPending ? 'Clearing...' : 'Clear All Picks'}
               </button>
@@ -4035,11 +4086,13 @@ function SubmissionNameEditor({
   poolId,
   currentName,
   defaultName,
+  isLocked,
   onUpdate,
 }: {
   poolId: string;
   currentName: string | null;
   defaultName: string;
+  isLocked: boolean;
   onUpdate: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -4056,6 +4109,9 @@ function SubmissionNameEditor({
       setIsEditing(false);
       onUpdate();
     },
+    onError: (error: unknown) => {
+      alert(getApiErrorMessage(error) ?? 'Failed to update ballot name');
+    },
   });
 
   const displayName = currentName || defaultName;
@@ -4064,9 +4120,16 @@ function SubmissionNameEditor({
   const isDefaultName =
     trimmedCurrentName.length === 0 || trimmedCurrentName === trimmedDefaultName;
   const startEditing = () => {
+    if (isLocked || isBallotLocked()) return;
     setName(displayName);
     setIsEditing(true);
   };
+  useEffect(() => {
+    if (isLocked && isEditing) {
+      setIsEditing(false);
+      setName(displayName);
+    }
+  }, [displayName, isEditing, isLocked]);
   const renameButtonClasses = isDefaultName
     ? 'flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-full border-2 border-yellow-200 text-yellow-100 bg-yellow-100/10 shadow-md hover:bg-yellow-100/20 transition-all focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-900'
     : 'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors';
@@ -4076,7 +4139,7 @@ function SubmissionNameEditor({
       : ''
   }`;
 
-  if (isEditing) {
+  if (isEditing && !isLocked) {
     return (
       <div className="flex flex-col gap-1 w-full">
         <input
@@ -4088,14 +4151,18 @@ function SubmissionNameEditor({
           autoFocus
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              updateName.mutate(name);
+              if (!isLocked && !isBallotLocked()) {
+                updateName.mutate(name);
+              }
             } else if (e.key === 'Escape') {
               setIsEditing(false);
               setName(displayName);
             }
           }}
           onBlur={() => {
-            updateName.mutate(name);
+            if (!isLocked && !isBallotLocked()) {
+              updateName.mutate(name);
+            }
           }}
         />
         <p className="text-xs text-white/70">Press Enter to save, Esc to cancel.</p>
@@ -4108,7 +4175,8 @@ function SubmissionNameEditor({
       <button
         type="button"
         onClick={startEditing}
-        className="flex-1 text-left"
+        disabled={isLocked}
+        className={`flex-1 text-left ${isLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
         aria-label="Edit ballot name"
       >
         <h2 className={displayNameClasses}>{displayName}</h2>
@@ -4118,7 +4186,7 @@ function SubmissionNameEditor({
           </p>
         )}
       </button>
-      {!isDefaultName && (
+      {!isDefaultName && !isLocked && (
         <button
           type="button"
           onClick={startEditing}

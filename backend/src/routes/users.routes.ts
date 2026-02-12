@@ -109,6 +109,62 @@ router.patch('/:userId/password', authenticate, requireSuperuser, async (req: Au
   }
 });
 
+// Delete user (superuser only)
+router.delete('/:userId', authenticate, requireSuperuser, async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      res.status(400).json({ error: 'User ID is required' });
+      return;
+    }
+
+    if (req.user?.id === userId) {
+      res.status(400).json({ error: 'You cannot delete your own account' });
+      return;
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+
+    if (!targetUser) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (targetUser.role === 'SUPERUSER') {
+      const superuserCount = await prisma.user.count({ where: { role: 'SUPERUSER' } });
+      if (superuserCount <= 1) {
+        res.status(400).json({ error: 'You cannot delete the last superuser' });
+        return;
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.actualWinner.updateMany({
+        where: { enteredBy: userId },
+        data: { enteredBy: null },
+      });
+
+      await tx.$executeRaw`
+        UPDATE events
+        SET user_id = NULL
+        WHERE user_id = ${userId}
+      `;
+
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+
+    res.json({ message: 'User deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get a user's seen movies for a given year (superuser only)
 router.get(
   '/:userId/seen-movies/:year',

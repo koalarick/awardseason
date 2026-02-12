@@ -44,6 +44,7 @@ export default function Users() {
   const [roleSaving, setRoleSaving] = useState<Record<string, boolean>>({});
   const [passwordEdits, setPasswordEdits] = useState<Record<string, string>>({});
   const [passwordEditing, setPasswordEditing] = useState<Record<string, boolean>>({});
+  const [deleteStatus, setDeleteStatus] = useState<Record<string, boolean>>({});
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -129,6 +130,32 @@ export default function Users() {
     },
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await api.delete(`/users/${userId}`);
+      return response.data;
+    },
+    onMutate: (userId) => {
+      setDeleteStatus((prev) => ({ ...prev, [userId]: true }));
+      return { userId };
+    },
+    onSuccess: () => {
+      setStatusMessage('User deleted.');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users-seen-counts', year] });
+      queryClient.invalidateQueries({ queryKey: ['global-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['superuser-metrics'] });
+    },
+    onError: (error: unknown) => {
+      setStatusMessage(getApiErrorMessage(error) ?? 'Failed to delete user.');
+    },
+    onSettled: (_data, _error, userId) => {
+      if (userId) {
+        setDeleteStatus((prev) => ({ ...prev, [userId]: false }));
+      }
+    },
+  });
+
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     const term = search.trim().toLowerCase();
@@ -151,6 +178,19 @@ export default function Users() {
       return;
     }
     updateRoleMutation.mutate({ userId, role: nextRole, previousRole });
+  };
+
+  const handleDeleteUser = (entry: UserSummary) => {
+    if (!entry?.id) return;
+    if (entry.id === user?.id) {
+      setStatusMessage('You cannot delete your own account.');
+      return;
+    }
+    const confirmDelete = window.confirm(
+      `Delete ${entry.email}?\n\nThis permanently removes the user, their pools, memberships, predictions, and checklist data.`,
+    );
+    if (!confirmDelete) return;
+    deleteUserMutation.mutate(entry.id);
   };
 
   if (user?.role !== 'SUPERUSER') {
@@ -256,6 +296,7 @@ export default function Users() {
                         <th className="text-right px-4 py-2">Films Seen</th>
                         <th className="text-left px-4 py-2">Password</th>
                         <th className="text-left px-4 py-2">Checklist</th>
+                        <th className="text-left px-4 py-2">Delete</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -266,6 +307,8 @@ export default function Users() {
                         const isEditingPassword = passwordEditing[entry.id] ?? false;
                         const canSetPassword = !isOauthUser && passwordValue.trim().length >= 6;
                         const isSavingRole = roleSaving[entry.id] ?? false;
+                        const isDeleting = deleteStatus[entry.id] ?? false;
+                        const canDelete = entry.id !== user?.id;
 
                         return (
                           <tr key={entry.id} className="border-t border-gray-200">
@@ -365,6 +408,20 @@ export default function Users() {
                                 View
                               </button>
                             </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => handleDeleteUser(entry)}
+                                disabled={!canDelete || isDeleting}
+                                title={
+                                  canDelete
+                                    ? 'Delete user'
+                                    : 'You cannot delete your own account'
+                                }
+                                className="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent"
+                              >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -379,6 +436,8 @@ export default function Users() {
                     const isEditingPassword = passwordEditing[entry.id] ?? false;
                     const passwordValue = passwordEdits[entry.id] ?? '';
                     const canSetPassword = passwordValue.trim().length >= 6;
+                    const isDeleting = deleteStatus[entry.id] ?? false;
+                    const canDelete = entry.id !== user?.id;
 
                     return (
                       <div key={entry.id} className="border border-gray-200 rounded-lg p-4 bg-white">
@@ -482,6 +541,18 @@ export default function Users() {
                               )}
                             </div>
                           </div>
+                        </div>
+                        <div className="pt-2">
+                          <button
+                            onClick={() => handleDeleteUser(entry)}
+                            disabled={!canDelete || isDeleting}
+                            title={
+                              canDelete ? 'Delete user' : 'You cannot delete your own account'
+                            }
+                            className="px-3 py-1 text-[10px] font-semibold rounded-md border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent"
+                          >
+                            {isDeleting ? 'Deleting...' : 'Delete user'}
+                          </button>
                         </div>
                       </div>
                     );
