@@ -521,6 +521,7 @@ export default function PoolEdit() {
   // Check if viewing someone else's submission
   const viewUserId = searchParams.get('userId');
   const isViewingOtherSubmission = Boolean(viewUserId && viewUserId !== user?.id);
+  const showSummaryView = isViewingOtherSubmission;
   const ballotLocked = useBallotLock();
   const canEditBallot = !isViewingOtherSubmission && !ballotLocked;
   const targetUserId = isViewingOtherSubmission ? viewUserId : user?.id;
@@ -1129,7 +1130,7 @@ export default function PoolEdit() {
           {/* Submission Name Header */}
           <div className="bg-slate-800 text-white px-4 sm:px-6 py-3">
             {isViewingOtherSubmission ? (
-              <h2 className="oscars-font text-base sm:text-lg font-bold whitespace-normal break-words">
+              <h2 className="oscars-font text-lg sm:text-xl font-bold whitespace-normal break-words">
                 {submissionName}
               </h2>
             ) : (
@@ -1262,7 +1263,8 @@ export default function PoolEdit() {
             })()}
 
           {/* How It Works - Collapsible */}
-          {categories &&
+          {!isViewingOtherSubmission &&
+            categories &&
             predictions &&
             (() => {
               const multiplierEnabled = poolSettings?.oddsMultiplierEnabled === true;
@@ -1503,8 +1505,8 @@ export default function PoolEdit() {
         )}
         {categories && categories.length > 0 && (
           <div>
-            {isViewingOtherSubmission ? (
-              /* Summary View - Show all picks without tabs, using same order as edit view */
+            {showSummaryView ? (
+              /* Summary View - Show selected nominee per category, no tabs */
               <div className="bg-white rounded-lg shadow p-3 md:p-6">
                 {!predictions || predictions.length === 0 ? (
                   <div className="text-center py-12">
@@ -1512,8 +1514,7 @@ export default function PoolEdit() {
                     <p className="text-gray-400 text-sm">This ballot hasn't been filled out yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Use same category ordering as edit view - iterate through categoryGroups */}
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {categoryGroups
                       .flatMap((group) =>
                         group.categoryIds
@@ -1544,6 +1545,8 @@ export default function PoolEdit() {
                         );
 
                         if (!selectedNominee) return null;
+                        const showFilm =
+                          selectedNominee.film && selectedNominee.name !== selectedNominee.film;
 
                         const currentOdds =
                           categoryOddsForThis.find(
@@ -1571,48 +1574,35 @@ export default function PoolEdit() {
                         });
                         const isCorrect = winner && winner.nomineeId === prediction.nomineeId;
                         const hasWinner = !!winner;
-                        const actualWinnerNominee = winner
-                          ? category.nominees.find((n: Nominee) => n.id === winner.nomineeId)
-                          : null;
 
                         return (
-                          <div
-                            key={category.id}
-                            className={`p-3 md:p-4 rounded-lg border-2 ${
-                              hasWinner
-                                ? isCorrect
-                                  ? 'bg-green-50 border-green-400'
-                                  : 'bg-red-50 border-red-400'
-                                : 'bg-gray-50 border-gray-200'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="oscars-font text-base font-bold oscars-dark">
-                                <span className="md:hidden oscars-font">
-                                  {getMobileCategoryLabel(category.name)}
-                                </span>
-                                <span className="hidden md:inline oscars-font">
-                                  {category.name}
-                                </span>
-                                {hasWinner && (
-                                  <span
-                                    className={`ml-2 text-sm font-semibold ${
-                                      isCorrect ? 'text-green-700' : 'text-red-700'
-                                    }`}
-                                  >
-                                    {isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                                  </span>
-                                )}
+                          <div key={category.id} className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <h4 className="oscars-font text-sm font-bold oscars-dark">
+                                {getMobileCategoryLabel(category.name)}
                               </h4>
+                              {hasWinner && (
+                                <span
+                                  className={`text-[10px] uppercase tracking-[0.2em] font-semibold ${
+                                    isCorrect ? 'text-green-700' : 'text-red-700'
+                                  }`}
+                                >
+                                  {isCorrect ? 'Correct' : 'Incorrect'}
+                                </span>
+                              )}
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div
+                              className={`relative border-2 rounded-lg p-3 shadow-sm ${
+                                hasWinner
+                                  ? isCorrect
+                                    ? 'border-green-400 bg-green-50'
+                                    : 'border-red-300 bg-red-50'
+                                  : 'border-[#D6A23C] bg-gradient-to-b from-[#FFF0D6] via-[#FFF7E5] to-[#FFFCF6]'
+                              }`}
+                            >
                               <div
-                                className={`relative w-12 h-12 flex-shrink-0 rounded overflow-hidden flex items-center justify-center cursor-zoom-in border border-gray-300/50 active:scale-95 transition-transform ${
-                                  hasWinner && !isCorrect ? 'opacity-50' : ''
-                                }`}
-                                onClick={(e) =>
-                                  handleNomineeModalClick(e, selectedNominee, category)
-                                }
+                                className="nominee-image-container relative w-full aspect-[2/3] rounded overflow-hidden flex items-center justify-center bg-gray-100 p-1 border border-gray-300/50"
+                                onClick={(e) => handleNomineeImageClick(e, selectedNominee, category)}
                               >
                                 <div className="group relative h-full w-full">
                                   <img
@@ -1661,10 +1651,31 @@ export default function PoolEdit() {
                                     );
                                   })()}
                                 </div>
-                                {/* Info icon badge - mobile only, subtle */}
-                                <div className="md:hidden absolute top-0.5 right-0.5 bg-white/50 backdrop-blur-sm rounded-full p-0.5">
+                                {/* Info trigger - desktop only */}
+                                <button
+                                  type="button"
+                                  className="nominee-modal-trigger hidden md:flex absolute top-1.5 right-1.5 z-20 h-7 w-7 items-center justify-center rounded-full bg-white/60 text-slate-500 shadow-sm backdrop-blur-sm border border-slate-200/60 transition-all hover:bg-white/80 hover:text-slate-700 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-white"
+                                  onClick={(e) => handleNomineeModalClick(e, selectedNominee, category)}
+                                  aria-label={`View ${selectedNominee.name} details`}
+                                >
                                   <svg
-                                    className="w-2 h-2 text-gray-500"
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={1.75}
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                </button>
+                                {/* Info icon badge - mobile only */}
+                                <div className="md:hidden absolute top-1 right-1 bg-white/70 backdrop-blur-sm rounded-full p-1">
+                                  <svg
+                                    className="w-3 h-3 text-gray-500"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -1677,197 +1688,45 @@ export default function PoolEdit() {
                                     />
                                   </svg>
                                 </div>
-                                {/* Info trigger - desktop only */}
-                                <button
-                                  type="button"
-                                  className="nominee-modal-trigger hidden md:flex absolute top-0.5 right-0.5 z-10 h-5 w-5 items-center justify-center rounded-full bg-white/80 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:text-gray-900 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-1 focus:ring-yellow-400"
-                                  onClick={(e) =>
-                                    handleNomineeModalClick(e, selectedNominee, category)
-                                  }
-                                  aria-label={`View ${selectedNominee.name} details`}
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </svg>
-                                </button>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                {selectedNominee.film &&
-                                  selectedNominee.name !== selectedNominee.film && (
-                                    <>
-                                      <h5
-                                        className={`font-bold text-sm truncate ${
-                                          hasWinner && !isCorrect
-                                            ? 'line-through text-gray-500'
-                                            : 'oscars-dark'
-                                        }`}
-                                      >
-                                        {selectedNominee.name}
-                                      </h5>
-                                      <h5
-                                        className={`font-normal text-xs italic truncate mt-0.5 ${
-                                          hasWinner && !isCorrect
-                                            ? 'line-through text-gray-400'
-                                            : 'text-gray-600'
-                                        }`}
-                                      >
-                                        {selectedNominee.film}
-                                      </h5>
-                                    </>
-                                  )}
-                                {(!selectedNominee.film ||
-                                  selectedNominee.name === selectedNominee.film) && (
-                                  <h5
-                                    className={`font-bold text-sm truncate ${
-                                      hasWinner && !isCorrect
-                                        ? 'line-through text-gray-500'
-                                        : 'oscars-dark'
-                                    }`}
-                                  >
-                                    {selectedNominee.name}
-                                  </h5>
-                                )}
-                                {!oddsLoading && (
-                                  <div className="text-xs text-gray-600 mt-0.5">
-                                    {prediction?.originalOddsPercentage !== null &&
-                                    prediction?.originalOddsPercentage !== undefined &&
-                                    prediction?.nomineeId === selectedNominee.id ? (
-                                      <>
-                                        {currentOdds !== null &&
-                                        currentOdds > 0 &&
-                                        currentOdds !== prediction.originalOddsPercentage ? (
-                                          <div className="text-gray-700">
-                                            Chance to win:{' '}
-                                            <span className="font-semibold">
-                                              {currentOdds.toFixed(0)}%
-                                            </span>{' '}
-                                            <span className="text-gray-500">
-                                              (Selected at:{' '}
-                                              {prediction.originalOddsPercentage.toFixed(0)}%)
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <span>
-                                            Selected at:{' '}
-                                            <span className="font-semibold">
-                                              {prediction.originalOddsPercentage.toFixed(0)}%
-                                            </span>
-                                          </span>
-                                        )}
-                                      </>
-                                    ) : prediction?.oddsPercentage !== null &&
-                                      prediction?.oddsPercentage !== undefined ? (
-                                      currentOdds !== null && currentOdds > 0 ? (
-                                        <span>
-                                          Scoring at:{' '}
-                                          <span className="font-semibold text-yellow-700">
-                                            {currentOdds.toFixed(0)}%
-                                          </span>
-                                        </span>
-                                      ) : (
-                                        <span>
-                                          Selected at:{' '}
-                                          <span className="font-semibold">
-                                            {prediction.oddsPercentage.toFixed(0)}%
-                                          </span>
-                                        </span>
-                                      )
-                                    ) : currentOdds !== null && currentOdds > 0 ? (
-                                      <span>
-                                        Chance to win:{' '}
-                                        <span className="font-semibold">
-                                          {currentOdds.toFixed(0)}%
-                                        </span>
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                )}
-                                {hasWinner && !isCorrect && actualWinnerNominee && (
-                                  <div className="mt-2 pt-2 border-t border-red-300">
-                                    <div className="text-xs text-red-700 font-semibold mb-1">
-                                      Actual Winner:
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-8 h-8 flex-shrink-0 rounded overflow-hidden flex items-center justify-center bg-white">
-                                        <img
-                                          src={getNomineeImage(
-                                            actualWinnerNominee,
-                                            category.id,
-                                            pool.year,
-                                          )}
-                                          alt={actualWinnerNominee.name}
-                                          className="w-full h-full object-contain"
-                                          onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                          }}
-                                        />
-                                      </div>
-                                      <div>
-                                        {actualWinnerNominee.film &&
-                                          actualWinnerNominee.name !== actualWinnerNominee.film && (
-                                            <>
-                                              <div className="font-bold text-sm text-red-700 truncate">
-                                                {actualWinnerNominee.name}
-                                              </div>
-                                              <div className="font-normal text-xs text-red-600 italic truncate">
-                                                {actualWinnerNominee.film}
-                                              </div>
-                                            </>
-                                          )}
-                                        {(!actualWinnerNominee.film ||
-                                          actualWinnerNominee.name ===
-                                            actualWinnerNominee.film) && (
-                                          <div className="font-bold text-sm text-red-700 truncate">
-                                            {actualWinnerNominee.name}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
+                              <div className="mt-2 flex flex-col">
+                                <h5 className="font-bold text-sm oscars-dark line-clamp-2">
+                                  {selectedNominee.name}
+                                </h5>
+                                <h5
+                                  className={`font-normal text-xs text-gray-600 italic line-clamp-1 ${
+                                    showFilm ? '' : 'invisible'
+                                  }`}
+                                  aria-hidden={!showFilm}
+                                >
+                                  {showFilm ? selectedNominee.film : 'Placeholder'}
+                                </h5>
                               </div>
                               {multiplierEnabled && (
-                                <div className="flex flex-col items-end text-sm flex-shrink-0">
-                                  {scoring.multiplier !== 1.0 && (
-                                    <span className="text-gray-600 text-xs">
-                                      ×{scoring.multiplier.toFixed(2)}
-                                    </span>
-                                  )}
-                                  {hasWinner ? (
-                                    isCorrect ? (
-                                      <>
-                                        <span className="text-xs text-green-700 font-semibold mb-0.5">
-                                          Earned
+                                <div className="mt-1 pt-2 border-t border-gray-200">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-gray-500 text-sm">Points</span>
+                                    {hasWinner ? (
+                                      isCorrect ? (
+                                        <span className="font-bold text-green-700 text-sm">
+                                          {scoring.totalPoints.toFixed(1)}
                                         </span>
-                                        <span className="font-bold text-green-700">
-                                          {scoring.totalPoints.toFixed(1)} pts
-                                        </span>
-                                      </>
+                                      ) : (
+                                        <span className="font-bold text-red-700 text-sm">0</span>
+                                      )
                                     ) : (
-                                      <>
-                                        <span className="font-bold text-red-700 text-base mb-0.5">
-                                          0 pts
+                                      <div className="flex items-baseline gap-1">
+                                        <span className="font-bold oscars-gold text-sm">
+                                          {scoring.totalPoints.toFixed(1)}
                                         </span>
-                                        <span className="text-gray-400 line-through text-xs">
-                                          {scoring.totalPoints.toFixed(1)} pts
-                                        </span>
-                                      </>
-                                    )
-                                  ) : (
-                                    <span className="font-bold oscars-gold">
-                                      {scoring.totalPoints.toFixed(1)} pts
-                                    </span>
-                                  )}
+                                        {multiplierEnabled && scoring.multiplier !== 1.0 && (
+                                          <span className="text-yellow-600 text-xs">
+                                            ({scoring.multiplier.toFixed(2)}x)
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -2111,7 +1970,6 @@ export default function PoolEdit() {
                                       hasWinner && isCorrect && !isSelected;
 
                                     const canSelect = !hasWinner && canEditBallot;
-
                                     return (
                                       <div
                                         key={nominee.id}
