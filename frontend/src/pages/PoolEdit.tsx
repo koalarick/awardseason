@@ -902,20 +902,20 @@ export default function PoolEdit() {
     if (existingPrediction && existingPrediction.nomineeId !== nomineeId) {
       const oldOdds = existingPrediction.oddsPercentage;
 
-      // Only show warning if the old selection had odds stored AND they differ from current odds
+      // Only show warning if the old selection had odds stored AND current odds are better
       if (oldOdds !== null && oldOdds !== undefined) {
         const categoryOddsForThis = getCategoryOdds(categoryId);
         // Get current odds for the currently selected nominee (the one being changed from)
         const currentOddsForOldNominee =
           categoryOddsForThis.find(
             (oddsEntry) => oddsEntry.nomineeId === existingPrediction.nomineeId,
-          )?.odds || null;
+          )?.odds ?? null;
 
-        // Only show warning if odds have changed for the current selection
+        // Only show warning if current odds are higher (better) than when originally picked
         if (
           currentOddsForOldNominee !== null &&
           currentOddsForOldNominee !== undefined &&
-          Math.abs(currentOddsForOldNominee - oldOdds) > 0.01
+          currentOddsForOldNominee - oldOdds > 0.01
         ) {
           const category = categories?.find((c: Category) => c.id === categoryId);
           const oldNominee = category?.nominees.find(
@@ -2499,22 +2499,11 @@ export default function PoolEdit() {
             <h3 className="oscars-font text-xl font-bold oscars-dark mb-4">
               Change Your Selection?
             </h3>
-            <p className="text-gray-700 mb-3">
-              <strong>{pendingSelection.categoryName}:</strong> You're about to change from{' '}
-              <strong className="text-yellow-700">{pendingSelection.oldNomineeName}</strong>{' '}
-              (selected at {pendingSelection.oldOdds?.toFixed(0)}%) to{' '}
-              <strong className="text-yellow-700">{pendingSelection.nomineeName}</strong>
-              {pendingSelection.currentOdds !== null && pendingSelection.currentOdds !== undefined
-                ? ` (current odds: ${pendingSelection.currentOdds.toFixed(0)}%)`
-                : ''}
-              .
-            </p>
-            <p className="text-gray-700 mb-6">
-              <strong className="text-red-600">Important:</strong> If you change your selection and
-              then switch back to <strong>{pendingSelection.oldNomineeName}</strong> later, you'll
-              get the <strong>current odds at that time</strong>, not your original{' '}
-              {pendingSelection.oldOdds?.toFixed(0)}% odds. Your original odds will be lost.
-            </p>
+            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <span className="font-semibold uppercase tracking-wide">Warning:</span> Your original
+              pick&apos;s odds have improved. We&apos;ve locked in your multiplier, but if you
+              change your selection, it will be lost.
+            </div>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={cancelSelectionChange}
