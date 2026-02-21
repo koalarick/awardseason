@@ -150,14 +150,12 @@ router.patch(
         return;
       }
 
-      if (
-        'year' in updateData &&
-        (updateData.year === undefined ||
-          !Number.isFinite(updateData.year) ||
-          updateData.year <= 0)
-      ) {
-        res.status(400).json({ error: 'year must be a positive number' });
-        return;
+      if ('year' in updateData) {
+        const yearValue = updateData.year;
+        if (typeof yearValue !== 'number' || !Number.isFinite(yearValue) || yearValue <= 0) {
+          res.status(400).json({ error: 'year must be a positive number' });
+          return;
+        }
       }
 
       if (Object.keys(updateData).length === 0) {
