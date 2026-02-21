@@ -293,10 +293,6 @@ export default function MovieMetadata() {
     return null;
   }
 
-  const imdbLink = formState.imdbId.trim()
-    ? `https://www.imdb.com/title/${formState.imdbId.trim()}`
-    : null;
-
   const posterPreviewId =
     normalizeValue(formState.posterImageId) ||
     (selectedMovie?.slug ? stripYearSuffix(selectedMovie.slug) : '') ||
