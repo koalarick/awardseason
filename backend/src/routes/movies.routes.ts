@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { authenticate, requireSuperuser, AuthRequest } from '../middleware/auth.middleware';
 
 const prisma = new PrismaClient();
@@ -87,10 +87,7 @@ router.patch(
       ] as const;
       type MovieStringField = (typeof stringFields)[number];
 
-      const updateData: Partial<Record<MovieStringField, string | null>> & {
-        year?: number;
-        tmdbId?: number | null;
-      } = {};
+      const updateData: Prisma.MovieUpdateInput = {};
 
       for (const field of stringFields) {
         if (!(field in req.body)) continue;
@@ -102,12 +99,20 @@ router.patch(
         }
 
         if (rawValue === null) {
-          updateData[field] = null;
+          if (field !== 'title') {
+            updateData[field] = null;
+          }
           continue;
         }
 
         const trimmed = rawValue.trim();
-        updateData[field] = trimmed.length > 0 ? trimmed : null;
+        if (field === 'title') {
+          if (trimmed.length > 0) {
+            updateData.title = trimmed;
+          }
+        } else {
+          updateData[field] = trimmed.length > 0 ? trimmed : null;
+        }
       }
 
       if ('year' in req.body) {
@@ -145,7 +150,12 @@ router.patch(
         return;
       }
 
-      if ('year' in updateData && (!Number.isFinite(updateData.year) || updateData.year <= 0)) {
+      if (
+        'year' in updateData &&
+        (updateData.year === undefined ||
+          !Number.isFinite(updateData.year) ||
+          updateData.year <= 0)
+      ) {
         res.status(400).json({ error: 'year must be a positive number' });
         return;
       }
