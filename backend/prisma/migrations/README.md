@@ -6,17 +6,17 @@ This directory contains database migrations for the Academy Awards Pool applicat
 
 ### Migration Order (by timestamp)
 
-1. **20260125135834_add_paid_pool_fields** (Jan 25, 2026 13:58:34)
-   - Adds paid pool functionality
-   - Adds `is_paid_pool`, `entry_amount`, `venmo_alias` columns to `pools` table
-   - Adds `has_paid` column to `pool_members` table
-
-2. **20260125172918_add_original_odds_percentage** (Jan 25, 2026 17:29:18)
+1. **20260125172918_add_original_odds_percentage** (Jan 25, 2026 17:29:18)
    - **NOTE: This is the INITIAL migration that creates all database tables**
    - Creates all core tables: users, pools, pool_members, predictions, odds_snapshots, actual_winners, pool_settings, categories, nominees
    - Creates UserRole enum
    - Creates all indexes and foreign keys
    - Adds `original_odds_percentage` column to `predictions` table
+
+2. **20260125180000_add_paid_pool_fields** (Jan 25, 2026 18:00:00)
+   - Adds paid pool functionality
+   - Adds `is_paid_pool`, `entry_amount`, `venmo_alias` columns to `pools` table
+   - Adds `has_paid` column to `pool_members` table
 
 3. **20260126000000_add_payout_structure** (Jan 26, 2026 00:00:00)
    - Adds `payout_structure` JSONB column to `pool_settings` table
@@ -33,6 +33,14 @@ This directory contains database migrations for the Academy Awards Pool applicat
 
 7. **20260221161500_add_odds_current_table** (Feb 21, 2026 16:15:00)
    - Adds `odds_current` table to store latest odds per nominee
+
+8. **20260221170000_add_movies_table** (Feb 21, 2026 17:00:00)
+   - Adds `movies` table and indexes for release-year movie metadata
+
+9. **20260221180000_backfill_missing_schema** (Feb 21, 2026 18:00:00)
+   - Adds missing password reset + seen movies tables/constraints
+   - Adds nominee blurb + IMDb columns
+   - Aligns timestamp columns with `TIMESTAMPTZ`
 
 ## Important Notes
 

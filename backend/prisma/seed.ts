@@ -41,6 +41,8 @@ const categoryGroups = {
   ],
 };
 
+const MOVIE_RELEASE_YEAR = 2025;
+
 type NomineeSeed = {
   id: string;
   name: string;
@@ -61,6 +63,70 @@ type CategorySeed = {
 };
 
 type NomineesByYear = Record<string, CategorySeed[]>;
+
+type MovieSeed = {
+  slug: string;
+  title: string;
+  year: number;
+  imdbId: string | null;
+  letterboxdUrl: string | null;
+  tmdbId: number | null;
+  wikidataId: string | null;
+  posterPath: string | null;
+  posterImageId: string | null;
+};
+
+const personCategoryPattern = /(actor|actress|directing)/i;
+
+function isPersonCategory(categoryId: string): boolean {
+  return personCategoryPattern.test(categoryId);
+}
+
+function normalizeSpecialCharacters(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[āáàâä]/g, 'a')
+    .replace(/[ēéèêë]/g, 'e')
+    .replace(/[īíìîï]/g, 'i')
+    .replace(/[ōóòôö]/g, 'o')
+    .replace(/[ūúùûü]/g, 'u')
+    .replace(/[ç]/g, 'c')
+    .replace(/[ñ]/g, 'n')
+    .trim();
+}
+
+function filmNameToSlug(name: string): string {
+  return normalizeSpecialCharacters(name)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function extractImdbId(url?: string): string | null {
+  if (!url) return null;
+  const match = url.match(/tt\\d+/i);
+  return match ? match[0] : null;
+}
+
+function getMovieTitleFromNominee(nominee: NomineeSeed, categoryId: string): string | null {
+  if (isPersonCategory(categoryId)) {
+    return nominee.film ?? null;
+  }
+
+  if (nominee.film) {
+    return nominee.film;
+  }
+
+  if (categoryId === 'music-song' && nominee.song) {
+    const match = nominee.song.match(/from\\s+([^;]+)/i);
+    return match?.[1]?.trim() || null;
+  }
+
+  if (nominee.name) {
+    return nominee.name;
+  }
+
+  return null;
+}
 
 function getDefaultPointsForCategory(categoryId: string): number {
   if (categoryGroups.major.includes(categoryId)) {
@@ -223,6 +289,35 @@ async function main() {
   if (yearData && Array.isArray(yearData)) {
     console.log(`Seeding ${yearData.length} categories for year ${year}...`);
 
+    const moviesBySlug = new Map<string, MovieSeed>();
+
+    const upsertMovieSeed = (
+      title: string,
+      imdbId: string | null,
+      letterboxdUrl: string | null,
+    ) => {
+      const slug = filmNameToSlug(title);
+      const existing = moviesBySlug.get(slug);
+
+      if (!existing) {
+        moviesBySlug.set(slug, {
+          slug,
+          title,
+          year: MOVIE_RELEASE_YEAR,
+          imdbId,
+          letterboxdUrl,
+          tmdbId: null,
+          wikidataId: null,
+          posterPath: null,
+          posterImageId: null,
+        });
+        return;
+      }
+
+      if (!existing.imdbId && imdbId) existing.imdbId = imdbId;
+      if (!existing.letterboxdUrl && letterboxdUrl) existing.letterboxdUrl = letterboxdUrl;
+    };
+
     // Clear existing nominees and categories for this year first (in case of schema changes)
     console.log('Clearing existing data for year', year);
     await prisma.nominee.deleteMany({
@@ -239,6 +334,22 @@ async function main() {
     });
 
     for (const categoryData of yearData) {
+      const categoryIsPerson = isPersonCategory(categoryData.id);
+
+      if (categoryData.nominees && Array.isArray(categoryData.nominees)) {
+        for (const nomineeData of categoryData.nominees) {
+          const title = getMovieTitleFromNominee(nomineeData, categoryData.id);
+          if (!title) {
+            continue;
+          }
+          const imdbId = categoryIsPerson ? null : extractImdbId(nomineeData.imdb_url);
+          const letterboxdUrl = categoryIsPerson
+            ? null
+            : nomineeData.letterboxd_url || null;
+          upsertMovieSeed(title, imdbId, letterboxdUrl);
+        }
+      }
+
       // Create composite ID: categoryId-year
       const categoryId = `${categoryData.id}-${year}`;
 
@@ -303,6 +414,34 @@ async function main() {
         console.log(`  - Seeded ${categoryData.nominees.length} nominees for ${category.name}`);
       }
     }
+
+    console.log(`Seeding ${moviesBySlug.size} movies with release year ${MOVIE_RELEASE_YEAR}...`);
+    for (const movie of moviesBySlug.values()) {
+      const updateData: Parameters<typeof prisma.movie.upsert>[0]['update'] = {
+        title: movie.title,
+        year: movie.year,
+      };
+
+      if (movie.imdbId) updateData.imdbId = movie.imdbId;
+      if (movie.letterboxdUrl) updateData.letterboxdUrl = movie.letterboxdUrl;
+
+      await prisma.movie.upsert({
+        where: { slug: movie.slug },
+        update: updateData,
+        create: {
+          slug: movie.slug,
+          title: movie.title,
+          year: movie.year,
+          imdbId: movie.imdbId,
+          letterboxdUrl: movie.letterboxdUrl,
+          tmdbId: movie.tmdbId,
+          wikidataId: movie.wikidataId,
+          posterPath: movie.posterPath,
+          posterImageId: movie.posterImageId,
+        },
+      });
+    }
+    console.log('Movies seeded.');
 
     console.log(`Categories and nominees seeded for year ${year}`);
 

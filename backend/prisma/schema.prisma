@@ -143,8 +143,8 @@ model OddsCurrent {
   categoryId     String   @map("category_id")
   nomineeId      String   @map("nominee_id")
   oddsPercentage Float    @map("odds_percentage")
-  snapshotTime   DateTime @map("snapshot_time")
-  updatedAt      DateTime @default(now()) @map("updated_at")
+  snapshotTime   DateTime @map("snapshot_time") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
   @@id([categoryId, nomineeId])
   @@map("odds_current")
@@ -171,7 +171,7 @@ model ActualWinner {
 model Event {
   id         String   @id @default(uuid())
   eventName  String   @map("event_name")
-  createdAt  DateTime @default(now()) @map("created_at")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
   userId     String?  @map("user_id")
   poolId     String?  @map("pool_id")
   requestId  String?  @map("request_id")
@@ -239,4 +239,22 @@ model Nominee {
   @@id([categoryId, id])  // Composite primary key - allows same ID in different categories
   @@index([categoryId])
   @@map("nominees")
+}
+
+model Movie {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  title         String
+  year          Int
+  imdbId        String?  @unique @map("imdb_id")
+  letterboxdUrl String?  @map("letterboxd_url")
+  tmdbId        Int?     @map("tmdb_id")
+  wikidataId    String?  @map("wikidata_id")
+  posterPath    String?  @map("poster_path")
+  posterImageId String?  @map("poster_image_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([year])
+  @@map("movies")
 }

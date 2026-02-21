@@ -75,6 +75,12 @@ export default function SuperuserDashboard() {
       cta: 'Edit Metadata',
       onClick: () => navigate('/nominees/metadata'),
     },
+    {
+      title: 'Movie Metadata',
+      description: 'Update movie IDs, release year, and external links.',
+      cta: 'Edit Movies',
+      onClick: () => navigate('/movies/metadata'),
+    },
   ];
 
   return (

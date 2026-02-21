@@ -110,3 +110,18 @@ export interface Category {
   nominees: Nominee[];
   year?: string;
 }
+
+export interface Movie {
+  id: string;
+  slug: string;
+  title: string;
+  year: number;
+  imdbId?: string;
+  letterboxdUrl?: string;
+  tmdbId?: number;
+  wikidataId?: string;
+  posterPath?: string;
+  posterImageId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
