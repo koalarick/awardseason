@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import type { Movie } from '../types/pool';
 import { getApiErrorMessage } from '../utils/apiErrors';
+import { filmNameToSlug } from '../utils/nomineeImages';
 import BackButton from '../components/BackButton';
 import { useSmartBack } from '../hooks/useSmartBack';
 
@@ -33,9 +34,7 @@ const emptyForm: MovieFormState = {
 
 const normalizeValue = (value?: string | null) => (value ?? '').trim();
 const normalizeNumber = (value?: number | null) => (value === null || value === undefined ? '' : String(value));
-
-const isMetadataComplete = (movie: Movie) =>
-  Boolean(movie.imdbId || movie.tmdbId || movie.wikidataId || movie.letterboxdUrl);
+const stripYearSuffix = (value: string) => value.replace(/-\d{4}(?:-\d+)?$/, '');
 
 export default function MovieMetadata() {
   const { user, logout } = useAuth();
@@ -43,17 +42,16 @@ export default function MovieMetadata() {
   const location = useLocation();
   const goBack = useSmartBack({ fallback: '/superuser' });
   const queryClient = useQueryClient();
-  const defaultYear = String(new Date().getFullYear() - 1);
-  const [yearInput, setYearInput] = useState(defaultYear);
-  const [year, setYear] = useState(defaultYear);
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
   const [formState, setFormState] = useState<MovieFormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const pendingSelectionRef = useRef<{ movieId?: string; year?: string } | null>(null);
+  const pendingSelectionRef = useRef<{ movieId?: string } | null>(null);
   const editPanelRef = useRef<HTMLDivElement | null>(null);
   const [listPanelHeight, setListPanelHeight] = useState<number | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [posterError, setPosterError] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== 'SUPERUSER') {
@@ -94,33 +92,27 @@ export default function MovieMetadata() {
   }, [isDesktop]);
 
   useEffect(() => {
-    const state = location.state as { createdMovieId?: string; year?: string } | null;
+    const state = location.state as { createdMovieId?: string } | null;
     if (!state) return;
-
-    if (state.year && state.year !== year) {
-      setYearInput(state.year);
-      setYear(state.year);
-    }
 
     if (state.createdMovieId) {
       pendingSelectionRef.current = {
         movieId: state.createdMovieId,
-        year: state.year,
       };
     }
 
     navigate('/movies/metadata', { replace: true, state: null });
-  }, [location.state, navigate, year]);
+  }, [location.state, navigate]);
 
   const {
     data: movies,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['movies', year],
+    queryKey: ['movies'],
     queryFn: async () => {
       try {
-        const response = await api.get(`/movies/${year}`);
+        const response = await api.get('/movies');
         return response.data as Movie[];
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -129,7 +121,6 @@ export default function MovieMetadata() {
         throw error;
       }
     },
-    enabled: !!year,
   });
 
   useEffect(() => {
@@ -139,10 +130,6 @@ export default function MovieMetadata() {
     }
 
     const pending = pendingSelectionRef.current;
-    if (pending?.year && pending.year !== year) {
-      return;
-    }
-
     if (pending?.movieId && movies.some((movie) => movie.id === pending.movieId)) {
       setSelectedMovieId(pending.movieId);
       pendingSelectionRef.current = null;
@@ -152,7 +139,7 @@ export default function MovieMetadata() {
     if (!selectedMovieId || !movies.some((movie) => movie.id === selectedMovieId)) {
       setSelectedMovieId(movies[0].id);
     }
-  }, [movies, selectedMovieId, year]);
+  }, [movies, selectedMovieId]);
 
   const selectedMovie = useMemo(() => {
     if (!movies || !selectedMovieId) return null;
@@ -180,6 +167,10 @@ export default function MovieMetadata() {
     setFormError(null);
     setSaveMessage(null);
   }, [selectedMovie]);
+
+  useEffect(() => {
+    setPosterError(false);
+  }, [selectedMovieId, formState.posterImageId, formState.title, formState.year]);
 
   const isDirty = useMemo(() => {
     if (!selectedMovie) return false;
@@ -215,7 +206,7 @@ export default function MovieMetadata() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movies', year] });
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
       setSaveMessage('Saved movie metadata.');
       setFormError(null);
     },
@@ -230,7 +221,7 @@ export default function MovieMetadata() {
       return response.data as { id: string };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movies', year] });
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
       setFormError(null);
       setSaveMessage(null);
     },
@@ -306,8 +297,31 @@ export default function MovieMetadata() {
     ? `https://www.imdb.com/title/${formState.imdbId.trim()}`
     : null;
 
+  const posterPreviewId =
+    normalizeValue(formState.posterImageId) ||
+    (selectedMovie?.slug ? stripYearSuffix(selectedMovie.slug) : '') ||
+    (formState.title.trim() ? filmNameToSlug(formState.title) : '');
+  const parsedReleaseYear = Number.parseInt(formState.year.trim(), 10);
+  const posterPreviewYear = Number.isFinite(parsedReleaseYear)
+    ? String(parsedReleaseYear + 1)
+    : String(new Date().getFullYear());
+  const posterPreviewSrc = posterPreviewId
+    ? `/images/${posterPreviewYear}_movie_${posterPreviewId}.jpg`
+    : null;
+  const showPosterPreview = Boolean(posterPreviewSrc) && !posterError;
+
   const movieCount = movies?.length ?? 0;
   const moviesList = movies ?? [];
+  const filteredMovies = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return moviesList.filter((movie) => {
+      return (
+        !term ||
+        movie.title.toLowerCase().includes(term) ||
+        movie.slug.toLowerCase().includes(term)
+      );
+    });
+  }, [moviesList, searchTerm]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -349,46 +363,12 @@ export default function MovieMetadata() {
           </div>
 
           <div className="p-4 sm:p-6 space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="year-input"
-                  className="text-xs font-semibold oscars-dark uppercase tracking-wide"
-                >
-                  Release Year
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="year-input"
-                    type="text"
-                    inputMode="numeric"
-                    value={yearInput}
-                    onChange={(e) => setYearInput(e.target.value)}
-                    className="w-24 px-3 py-2.5 min-h-[44px] text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    placeholder="2025"
-                  />
-                  <button
-                    onClick={() => {
-                      const nextYear = yearInput.trim();
-                      if (nextYear) {
-                        setYear(nextYear);
-                        setSelectedMovieId(null);
-                      }
-                    }}
-                    className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-medium"
-                  >
-                    Load
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {isLoading && <p className="text-sm text-gray-600">Loading movies...</p>}
 
-            {isError && <p className="text-sm text-red-600">Failed to load movies for {year}.</p>}
+            {isError && <p className="text-sm text-red-600">Failed to load movies.</p>}
 
             {!isLoading && movies && movies.length === 0 && (
-              <p className="text-sm text-gray-600">No movies found for {year}.</p>
+              <p className="text-sm text-gray-600">No movies found.</p>
             )}
 
             {!isLoading && (
@@ -399,15 +379,12 @@ export default function MovieMetadata() {
                     isDesktop && listPanelHeight ? { height: `${listPanelHeight}px` } : undefined
                   }
                 >
-                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 space-y-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <h3 className="text-sm font-semibold oscars-dark uppercase tracking-wide">
-                        Movies ({year})
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-500">
-                          {movieCount} total
-                        </span>
+                      <span className="text-sm font-semibold oscars-dark uppercase tracking-wide">
+                        {movieCount} movies
+                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => navigate('/movies/metadata/new')}
                           className="px-3 py-2 text-xs font-semibold bg-slate-800 text-white rounded hover:bg-slate-700 active:bg-slate-900 transition-colors"
@@ -416,11 +393,19 @@ export default function MovieMetadata() {
                         </button>
                       </div>
                     </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search title or slug"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      />
+                    </div>
                   </div>
                   <div className="flex-1 min-h-0 overflow-y-auto max-h-[520px] lg:max-h-none">
-                    {moviesList.map((movie) => {
+                    {filteredMovies.map((movie) => {
                       const isSelected = movie.id === selectedMovieId;
-                      const isComplete = isMetadataComplete(movie);
                       return (
                         <button
                           key={movie.id}
@@ -429,24 +414,19 @@ export default function MovieMetadata() {
                             isSelected ? 'bg-yellow-50/60' : 'bg-white'
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-sm oscars-dark">{movie.title}</p>
-                              <p className="text-xs text-gray-500">Slug: {movie.slug}</p>
-                            </div>
-                            <span
-                              className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded border ${
-                                isComplete
-                                  ? 'bg-green-100 text-green-700 border-green-200'
-                                  : 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                              }`}
-                            >
-                              {isComplete ? 'Has IDs' : 'Needs IDs'}
-                            </span>
+                          <div>
+                            <p className="font-semibold text-sm oscars-dark">
+                              {movie.title} <span className="text-xs text-gray-500">({movie.year})</span>
+                            </p>
                           </div>
                         </button>
                       );
                     })}
+                    {filteredMovies.length === 0 && (
+                      <div className="px-4 py-6 text-sm text-gray-500">
+                        No movies match that filter.
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -459,148 +439,148 @@ export default function MovieMetadata() {
                         {selectedMovie ? `Edit ${selectedMovie.title}` : 'Select a movie'}
                       </h3>
                     </div>
-                    <div className="p-4 space-y-4">
+                    <div className="p-4 space-y-6">
                       {selectedMovie ? (
                         <>
-                          <div className="text-xs text-gray-500 space-y-1">
-                            <div>ID: {selectedMovie.id}</div>
-                            <div>Slug: {selectedMovie.slug}</div>
+                          <div>
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Poster
+                              </p>
+                              <div className="w-56 sm:w-64 lg:w-[300px] aspect-[2/3] border border-gray-200 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                {showPosterPreview ? (
+                                  <img
+                                    src={posterPreviewSrc ?? undefined}
+                                    alt={`${formState.title || selectedMovie.title} poster`}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    onError={() => setPosterError(true)}
+                                  />
+                                ) : (
+                                  <div className="px-3 text-center text-xs text-gray-500">
+                                    Poster not found
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              Title
-                            </label>
-                            <input
-                              type="text"
-                              value={formState.title}
-                              onChange={(e) =>
-                                setFormState({ ...formState, title: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                          </div>
+                          <div className="space-y-3">
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Title
+                              </label>
+                              <input
+                                type="text"
+                                value={formState.title}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, title: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              Release Year
-                            </label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={formState.year}
-                              onChange={(e) =>
-                                setFormState({ ...formState, year: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                          </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Release Year
+                              </label>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={formState.year}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, year: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              IMDb ID
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="tt1234567"
-                              value={formState.imdbId}
-                              onChange={(e) =>
-                                setFormState({ ...formState, imdbId: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                            {imdbLink && (
-                              <a
-                                href={imdbLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                Open IMDb link
-                              </a>
-                            )}
-                          </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                IMDb ID
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="tt1234567"
+                                value={formState.imdbId}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, imdbId: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              Letterboxd URL (optional)
-                            </label>
-                            <input
-                              type="url"
-                              value={formState.letterboxdUrl}
-                              onChange={(e) =>
-                                setFormState({ ...formState, letterboxdUrl: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                            {formState.letterboxdUrl && (
-                              <a
-                                href={formState.letterboxdUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                Open Letterboxd link
-                              </a>
-                            )}
-                          </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Letterboxd URL (optional)
+                              </label>
+                              <input
+                                type="url"
+                                value={formState.letterboxdUrl}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, letterboxdUrl: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              TMDB ID (optional)
-                            </label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={formState.tmdbId}
-                              onChange={(e) =>
-                                setFormState({ ...formState, tmdbId: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                          </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                TMDB ID (optional)
+                              </label>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={formState.tmdbId}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, tmdbId: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              Wikidata ID (optional)
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Q123456"
-                              value={formState.wikidataId}
-                              onChange={(e) =>
-                                setFormState({ ...formState, wikidataId: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                          </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Wikidata ID (optional)
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Q123456"
+                                value={formState.wikidataId}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, wikidataId: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              Poster Path (optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={formState.posterPath}
-                              onChange={(e) =>
-                                setFormState({ ...formState, posterPath: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                          </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Poster Path (optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={formState.posterPath}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, posterPath: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
-                              Poster Image ID (optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={formState.posterImageId}
-                              onChange={(e) =>
-                                setFormState({ ...formState, posterImageId: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold oscars-dark uppercase tracking-wide">
+                                Poster Image ID (optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={formState.posterImageId}
+                                onChange={(e) =>
+                                  setFormState({ ...formState, posterImageId: e.target.value })
+                                }
+                                className="w-full px-3 py-2.5 min-h-[44px] text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              />
+                            </div>
                           </div>
 
                           {formError && <p className="text-sm text-red-600">{formError}</p>}

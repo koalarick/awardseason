@@ -81,6 +81,24 @@ const getUniqueMovieSlug = async (title: string, year: number) => {
   return candidate;
 };
 
+router.get('/', async (_req, res: Response) => {
+  try {
+    const movies = await prisma.movie.findMany({
+      orderBy: [{ year: 'desc' }, { title: 'asc' }],
+    });
+
+    if (!movies.length) {
+      res.status(404).json({ error: 'No movies found.' });
+      return;
+    }
+
+    res.json(movies.map((movie) => formatMovie(movie)));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load movies';
+    res.status(500).json({ error: message });
+  }
+});
+
 router.get('/:year', async (req, res: Response) => {
   try {
     const yearParam = normalizeYear(req.params.year);
