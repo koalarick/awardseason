@@ -447,12 +447,12 @@ export default function MovieMetadata() {
                               <p className="text-xs font-semibold oscars-dark uppercase tracking-wide">
                                 Poster
                               </p>
-                              <div className="w-56 sm:w-64 lg:w-[300px] aspect-[2/3] border border-gray-200 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                              <div className="max-w-[320px] border border-gray-200 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                                 {showPosterPreview ? (
                                   <img
                                     src={posterPreviewSrc ?? undefined}
                                     alt={`${formState.title || selectedMovie.title} poster`}
-                                    className="w-full h-full object-cover"
+                                    className="max-w-full h-auto"
                                     loading="lazy"
                                     onError={() => setPosterError(true)}
                                   />
