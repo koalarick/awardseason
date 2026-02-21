@@ -15,10 +15,6 @@ type CategoryWithNominees = {
   id: string;
   nominees: NomineeSnapshotCandidate[];
 };
-type LatestOddsRow = {
-  nomineeId: string;
-  oddsPercentage: number | null;
-};
 type LatestOddsByCategoryRow = {
   categoryId: string;
   nomineeId: string;
@@ -90,55 +86,38 @@ export class OddsService {
   }
 
   async getCurrentOdds(categoryId: string, nomineeId: string): Promise<number | null> {
-    // Get the most recent snapshot
-    const snapshot = await prisma.oddsSnapshot.findFirst({
+    const current = await prisma.oddsCurrent.findUnique({
       where: {
-        categoryId,
-        nomineeId,
-      },
-      orderBy: {
-        snapshotTime: 'desc',
+        categoryId_nomineeId: {
+          categoryId,
+          nomineeId,
+        },
       },
       select: {
         oddsPercentage: true,
       },
     });
 
-    return snapshot?.oddsPercentage ?? null;
+    return current?.oddsPercentage ?? null;
   }
 
-  async getCurrentOddsForCategory(categoryId: string): Promise<Record<string, number | null>> {
-    const rows = await prisma.$queryRaw<LatestOddsRow[]>`
-      SELECT DISTINCT ON ("nominee_id")
-        "nominee_id" AS "nomineeId",
-        "odds_percentage" AS "oddsPercentage"
-      FROM "odds_snapshots"
-      WHERE "category_id" = ${categoryId}
-      ORDER BY "nominee_id", "snapshot_time" DESC
-    `;
-
-    const oddsByNominee: Record<string, number | null> = {};
-    for (const row of rows) {
-      oddsByNominee[row.nomineeId] = row.oddsPercentage ?? null;
-    }
-
-    return oddsByNominee;
-  }
-
-  async getCurrentOddsForCategories(
-    categoryIds: string[],
+  async getCurrentOddsForNomineePairs(
+    pairs: Array<{ categoryId: string; nomineeId: string }>,
   ): Promise<Record<string, Record<string, number | null>>> {
-    if (categoryIds.length === 0) return {};
+    if (pairs.length === 0) return {};
 
+    const valueTuples = pairs.map(
+      (pair) => Prisma.sql`(${pair.categoryId}, ${pair.nomineeId})`,
+    );
     const rows = await prisma.$queryRaw<LatestOddsByCategoryRow[]>(
       Prisma.sql`
-        SELECT DISTINCT ON ("category_id", "nominee_id")
-          "category_id" AS "categoryId",
-          "nominee_id" AS "nomineeId",
-          "odds_percentage" AS "oddsPercentage"
-        FROM "odds_snapshots"
-        WHERE "category_id" IN (${Prisma.join(categoryIds)})
-        ORDER BY "category_id", "nominee_id", "snapshot_time" DESC
+        SELECT v.category_id AS "categoryId",
+               v.nominee_id AS "nomineeId",
+               c.odds_percentage AS "oddsPercentage"
+        FROM (VALUES ${Prisma.join(valueTuples)}) AS v(category_id, nominee_id)
+        LEFT JOIN odds_current c
+          ON c.category_id = v.category_id
+         AND c.nominee_id = v.nominee_id
       `,
     );
 

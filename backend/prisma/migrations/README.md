@@ -31,6 +31,9 @@ This directory contains database migrations for the Academy Awards Pool applicat
 6. **20260221153000_add_events_table** (Feb 21, 2026 15:30:00)
    - Adds `events` table and related indexes
 
+7. **20260221161500_add_odds_current_table** (Feb 21, 2026 16:15:00)
+   - Adds `odds_current` table to store latest odds per nominee
+
 ## Important Notes
 
 - The migration `20260125172918_add_original_odds_percentage` is named for a specific feature but actually contains the initial schema creation. This is the base migration.

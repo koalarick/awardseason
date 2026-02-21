@@ -344,17 +344,39 @@ export class KalshiService {
       if (match && match.price !== null) {
         // Always create new snapshot for history tracking
         // getCurrentOdds will get the most recent one
-        await prisma.oddsSnapshot.create({
-          data: {
-            categoryId, // Use full category ID with year for database
-            nomineeId: nominee.id,
-            nomineeName:
-              baseCategoryId === 'casting' ? castingDirector || nomineeName : nomineeName,
-            nomineeFilm: baseCategoryId === 'casting' ? nomineeName : nomineeFilm,
-            oddsPercentage: match.price,
-            snapshotTime,
-          },
-        });
+        await prisma.$transaction([
+          prisma.oddsSnapshot.create({
+            data: {
+              categoryId, // Use full category ID with year for database
+              nomineeId: nominee.id,
+              nomineeName:
+                baseCategoryId === 'casting' ? castingDirector || nomineeName : nomineeName,
+              nomineeFilm: baseCategoryId === 'casting' ? nomineeName : nomineeFilm,
+              oddsPercentage: match.price,
+              snapshotTime,
+            },
+          }),
+          prisma.$executeRaw`
+            INSERT INTO odds_current (
+              category_id,
+              nominee_id,
+              odds_percentage,
+              snapshot_time
+            )
+            VALUES (
+              ${categoryId},
+              ${nominee.id},
+              ${match.price},
+              ${snapshotTime}
+            )
+            ON CONFLICT (category_id, nominee_id)
+            DO UPDATE SET
+              odds_percentage = EXCLUDED.odds_percentage,
+              snapshot_time = EXCLUDED.snapshot_time,
+              updated_at = NOW()
+            WHERE odds_current.snapshot_time <= EXCLUDED.snapshot_time
+          `,
+        ]);
         console.log(
           `✓ Created odds snapshot for ${baseCategoryId} nominee ${nominee.id} (${nomineeName}): ${match.price}%`,
         );

@@ -139,6 +139,17 @@ model OddsSnapshot {
   @@map("odds_snapshots")
 }
 
+model OddsCurrent {
+  categoryId     String   @map("category_id")
+  nomineeId      String   @map("nominee_id")
+  oddsPercentage Float    @map("odds_percentage")
+  snapshotTime   DateTime @map("snapshot_time")
+  updatedAt      DateTime @default(now()) @map("updated_at")
+
+  @@id([categoryId, nomineeId])
+  @@map("odds_current")
+}
+
 model ActualWinner {
   id          String   @id @default(uuid())
   poolId      String   @map("pool_id")

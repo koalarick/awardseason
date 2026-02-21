@@ -31,8 +31,13 @@ router.get('/year/:year', async (req, res: Response) => {
       return;
     }
 
-    const categoryIds = categories.map((category) => category.id);
-    const oddsByCategory = await oddsService.getCurrentOddsForCategories(categoryIds);
+    const nomineePairs = categories.flatMap((category) =>
+      category.nominees.map((nominee) => ({
+        categoryId: category.id,
+        nomineeId: nominee.id,
+      })),
+    );
+    const oddsByCategory = await oddsService.getCurrentOddsForNomineePairs(nomineePairs);
     const oddsMap: Record<string, Array<{ nomineeId: string; odds: number | null }>> = {};
 
     categories.forEach((category) => {
@@ -74,7 +79,12 @@ router.get('/category/:categoryId', async (req, res: Response) => {
       return;
     }
 
-    const oddsByNominee = await oddsService.getCurrentOddsForCategory(categoryId);
+    const nomineePairs = category.nominees.map((nominee) => ({
+      categoryId,
+      nomineeId: nominee.id,
+    }));
+    const oddsByCategory = await oddsService.getCurrentOddsForNomineePairs(nomineePairs);
+    const oddsByNominee = oddsByCategory[categoryId] ?? {};
     const nomineesWithOdds = category.nominees.map((nominee) => ({
       nomineeId: nominee.id,
       odds: oddsByNominee[nominee.id] ?? null,

@@ -378,39 +378,44 @@ export class PoolService {
     const currentOddsMap: Record<string, number | null> = {};
 
     if (predictionsNeedingOdds.length > 0) {
-      const uniqueOddsLookups = new Map<string, { categoryId: string; nomineeId: string }>();
+      const uniqueOddsLookups = new Map<
+        string,
+        { baseCategoryId: string; fullCategoryId: string; nomineeId: string }
+      >();
       predictionsNeedingOdds.forEach((prediction) => {
         const key = `${prediction.categoryId}-${prediction.nomineeId}`;
         if (!uniqueOddsLookups.has(key)) {
+          const fullCategoryId = `${prediction.categoryId}-${pool.year}`;
           uniqueOddsLookups.set(key, {
-            categoryId: prediction.categoryId,
+            baseCategoryId: prediction.categoryId,
+            fullCategoryId,
             nomineeId: prediction.nomineeId,
           });
         }
       });
 
-      const oddsLookups = await Promise.all(
-        [...uniqueOddsLookups.values()].map(async (prediction) => {
-          const fullCategoryId = `${prediction.categoryId}-${pool.year}`;
-          const snapshot = await prisma.oddsSnapshot.findFirst({
-            where: {
-              categoryId: fullCategoryId,
-              nomineeId: prediction.nomineeId,
-            },
-            orderBy: {
-              snapshotTime: 'desc',
-            },
-          });
-          return {
-            key: `${prediction.categoryId}-${prediction.nomineeId}`,
-            odds: snapshot?.oddsPercentage || null,
-          };
-        }),
+      const valueTuples = [...uniqueOddsLookups.values()].map((entry) =>
+        Prisma.sql`(${entry.baseCategoryId}, ${entry.fullCategoryId}, ${entry.nomineeId})`,
       );
 
-      oddsLookups.forEach(({ key, odds }) => {
-        currentOddsMap[key] = odds;
-      });
+      if (valueTuples.length > 0) {
+        const rows = await prisma.$queryRaw<
+          Array<{ baseCategoryId: string; nomineeId: string; oddsPercentage: number | null }>
+        >(Prisma.sql`
+          SELECT v.base_category_id AS "baseCategoryId",
+                 v.nominee_id AS "nomineeId",
+                 c.odds_percentage AS "oddsPercentage"
+          FROM (VALUES ${Prisma.join(valueTuples)}) AS v(base_category_id, category_id, nominee_id)
+          LEFT JOIN odds_current c
+            ON c.category_id = v.category_id
+           AND c.nominee_id = v.nominee_id
+        `);
+
+        rows.forEach(({ baseCategoryId, nomineeId, oddsPercentage }) => {
+          const key = `${baseCategoryId}-${nomineeId}`;
+          currentOddsMap[key] = oddsPercentage ?? null;
+        });
+      }
     }
 
     // Get global winners for this year (from global pool) - do this once outside the loop
