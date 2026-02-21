@@ -12,6 +12,7 @@ import PoolInvite from './pages/PoolInvite';
 import GlobalWinners from './pages/GlobalWinners';
 import NomineeMetadata from './pages/NomineeMetadata';
 import MovieMetadata from './pages/MovieMetadata';
+import MovieMetadataCreate from './pages/MovieMetadataCreate';
 import Users from './pages/Users';
 import MoviesSeen from './pages/MoviesSeen';
 import Events from './pages/Events';
@@ -80,6 +81,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MovieMetadata />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/movies/metadata/new"
+              element={
+                <ProtectedRoute>
+                  <MovieMetadataCreate />
                 </ProtectedRoute>
               }
             />
