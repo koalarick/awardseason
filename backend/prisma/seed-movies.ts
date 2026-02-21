@@ -93,13 +93,27 @@ function loadNominees(): NomineesByYear {
   ];
 
   for (const jsonPath of possiblePaths) {
-    if (fs.existsSync(jsonPath)) {
-      const fileContent = fs.readFileSync(jsonPath, 'utf8');
-      return JSON.parse(fileContent) as NomineesByYear;
+    if (!fs.existsSync(jsonPath)) {
+      continue;
+    }
+    const fileContent = fs.readFileSync(jsonPath, 'utf8');
+    const trimmed = fileContent.trim();
+    if (!trimmed) {
+      continue;
+    }
+    try {
+      return JSON.parse(trimmed) as NomineesByYear;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse nominees.json at ${jsonPath}: ${message}`);
     }
   }
 
-  throw new Error(`Failed to load nominees.json from: ${possiblePaths.join(', ')}`);
+  throw new Error(
+    `Failed to load nominees.json from: ${possiblePaths.join(
+      ', ',
+    )}. File was missing or empty.`,
+  );
 }
 
 async function main() {
