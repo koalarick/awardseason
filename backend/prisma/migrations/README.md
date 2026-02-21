@@ -6,21 +6,30 @@ This directory contains database migrations for the Academy Awards Pool applicat
 
 ### Migration Order (by timestamp)
 
-1. **20260125135834_add_paid_pool_fields** (Jan 25, 2025 13:58:34)
+1. **20260125135834_add_paid_pool_fields** (Jan 25, 2026 13:58:34)
    - Adds paid pool functionality
    - Adds `is_paid_pool`, `entry_amount`, `venmo_alias` columns to `pools` table
    - Adds `has_paid` column to `pool_members` table
 
-2. **20260125172918_add_original_odds_percentage** (Jan 25, 2025 17:29:18)
+2. **20260125172918_add_original_odds_percentage** (Jan 25, 2026 17:29:18)
    - **NOTE: This is the INITIAL migration that creates all database tables**
    - Creates all core tables: users, pools, pool_members, predictions, odds_snapshots, actual_winners, pool_settings, categories, nominees
    - Creates UserRole enum
    - Creates all indexes and foreign keys
    - Adds `original_odds_percentage` column to `predictions` table
 
-3. **20260126000000_add_payout_structure** (Jan 26, 2025 00:00:00)
+3. **20260126000000_add_payout_structure** (Jan 26, 2026 00:00:00)
    - Adds `payout_structure` JSONB column to `pool_settings` table
    - Uses manual timestamp (should ideally use Prisma-generated timestamp)
+
+4. **20260127000000_add_letterboxd_url** (Jan 27, 2026 00:00:00)
+   - Adds `letterboxd_url` column to `nominees` table
+
+5. **20260221150000_add_odds_snapshot_index** (Feb 21, 2026 15:00:00)
+   - Adds composite index for odds snapshot lookups
+
+6. **20260221153000_add_events_table** (Feb 21, 2026 15:30:00)
+   - Adds `events` table and related indexes
 
 ## Important Notes
 

@@ -15,6 +15,10 @@ type CategoryWithNominees = {
   id: string;
   nominees: NomineeSnapshotCandidate[];
 };
+type LatestOddsRow = {
+  nomineeId: string;
+  oddsPercentage: number | null;
+};
 
 // Import nominees data - we'll need to copy this structure
 // For now, we'll create a function that accepts nominees
@@ -90,8 +94,29 @@ export class OddsService {
       orderBy: {
         snapshotTime: 'desc',
       },
+      select: {
+        oddsPercentage: true,
+      },
     });
 
-    return snapshot ? snapshot.oddsPercentage : null;
+    return snapshot?.oddsPercentage ?? null;
+  }
+
+  async getCurrentOddsForCategory(categoryId: string): Promise<Record<string, number | null>> {
+    const rows = await prisma.$queryRaw<LatestOddsRow[]>`
+      SELECT DISTINCT ON ("nominee_id")
+        "nominee_id" AS "nomineeId",
+        "odds_percentage" AS "oddsPercentage"
+      FROM "odds_snapshots"
+      WHERE "category_id" = ${categoryId}
+      ORDER BY "nominee_id", "snapshot_time" DESC
+    `;
+
+    const oddsByNominee: Record<string, number | null> = {};
+    for (const row of rows) {
+      oddsByNominee[row.nomineeId] = row.oddsPercentage ?? null;
+    }
+
+    return oddsByNominee;
   }
 }

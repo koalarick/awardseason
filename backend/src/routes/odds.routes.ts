@@ -15,8 +15,11 @@ router.get('/category/:categoryId', async (req, res: Response) => {
     // Get all nominees for this category from the database
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
-      include: {
-        nominees: true,
+      select: {
+        id: true,
+        nominees: {
+          select: { id: true },
+        },
       },
     });
 
@@ -25,16 +28,11 @@ router.get('/category/:categoryId', async (req, res: Response) => {
       return;
     }
 
-    // Get odds for each nominee
-    const nomineesWithOdds = await Promise.all(
-      category.nominees.map(async (nominee) => {
-        const odds = await oddsService.getCurrentOdds(categoryId, nominee.id);
-        return {
-          nomineeId: nominee.id,
-          odds,
-        };
-      }),
-    );
+    const oddsByNominee = await oddsService.getCurrentOddsForCategory(categoryId);
+    const nomineesWithOdds = category.nominees.map((nominee) => ({
+      nomineeId: nominee.id,
+      odds: oddsByNominee[nominee.id] ?? null,
+    }));
 
     res.json({ nominees: nomineesWithOdds });
   } catch (error) {
