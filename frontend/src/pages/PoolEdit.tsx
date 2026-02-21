@@ -682,41 +682,22 @@ export default function PoolEdit() {
     enabled: !!selectedNomineeInfo && !!pool?.year,
   });
 
-  // Fetch odds for all categories at once
+  // Fetch odds for all categories at once (single backend call)
   const { data: allCategoryOdds, isLoading: oddsLoading } = useQuery<
     Record<string, CategoryOdds[]>
   >({
     queryKey: ['odds', 'all', pool?.year],
     queryFn: async () => {
-      if (!pool?.year || !categories) return {};
-      const oddsMap: Record<string, CategoryOdds[]> = {};
-
-      // Fetch odds for all categories in parallel
-      const oddsPromises = categories.map(async (category) => {
-        const categoryId = `${category.id}-${pool.year}`;
-        try {
-          const response = await api.get(`/odds/category/${categoryId}`);
-          return {
-            categoryId: category.id,
-            nominees: (response.data?.nominees ?? []) as CategoryOdds[],
-          };
-        } catch (error: unknown) {
-          console.error(`Error fetching odds for ${categoryId}:`, error);
-          return {
-            categoryId: category.id,
-            nominees: [] as CategoryOdds[],
-          };
-        }
-      });
-
-      const results = await Promise.all(oddsPromises);
-      results.forEach(({ categoryId, nominees }) => {
-        oddsMap[categoryId] = nominees;
-      });
-
-      return oddsMap;
+      if (!pool?.year) return {};
+      try {
+        const response = await api.get(`/odds/year/${pool.year}`);
+        return (response.data?.odds ?? {}) as Record<string, CategoryOdds[]>;
+      } catch (error: unknown) {
+        console.error(`Error fetching odds for year ${pool.year}:`, error);
+        return {};
+      }
     },
-    enabled: !!pool?.year && !!categories && categories.length > 0,
+    enabled: !!pool?.year,
     staleTime: 1000 * 60 * 60,
   });
 

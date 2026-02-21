@@ -7,6 +7,52 @@ const router = Router();
 const prisma = new PrismaClient();
 const oddsService = new OddsService();
 
+// Get current odds for all nominees in a year (single call for ballot load)
+router.get('/year/:year', async (req, res: Response) => {
+  try {
+    const { year } = req.params;
+    if (!year) {
+      res.status(400).json({ error: 'Year is required' });
+      return;
+    }
+
+    const categories = await prisma.category.findMany({
+      where: { year },
+      select: {
+        id: true,
+        nominees: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!categories.length) {
+      res.json({ odds: {} });
+      return;
+    }
+
+    const categoryIds = categories.map((category) => category.id);
+    const oddsByCategory = await oddsService.getCurrentOddsForCategories(categoryIds);
+    const oddsMap: Record<string, Array<{ nomineeId: string; odds: number | null }>> = {};
+
+    categories.forEach((category) => {
+      const oddsByNominee = oddsByCategory[category.id] ?? {};
+      const baseCategoryId = category.id.includes(`-${year}`)
+        ? category.id.replace(`-${year}`, '')
+        : category.id.replace(/-\d{4}$/, '');
+
+      oddsMap[baseCategoryId] = category.nominees.map((nominee) => ({
+        nomineeId: nominee.id,
+        odds: oddsByNominee[nominee.id] ?? null,
+      }));
+    });
+
+    res.json({ odds: oddsMap });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get current odds for all nominees in a category (no auth required for public data)
 router.get('/category/:categoryId', async (req, res: Response) => {
   try {

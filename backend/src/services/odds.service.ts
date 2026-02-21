@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { KalshiService } from './kalshi.service';
 
 const prisma = new PrismaClient();
@@ -16,6 +16,11 @@ type CategoryWithNominees = {
   nominees: NomineeSnapshotCandidate[];
 };
 type LatestOddsRow = {
+  nomineeId: string;
+  oddsPercentage: number | null;
+};
+type LatestOddsByCategoryRow = {
+  categoryId: string;
   nomineeId: string;
   oddsPercentage: number | null;
 };
@@ -118,5 +123,33 @@ export class OddsService {
     }
 
     return oddsByNominee;
+  }
+
+  async getCurrentOddsForCategories(
+    categoryIds: string[],
+  ): Promise<Record<string, Record<string, number | null>>> {
+    if (categoryIds.length === 0) return {};
+
+    const rows = await prisma.$queryRaw<LatestOddsByCategoryRow[]>(
+      Prisma.sql`
+        SELECT DISTINCT ON ("category_id", "nominee_id")
+          "category_id" AS "categoryId",
+          "nominee_id" AS "nomineeId",
+          "odds_percentage" AS "oddsPercentage"
+        FROM "odds_snapshots"
+        WHERE "category_id" IN (${Prisma.join(categoryIds)})
+        ORDER BY "category_id", "nominee_id", "snapshot_time" DESC
+      `,
+    );
+
+    const oddsByCategory: Record<string, Record<string, number | null>> = {};
+    for (const row of rows) {
+      if (!oddsByCategory[row.categoryId]) {
+        oddsByCategory[row.categoryId] = {};
+      }
+      oddsByCategory[row.categoryId][row.nomineeId] = row.oddsPercentage ?? null;
+    }
+
+    return oddsByCategory;
   }
 }
